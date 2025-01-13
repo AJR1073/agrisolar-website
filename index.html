@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://formspree.io/js/formspree-forms.min.js" defer></script>
 </head>
 <body>
     <header>
@@ -285,7 +286,8 @@
                     </div>
                 </div>
                 <div class="contact-form">
-                    <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+                    <form id="contactForm" action="https://formspree.io/f/meoonlle" method="POST">
+                        <div id="formMessage" class="form-message" style="display: none;"></div>
                         <div class="form-group">
                             <label for="name">Name</label>
                             <input type="text" id="name" name="name" required>
@@ -297,6 +299,16 @@
                         <div class="form-group">
                             <label for="phone">Phone</label>
                             <input type="tel" id="phone" name="phone">
+                        </div>
+                        <div class="form-group">
+                            <label for="service">Service Needed</label>
+                            <select id="service" name="service" required>
+                                <option value="">Select a Service</option>
+                                <option value="mowing">Professional Mowing</option>
+                                <option value="trimming">Precision Trimming</option>
+                                <option value="herbicide">Herbicide Application</option>
+                                <option value="maintenance">Regular Maintenance</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label for="message">Message</label>
@@ -374,5 +386,6 @@
     </footer>
 
     <script src="js/main.js"></script>
+    <script src="js/form-handler.js"></script>
 </body>
 </html>
