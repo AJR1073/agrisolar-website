@@ -240,20 +240,14 @@ body {
 /* About Section */
 .about {
     padding: 5rem 0;
-    background: var(--light-color);
-}
-
-.about-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-    padding: 2rem 0;
+    background: var(--light-bg);
 }
 
 .about-content {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 2rem;
+    padding: 2rem 0;
 }
 
 .about-card {
@@ -293,19 +287,50 @@ body {
     margin-bottom: 0;
 }
 
-/* Mobile Styles for About Section */
+.services-list,
+.value-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.services-list li,
+.value-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+.services-list li:last-child,
+.value-list li:last-child {
+    margin-bottom: 0;
+}
+
+.services-list li i,
+.value-list li i {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    margin-top: 0.2rem;
+}
+
+.services-list li strong {
+    color: var(--dark-color);
+    margin-right: 0.5rem;
+}
+
+/* Mobile Styles */
 @media (max-width: 768px) {
     .about {
         padding: 3rem 0;
     }
 
-    .about-grid {
-        padding: 1rem;
-    }
-
     .about-content {
         grid-template-columns: 1fr;
         gap: 1.5rem;
+        padding: 1rem;
     }
 
     .about-card {
@@ -325,6 +350,12 @@ body {
         font-size: 1rem;
         line-height: 1.6;
     }
+
+    .services-list li,
+    .value-list li {
+        font-size: 0.95rem;
+        margin-bottom: 1rem;
+    }
 }
 
 @media (max-width: 480px) {
@@ -332,7 +363,7 @@ body {
         padding: 2rem 0;
     }
 
-    .about-grid {
+    .about-content {
         padding: 0.5rem;
     }
 
