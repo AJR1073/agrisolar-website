@@ -94,10 +94,11 @@ body {
     width: 100%;
 }
 
-/* Hero Section */
+/* Hero Section with Video */
 .hero {
     position: relative;
     height: 100vh;
+    min-height: 600px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -143,9 +144,18 @@ body {
     font-size: 4rem;
     font-weight: 700;
     line-height: 1.2;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     font-family: var(--heading-font);
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.hero-content p {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .hero-buttons {
@@ -193,6 +203,11 @@ body {
 @media (max-width: 768px) {
     .hero-content h1 {
         font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .hero-content p {
+        font-size: 1.2rem;
         margin-bottom: 1.5rem;
     }
 
@@ -216,67 +231,9 @@ body {
     .hero-content h1 {
         font-size: 2rem;
     }
-}
 
-/* Intro Section */
-.intro {
-    background: var(--dark-color);
-    padding: 5rem 0;
-    text-align: center;
-}
-
-.intro h2 {
-    color: white;
-    font-size: 2.5rem;
-    margin-bottom: 1.5rem;
-    font-family: var(--heading-font);
-}
-
-.intro p {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 1.25rem;
-    margin-bottom: 2.5rem;
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.intro-buttons {
-    display: flex;
-    gap: 1.5rem;
-    justify-content: center;
-}
-
-/* Mobile Styles */
-@media (max-width: 768px) {
-    .intro {
-        padding: 3rem 0;
-    }
-
-    .intro h2 {
-        font-size: 2rem;
-        margin-bottom: 1rem;
-    }
-
-    .intro p {
+    .hero-content p {
         font-size: 1.1rem;
-        margin-bottom: 2rem;
-    }
-
-    .intro-buttons {
-        flex-direction: column;
-        gap: 1rem;
-        padding: 0 1rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .intro h2 {
-        font-size: 1.75rem;
-    }
-
-    .intro p {
-        font-size: 1rem;
     }
 }
 
@@ -286,24 +243,34 @@ body {
     background: var(--light-color);
 }
 
+.about-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 2rem 0;
+}
+
 .about-content {
-    max-width: 900px;
-    margin: 2rem auto;
-    padding: 0 1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
 }
 
-.about-text {
-    margin-bottom: 3rem;
-    padding: 0 1rem;
+.about-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
 }
 
-.about-text:last-child {
-    margin-bottom: 0;
+.about-card:hover {
+    transform: translateY(-5px);
 }
 
-.about-text h3 {
+.about-card h3 {
     color: var(--primary-color);
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     margin-bottom: 1.5rem;
     display: flex;
     align-items: center;
@@ -311,21 +278,18 @@ body {
     font-family: var(--heading-font);
 }
 
-.about-text h3 i {
+.about-card h3 i {
     font-size: 1.8rem;
     color: var(--primary-color);
-    opacity: 0.9;
 }
 
-.about-text p {
+.about-card p {
     color: var(--text-color);
-    font-size: 1.1rem;
     line-height: 1.8;
-    margin-bottom: 1.5rem;
-    max-width: 800px;
+    margin-bottom: 1rem;
 }
 
-.about-text p:last-child {
+.about-card p:last-child {
     margin-bottom: 0;
 }
 
@@ -335,29 +299,31 @@ body {
         padding: 3rem 0;
     }
 
+    .about-grid {
+        padding: 1rem;
+    }
+
     .about-content {
-        margin: 1rem auto;
-        padding: 0 1rem;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
 
-    .about-text {
-        margin-bottom: 2rem;
-        padding: 0;
+    .about-card {
+        padding: 1.5rem;
     }
 
-    .about-text h3 {
-        font-size: 1.4rem;
+    .about-card h3 {
+        font-size: 1.3rem;
         margin-bottom: 1rem;
     }
 
-    .about-text h3 i {
-        font-size: 1.4rem;
+    .about-card h3 i {
+        font-size: 1.5rem;
     }
 
-    .about-text p {
+    .about-card p {
         font-size: 1rem;
         line-height: 1.6;
-        margin-bottom: 1rem;
     }
 }
 
@@ -366,16 +332,12 @@ body {
         padding: 2rem 0;
     }
 
-    .about-content {
-        padding: 0 0.75rem;
+    .about-grid {
+        padding: 0.5rem;
     }
 
-    .about-text h3 {
-        font-size: 1.3rem;
-    }
-
-    .about-text p {
-        font-size: 0.95rem;
+    .about-card {
+        padding: 1.25rem;
     }
 }
 
