@@ -31,8 +31,16 @@
 
     <section class="hero">
         <div class="video-background">
-            <video class="hero-video" muted playsinline autoplay loop>
-                <source src="gallery/solar-farm-video.mp4" type="video/mp4">
+            <video 
+                class="hero-video" 
+                muted 
+                playsinline 
+                autoplay 
+                loop
+                preload="auto"
+                poster="images/hero-bg.jpg"
+            >
+                <source src="gallery/solar-farm-video.mp4" type="video/mp4" />
             </video>
             <div class="video-overlay"></div>
         </div>
@@ -40,8 +48,12 @@
             <h2>Professional Solar Farm Vegetation Management</h2>
             <p>Expert mowing, trimming, and herbicide application services for solar energy facilities</p>
             <div class="hero-buttons">
-                <a href="#services" class="btn btn-primary">Explore Our Services</a>
-                <a href="#contact" class="btn btn-secondary">Request a Quote</a>
+                <a href="#services" class="btn btn-primary">
+                    <span>Explore Our Services</span>
+                </a>
+                <a href="#contact" class="btn btn-secondary">
+                    <span>Request a Quote</span>
+                </a>
             </div>
         </div>
     </section>
@@ -111,59 +123,102 @@
         <div class="container">
             <div class="section-title">
                 <h2>Our Services</h2>
-                <p>Professional Vegetation Management Solutions</p>
             </div>
             <div class="services-grid">
                 <div class="service-card">
                     <div class="service-icon">
-                        <i class="fas fa-tractor"></i>
+                        <i class="fas fa-seedling"></i>
                     </div>
-                    <h3>Professional Mowing</h3>
-                    <p>Commercial-grade equipment for efficient solar field maintenance</p>
-                    <ul class="service-features">
-                        <li><i class="fas fa-check"></i> Large-scale mowing capability</li>
-                        <li><i class="fas fa-check"></i> Professional equipment</li>
-                        <li><i class="fas fa-check"></i> Regular maintenance schedules</li>
-                    </ul>
+                    <h3>Seeding Native Plants</h3>
+                    <p>Establishing native vegetation to promote biodiversity and improve soil health.</p>
                 </div>
-
                 <div class="service-card">
                     <div class="service-icon">
-                        <i class="fas fa-cut"></i>
+                        <i class="fas fa-mountain"></i>
                     </div>
-                    <h3>Precision Trimming</h3>
-                    <p>Detailed vegetation control around solar panels and equipment</p>
-                    <ul class="service-features">
-                        <li><i class="fas fa-check"></i> Panel-safe techniques</li>
-                        <li><i class="fas fa-check"></i> Careful equipment handling</li>
-                        <li><i class="fas fa-check"></i> Thorough clean-up</li>
-                    </ul>
+                    <h3>Erosion Control</h3>
+                    <p>Implementing measures to prevent soil erosion, protecting both the environment and infrastructure.</p>
                 </div>
-
                 <div class="service-card">
                     <div class="service-icon">
-                        <i class="fas fa-spray-can"></i>
+                        <i class="fas fa-tasks"></i>
                     </div>
-                    <h3>Herbicide Application</h3>
-                    <p>EPA-compliant vegetation management solutions</p>
-                    <ul class="service-features">
-                        <li><i class="fas fa-check"></i> EPA-approved products</li>
-                        <li><i class="fas fa-check"></i> Licensed applicators</li>
-                        <li><i class="fas fa-check"></i> Environmentally conscious</li>
-                    </ul>
+                    <h3>Ongoing Maintenance</h3>
+                    <p>Regular upkeep including mowing and herbicide application.</p>
                 </div>
+            </div>
+        </div>
+    </section>
 
-                <div class="service-card">
-                    <div class="service-icon">
-                        <i class="fas fa-calendar-check"></i>
+    <section id="why-us" class="why-us">
+        <div class="container">
+            <div class="section-title">
+                <h2>Why Choose AgriSolar LLC?</h2>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-building"></i>
                     </div>
-                    <h3>Regular Maintenance</h3>
-                    <p>Scheduled service to maintain optimal solar farm conditions</p>
-                    <ul class="service-features">
-                        <li><i class="fas fa-check"></i> Customized schedules</li>
-                        <li><i class="fas fa-check"></i> Comprehensive care</li>
-                        <li><i class="fas fa-check"></i> Performance monitoring</li>
-                    </ul>
+                    <p>Strong foundation in large-scale land management</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <p>Commitment to sustainable practices</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-solar-panel"></i>
+                    </div>
+                    <p>Professional panel monitoring</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-certificate"></i>
+                    </div>
+                    <p>Commercial Pesticide License holders</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <p>Family-operated business values</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="values" class="values">
+        <div class="container">
+            <div class="section-title">
+                <h2>Our Values</h2>
+            </div>
+            <div class="values-grid">
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <p>Operating with honesty and integrity</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <p>Environmental sustainability</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p>Personalized service excellence</p>
+                </div>
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <p>Highest standards of quality and safety</p>
                 </div>
             </div>
         </div>
