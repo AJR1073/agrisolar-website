@@ -331,34 +331,24 @@ body {
     background: var(--light-bg);
 }
 
-.about-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-    padding: 2rem 0;
-}
-
 .about-content {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 1rem;
 }
 
-.about-card {
-    background: white;
-    padding: 2rem;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
+.about-text {
+    margin-bottom: 3rem;
+    padding: 0 1rem;
 }
 
-.about-card:hover {
-    transform: translateY(-5px);
+.about-text:last-child {
+    margin-bottom: 0;
 }
 
-.about-card h3 {
+.about-text h3 {
     color: var(--primary-color);
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     margin-bottom: 1.5rem;
     display: flex;
     align-items: center;
@@ -366,18 +356,21 @@ body {
     font-family: var(--heading-font);
 }
 
-.about-card h3 i {
+.about-text h3 i {
     font-size: 1.8rem;
     color: var(--primary-color);
+    opacity: 0.9;
 }
 
-.about-card p {
+.about-text p {
     color: var(--text-color);
+    font-size: 1.1rem;
     line-height: 1.8;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    max-width: 800px;
 }
 
-.about-card p:last-child {
+.about-text p:last-child {
     margin-bottom: 0;
 }
 
@@ -387,31 +380,29 @@ body {
         padding: 3rem 0;
     }
 
-    .about-grid {
-        padding: 1rem;
-    }
-
     .about-content {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
+        margin: 1rem auto;
+        padding: 0 1rem;
     }
 
-    .about-card {
-        padding: 1.5rem;
+    .about-text {
+        margin-bottom: 2rem;
+        padding: 0;
     }
 
-    .about-card h3 {
-        font-size: 1.3rem;
+    .about-text h3 {
+        font-size: 1.4rem;
         margin-bottom: 1rem;
     }
 
-    .about-card h3 i {
-        font-size: 1.5rem;
+    .about-text h3 i {
+        font-size: 1.4rem;
     }
 
-    .about-card p {
+    .about-text p {
         font-size: 1rem;
         line-height: 1.6;
+        margin-bottom: 1rem;
     }
 }
 
@@ -420,12 +411,16 @@ body {
         padding: 2rem 0;
     }
 
-    .about-grid {
-        padding: 0.5rem;
+    .about-content {
+        padding: 0 0.75rem;
     }
 
-    .about-card {
-        padding: 1.25rem;
+    .about-text h3 {
+        font-size: 1.3rem;
+    }
+
+    .about-text p {
+        font-size: 0.95rem;
     }
 }
 
