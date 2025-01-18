@@ -1,7 +1,15 @@
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('contactForm');
+    console.log('Form found:', form);
     
     if (form) {
+        // Debug log all form elements
+        console.log('Name field:', form.querySelector('#name'));
+        console.log('Email field:', form.querySelector('#email'));
+        console.log('Phone field:', form.querySelector('#phone'));
+        console.log('Service field:', form.querySelector('#service'));
+        console.log('Message field:', form.querySelector('#message'));
+
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -11,17 +19,29 @@ document.addEventListener('DOMContentLoaded', function() {
             submitButton.disabled = true;
 
             try {
-                // Get form data
-                const formData = new FormData(form);
-                
-                // Get all form values
-                const name = form.querySelector('#name').value.trim();
-                const email = form.querySelector('#email').value.trim();
-                const phone = form.querySelector('#phone').value.trim();
-                const service = form.querySelector('#service').value.trim();
-                const message = form.querySelector('#message').value.trim();
+                // Get form elements
+                const nameField = form.querySelector('#name');
+                const emailField = form.querySelector('#email');
+                const phoneField = form.querySelector('#phone');
+                const serviceField = form.querySelector('#service');
+                const messageField = form.querySelector('#message');
 
-                // Debug log
+                console.log('Form Elements:', {
+                    nameField,
+                    emailField,
+                    phoneField,
+                    serviceField,
+                    messageField
+                });
+
+                // Get form values
+                const name = nameField ? nameField.value.trim() : '';
+                const email = emailField ? emailField.value.trim() : '';
+                const phone = phoneField ? phoneField.value.trim() : '';
+                const service = serviceField ? serviceField.value.trim() : '';
+                const message = messageField ? messageField.value.trim() : '';
+
+                // Debug log values
                 console.log('Form Values:', {
                     name,
                     email,
@@ -73,6 +93,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 submitButton.disabled = false;
             }
         });
+    } else {
+        console.error('Contact form not found!');
     }
 });
 
@@ -84,7 +106,12 @@ function showMessage(message, type) {
         formStatus.id = 'formStatus';
         formStatus.className = 'form-status';
         const form = document.getElementById('contactForm');
-        form.parentNode.insertBefore(formStatus, form.nextSibling);
+        if (form) {
+            form.parentNode.insertBefore(formStatus, form.nextSibling);
+        } else {
+            console.error('Form not found for message display');
+            return;
+        }
     }
     
     // Handle multi-line error messages
