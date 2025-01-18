@@ -13,14 +13,27 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 // Get form data
                 const formData = new FormData(form);
+                
+                // Validate required fields
+                const name = formData.get('name');
+                const email = formData.get('email');
+                const service = formData.get('service');
+                const message = formData.get('message');
+                
+                if (!name || !email || !service || !message) {
+                    throw new Error('Please fill in all required fields');
+                }
+
                 const data = {
-                    name: formData.get('name'),
-                    email: formData.get('email'),
-                    phone: formData.get('phone'),
-                    service: formData.get('service'),
-                    message: formData.get('message'),
+                    name: name,
+                    email: email,
+                    phone: formData.get('phone') || 'Not provided',
+                    service: service,
+                    message: message,
                     timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    status: 'new'
+                    status: 'new',
+                    viewed: false,
+                    notifyEmail: 'aaronreifschneider@outlook.com'
                 };
 
                 // Save to Firebase Realtime Database
@@ -33,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 form.reset();
             } catch (error) {
                 console.error('Error submitting form:', error);
-                showMessage('Oops! Something went wrong. Please try again or contact us directly at (618) 539-2098.', 'error');
+                showMessage(error.message || 'Oops! Something went wrong. Please try again or contact us directly at (618) 539-2098.', 'error');
             } finally {
                 submitButton.textContent = originalButtonText;
                 submitButton.disabled = false;
@@ -48,6 +61,7 @@ function showMessage(message, type) {
     if (!formStatus) {
         formStatus = document.createElement('div');
         formStatus.id = 'formStatus';
+        formStatus.className = 'form-status';
         const form = document.getElementById('contactForm');
         form.parentNode.insertBefore(formStatus, form.nextSibling);
     }
