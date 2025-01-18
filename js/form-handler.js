@@ -1,44 +1,66 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('.contact-form form');
+    const form = document.getElementById('contactForm');
     
     if (form) {
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            // Show loading state
             const submitButton = form.querySelector('button[type="submit"]');
             const originalButtonText = submitButton.textContent;
             submitButton.textContent = 'Sending...';
             submitButton.disabled = true;
 
             try {
-                // Send form data to Formspree
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    body: new FormData(form),
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                });
+                // Get form data
+                const formData = new FormData(form);
+                const data = {
+                    name: formData.get('name'),
+                    email: formData.get('email'),
+                    phone: formData.get('phone'),
+                    service: formData.get('service'),
+                    message: formData.get('message'),
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    status: 'new'
+                };
 
-                const data = await response.json();
+                // Save to Firebase Realtime Database
+                const db = firebase.database();
+                const newSubmissionRef = db.ref('contact_submissions').push();
+                await newSubmissionRef.set(data);
                 
-                if (data.ok) {
-                    // Success - redirect to thank you page
-                    window.location.href = 'form-submitted.html?status=success';
-                } else {
-                    // Error from Formspree
-                    throw new Error('Form submission failed');
-                }
+                // Show success message
+                showMessage('Thank you for your message! We will get back to you soon.', 'success');
+                form.reset();
             } catch (error) {
                 console.error('Error submitting form:', error);
-                // Redirect to error page
-                window.location.href = 'form-submitted.html?status=error';
+                showMessage('Oops! Something went wrong. Please try again or contact us directly at (618) 539-2098.', 'error');
             } finally {
-                // Reset button state
                 submitButton.textContent = originalButtonText;
                 submitButton.disabled = false;
             }
         });
     }
 });
+
+function showMessage(message, type) {
+    let formStatus = document.getElementById('formStatus');
+    
+    if (!formStatus) {
+        formStatus = document.createElement('div');
+        formStatus.id = 'formStatus';
+        const form = document.getElementById('contactForm');
+        form.parentNode.insertBefore(formStatus, form.nextSibling);
+    }
+    
+    formStatus.textContent = message;
+    formStatus.className = `form-status ${type}`;
+    
+    // Scroll to message
+    formStatus.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Clear message after 5 seconds
+    setTimeout(() => {
+        formStatus.textContent = '';
+        formStatus.className = 'form-status';
+    }, 5000);
+}

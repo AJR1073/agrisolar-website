@@ -37,8 +37,9 @@
       "knowsAbout": ["Solar Panel Maintenance", "Agricultural Equipment Operation", "Vegetation Management", "Sustainable Farming Practices"]
     }
     </script>
-    <title>AgriSolar LLC - Professional Solar Farm Vegetation Management | Illinois</title>
+    <title>AgriSolar LLC - Professional Solar Farm Vegetation Management</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/contact-form.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -734,7 +735,7 @@
                         </div>
                     </div>
                     <div class="contact-form">
-                        <form action="https://formspree.io/f/meoonlle" method="POST">
+                        <form id="contactForm">
                             <div class="form-group">
                                 <label for="name">Name</label>
                                 <input type="text" id="name" name="name" required>
@@ -751,17 +752,17 @@
                                 <label for="service">Service Needed</label>
                                 <select id="service" name="service" required>
                                     <option value="">Select a Service</option>
-                                    <option value="mowing">Professional Mowing</option>
-                                    <option value="trimming">Precision Trimming</option>
-                                    <option value="herbicide">Herbicide Application</option>
-                                    <option value="maintenance">Regular Maintenance</option>
+                                    <option value="Vegetation Management">Vegetation Management</option>
+                                    <option value="Native Plant Seeding">Native Plant Seeding</option>
+                                    <option value="Erosion Control">Erosion Control</option>
+                                    <option value="Other">Other</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label for="message">Message</label>
                                 <textarea id="message" name="message" rows="5" required></textarea>
                             </div>
-                            <button type="submit" class="btn btn-primary">Send Message</button>
+                            <button type="submit">Send Message</button>
                         </form>
                     </div>
                 </div>
@@ -824,6 +825,9 @@
         </div>
     </footer>
 
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
     <script src="js/main.js"></script>
     <script src="js/form-handler.js"></script>
 </body>

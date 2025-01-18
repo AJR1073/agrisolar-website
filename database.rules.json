@@ -1,0 +1,12 @@
+{
+  /* Visit https://firebase.google.com/docs/database/security to learn more about security rules. */
+  "rules": {
+    "contact_submissions": {
+      ".write": true,
+      ".read": "auth != null",
+      "$submission": {
+        ".validate": "newData.hasChildren(['name', 'email', 'message', 'timestamp']) && newData.child('name').isString() && newData.child('email').isString() && newData.child('message').isString() && newData.child('timestamp').isNumber()"
+      }
+    }
+  }
+}
