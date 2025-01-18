@@ -3,15 +3,18 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Form found:', form);
     
     if (form) {
-        // Debug log all form elements
-        console.log('Name field:', form.querySelector('#name'));
-        console.log('Email field:', form.querySelector('#email'));
-        console.log('Phone field:', form.querySelector('#phone'));
-        console.log('Service field:', form.querySelector('#service'));
-        console.log('Message field:', form.querySelector('#message'));
+        // Log form fields on page load
+        console.log('Form fields on load:', {
+            name: form.querySelector('input[name="name"]'),
+            email: form.querySelector('input[name="email"]'),
+            phone: form.querySelector('input[name="phone"]'),
+            service: form.querySelector('select[name="service"]'),
+            message: form.querySelector('textarea[name="message"]')
+        });
 
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
+            console.log('Form submitted');
             
             const submitButton = form.querySelector('button[type="submit"]');
             const originalButtonText = submitButton.textContent;
@@ -19,18 +22,24 @@ document.addEventListener('DOMContentLoaded', function() {
             submitButton.disabled = true;
 
             try {
-                // Get form data
-                const formData = new FormData(this);
-                
-                // Get all form values directly from FormData
-                const name = formData.get('name');
-                const email = formData.get('email');
-                const phone = formData.get('phone');
-                const service = formData.get('service');
-                const message = formData.get('message');
+                // Log raw form fields
+                console.log('Raw form fields:', {
+                    nameField: form.querySelector('input[name="name"]')?.value,
+                    emailField: form.querySelector('input[name="email"]')?.value,
+                    phoneField: form.querySelector('input[name="phone"]')?.value,
+                    serviceField: form.querySelector('select[name="service"]')?.value,
+                    messageField: form.querySelector('textarea[name="message"]')?.value
+                });
+
+                // Get form data using direct field access
+                const name = form.querySelector('input[name="name"]')?.value || '';
+                const email = form.querySelector('input[name="email"]')?.value || '';
+                const phone = form.querySelector('input[name="phone"]')?.value || '';
+                const service = form.querySelector('select[name="service"]')?.value || '';
+                const message = form.querySelector('textarea[name="message"]')?.value || '';
 
                 // Debug log values
-                console.log('Form Values:', {
+                console.log('Collected form values:', {
                     name,
                     email,
                     phone,
@@ -46,6 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!message || message.trim() === '') errors.push('Message is required');
 
                 if (errors.length > 0) {
+                    console.log('Validation errors:', errors);
                     throw new Error(errors.join('\n'));
                 }
 
