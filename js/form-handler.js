@@ -5,21 +5,39 @@ document.addEventListener('DOMContentLoaded', function() {
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const formData = new FormData(form);
-            const data = {};
-            formData.forEach((value, key) => data[key] = value);
-            
+            // Show loading state
+            const submitButton = form.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.textContent;
+            submitButton.textContent = 'Sending...';
+            submitButton.disabled = true;
+
             try {
-                // Here you would typically send the data to your server
-                // For now, we'll simulate a successful submission
-                console.log('Form data:', data);
+                // Send form data to Formspree
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: new FormData(form),
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
                 
-                // Redirect to success page
-                window.location.href = 'form-submitted.html?status=success';
+                if (data.ok) {
+                    // Success - redirect to thank you page
+                    window.location.href = 'form-submitted.html?status=success';
+                } else {
+                    // Error from Formspree
+                    throw new Error('Form submission failed');
+                }
             } catch (error) {
                 console.error('Error submitting form:', error);
                 // Redirect to error page
                 window.location.href = 'form-submitted.html?status=error';
+            } finally {
+                // Reset button state
+                submitButton.textContent = originalButtonText;
+                submitButton.disabled = false;
             }
         });
     }
