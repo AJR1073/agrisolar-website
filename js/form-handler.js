@@ -19,27 +19,15 @@ document.addEventListener('DOMContentLoaded', function() {
             submitButton.disabled = true;
 
             try {
-                // Get form elements
-                const nameField = form.querySelector('#name');
-                const emailField = form.querySelector('#email');
-                const phoneField = form.querySelector('#phone');
-                const serviceField = form.querySelector('#service');
-                const messageField = form.querySelector('#message');
-
-                console.log('Form Elements:', {
-                    nameField,
-                    emailField,
-                    phoneField,
-                    serviceField,
-                    messageField
-                });
-
-                // Get form values
-                const name = nameField ? nameField.value.trim() : '';
-                const email = emailField ? emailField.value.trim() : '';
-                const phone = phoneField ? phoneField.value.trim() : '';
-                const service = serviceField ? serviceField.value.trim() : '';
-                const message = messageField ? messageField.value.trim() : '';
+                // Get form data
+                const formData = new FormData(this);
+                
+                // Get all form values directly from FormData
+                const name = formData.get('name');
+                const email = formData.get('email');
+                const phone = formData.get('phone');
+                const service = formData.get('service');
+                const message = formData.get('message');
 
                 // Debug log values
                 console.log('Form Values:', {
@@ -52,10 +40,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Validate required fields
                 const errors = [];
-                if (!name) errors.push('Name is required');
-                if (!email) errors.push('Email is required');
-                if (!service) errors.push('Please select a service');
-                if (!message) errors.push('Message is required');
+                if (!name || name.trim() === '') errors.push('Name is required');
+                if (!email || email.trim() === '') errors.push('Email is required');
+                if (!service || service.trim() === '') errors.push('Please select a service');
+                if (!message || message.trim() === '') errors.push('Message is required');
 
                 if (errors.length > 0) {
                     throw new Error(errors.join('\n'));
@@ -63,11 +51,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Create data object
                 const data = {
-                    name: name,
-                    email: email,
-                    phone: phone || 'Not provided',
-                    service: service,
-                    message: message,
+                    name: name.trim(),
+                    email: email.trim(),
+                    phone: phone ? phone.trim() : 'Not provided',
+                    service: service.trim(),
+                    message: message.trim(),
                     timestamp: firebase.database.ServerValue.TIMESTAMP,
                     status: 'new',
                     viewed: false,
