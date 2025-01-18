@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Sitemap: https://agrisolarllc.com/sitemap.xml
+
+# Allow all bots to access the entire site
+# Optimize crawling by providing sitemap location

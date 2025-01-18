@@ -1,11 +1,22 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Mobile menu toggle
-    const mobileMenu = document.querySelector('.mobile-menu');
+    const menuToggle = document.querySelector('.menu-toggle');
     const navLinks = document.querySelector('.nav-links');
+    const navLinksItems = document.querySelectorAll('.nav-links a');
     
-    mobileMenu.addEventListener('click', function() {
+    menuToggle.addEventListener('click', function() {
         navLinks.classList.toggle('active');
         this.classList.toggle('active');
+        document.body.classList.toggle('menu-open');
+    });
+
+    // Close mobile menu when clicking a link
+    navLinksItems.forEach(link => {
+        link.addEventListener('click', function() {
+            navLinks.classList.remove('active');
+            menuToggle.classList.remove('active');
+            document.body.classList.remove('menu-open');
+        });
     });
 
     // Smooth scrolling for anchor links
@@ -14,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const target = document.querySelector(this.getAttribute('href'));
             if (target) {
-                const headerOffset = 100;
+                const headerOffset = 80;
                 const elementPosition = target.getBoundingClientRect().top;
                 const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
@@ -22,10 +33,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     top: offsetPosition,
                     behavior: 'smooth'
                 });
-                
-                // Close mobile menu if open
-                navLinks.classList.remove('active');
-                mobileMenu.classList.remove('active');
             }
         });
     });
@@ -33,7 +40,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Navbar scroll effect
     const navbar = document.querySelector('.navbar');
     let lastScroll = 0;
-    const scrollThreshold = 100;
 
     window.addEventListener('scroll', () => {
         const currentScroll = window.pageYOffset;
@@ -45,20 +51,23 @@ document.addEventListener('DOMContentLoaded', function() {
             navbar.classList.remove('scrolled');
         }
         
-        // Hide/show navbar on scroll
-        if (currentScroll <= 0) {
-            navbar.classList.remove('scroll-up');
-            return;
-        }
-        
-        if (currentScroll > lastScroll && !navbar.classList.contains('scroll-down') && currentScroll > scrollThreshold) {
-            navbar.classList.remove('scroll-up');
-            navbar.classList.add('scroll-down');
-        } else if (currentScroll < lastScroll && navbar.classList.contains('scroll-down')) {
-            navbar.classList.remove('scroll-down');
-            navbar.classList.add('scroll-up');
-        }
-        lastScroll = currentScroll;
+        // Update active menu item based on scroll position
+        let fromTop = window.scrollY + navbar.offsetHeight + 20;
+
+        navLinksItems.forEach(link => {
+            let section = document.querySelector(link.hash);
+            
+            if (section) {
+                if (
+                    section.offsetTop <= fromTop &&
+                    section.offsetTop + section.offsetHeight > fromTop
+                ) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            }
+        });
     });
 
     // Animate elements on scroll
