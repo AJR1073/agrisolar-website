@@ -15,11 +15,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 const formData = new FormData(form);
                 
                 // Get all form values
-                const name = formData.get('name')?.trim();
-                const email = formData.get('email')?.trim();
-                const phone = formData.get('phone')?.trim();
-                const service = formData.get('service')?.trim();
-                const message = formData.get('message')?.trim();
+                const name = form.querySelector('#name').value.trim();
+                const email = form.querySelector('#email').value.trim();
+                const phone = form.querySelector('#phone').value.trim();
+                const service = form.querySelector('#service').value.trim();
+                const message = form.querySelector('#message').value.trim();
+
+                // Debug log
+                console.log('Form Values:', {
+                    name,
+                    email,
+                    phone,
+                    service,
+                    message
+                });
 
                 // Validate required fields
                 const errors = [];
@@ -44,6 +53,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     viewed: false,
                     notifyEmail: 'aaronreifschneider@outlook.com'
                 };
+
+                // Debug log
+                console.log('Saving data:', data);
 
                 // Save to Firebase Realtime Database
                 const db = firebase.database();
