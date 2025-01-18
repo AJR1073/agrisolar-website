@@ -253,6 +253,80 @@
                 font-size: 12px;
             }
         }
+
+        /* Approach Section Styles */
+        .approach-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        .approach-item {
+            background: #fff;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            width: 100%;
+        }
+
+        .approach-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .approach-item h3 {
+            color: #2ecc71;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .approach-item p {
+            color: #666;
+            line-height: 1.6;
+            margin: 0;
+            font-size: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .approach-grid {
+                grid-template-columns: 1fr;
+                padding: 0 20px;
+                margin: 20px 0;
+            }
+
+            .approach-item {
+                padding: 20px;
+            }
+
+            .approach-item h3 {
+                font-size: 18px;
+            }
+
+            .approach-item p {
+                font-size: 15px;
+            }
+
+            .container {
+                padding: 0 15px;
+                width: 100%;
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+
+            section {
+                padding: 40px 0;
+                width: 100%;
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+        }
     </style>
 </head>
 <body>
@@ -357,15 +431,19 @@
                     <div class="approach-grid">
                         <div class="approach-item">
                             <h3>Customized Solutions</h3>
-                            <p>Every solar installation is unique. We develop tailored maintenance plans that address your specific needs and site conditions.</p>
+                            <p>We understand that each solar farm has unique needs. Our team develops tailored vegetation management plans that consider your specific site conditions, environmental factors, and operational requirements.</p>
                         </div>
                         <div class="approach-item">
-                            <h3>Professional Equipment</h3>
-                            <p>We invest in top-tier commercial mowing and maintenance equipment to ensure efficient and effective service.</p>
+                            <h3>Sustainable Practices</h3>
+                            <p>Our methods focus on long-term sustainability, incorporating native plant species and environmentally friendly maintenance techniques that promote biodiversity while ensuring optimal solar panel performance.</p>
                         </div>
                         <div class="approach-item">
-                            <h3>Experienced Team</h3>
-                            <p>Our operators are trained in both agricultural management and solar farm maintenance best practices.</p>
+                            <h3>Proactive Maintenance</h3>
+                            <p>Regular monitoring and preventive maintenance help us identify and address potential issues before they impact your solar farm's efficiency, saving you time and resources in the long run.</p>
+                        </div>
+                        <div class="approach-item">
+                            <h3>Quality Assurance</h3>
+                            <p>We maintain high standards through rigorous quality control processes, ensuring consistent and reliable service delivery that meets or exceeds industry standards.</p>
                         </div>
                     </div>
                 </div>
