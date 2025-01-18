@@ -14,20 +14,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Get form data
                 const formData = new FormData(form);
                 
+                // Get all form values
+                const name = formData.get('name')?.trim();
+                const email = formData.get('email')?.trim();
+                const phone = formData.get('phone')?.trim();
+                const service = formData.get('service')?.trim();
+                const message = formData.get('message')?.trim();
+
                 // Validate required fields
-                const name = formData.get('name');
-                const email = formData.get('email');
-                const service = formData.get('service');
-                const message = formData.get('message');
-                
-                if (!name || !email || !service || !message) {
-                    throw new Error('Please fill in all required fields');
+                const errors = [];
+                if (!name) errors.push('Name is required');
+                if (!email) errors.push('Email is required');
+                if (!service) errors.push('Please select a service');
+                if (!message) errors.push('Message is required');
+
+                if (errors.length > 0) {
+                    throw new Error(errors.join('\n'));
                 }
 
+                // Create data object
                 const data = {
                     name: name,
                     email: email,
-                    phone: formData.get('phone') || 'Not provided',
+                    phone: phone || 'Not provided',
                     service: service,
                     message: message,
                     timestamp: firebase.database.ServerValue.TIMESTAMP,
@@ -66,7 +75,13 @@ function showMessage(message, type) {
         form.parentNode.insertBefore(formStatus, form.nextSibling);
     }
     
-    formStatus.textContent = message;
+    // Handle multi-line error messages
+    if (message.includes('\n')) {
+        formStatus.innerHTML = message.split('\n').join('<br>');
+    } else {
+        formStatus.textContent = message;
+    }
+    
     formStatus.className = `form-status ${type}`;
     
     // Scroll to message
