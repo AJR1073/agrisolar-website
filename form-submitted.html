@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Submitted - AgriSolar LLC</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .submission-status {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        .status-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        .status-icon.success {
+            color: #2ecc71;
+        }
+
+        .status-icon.error {
+            color: #e74c3c;
+        }
+
+        .status-message {
+            max-width: 600px;
+            margin: 0 auto 30px;
+        }
+
+        .status-message h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+
+        .status-message p {
+            color: #666;
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: #2ecc71;
+            color: white;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.2);
+        }
+
+        .btn-secondary {
+            background-color: #fff;
+            color: #2ecc71;
+            border: 2px solid #2ecc71;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.25);
+        }
+
+        @keyframes scaleIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .status-message h1 {
+                font-size: 28px;
+            }
+
+            .status-message p {
+                font-size: 16px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="submission-status">
+        <div class="status-icon success">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="status-message">
+            <h1>Thank You for Contacting Us!</h1>
+            <p>Your message has been successfully submitted. Our team will review your inquiry and get back to you within 1-2 business days. We appreciate your interest in AgriSolar LLC's professional solar farm management services.</p>
+        </div>
+        <div class="action-buttons">
+            <a href="index.html" class="btn btn-primary">Return to Homepage</a>
+            <a href="index.html#services" class="btn btn-secondary">View Our Services</a>
+        </div>
+    </div>
+
+    <script>
+        // Check URL parameters for submission status
+        const urlParams = new URLSearchParams(window.location.search);
+        const status = urlParams.get('status');
+        const statusIcon = document.querySelector('.status-icon');
+        const statusMessage = document.querySelector('.status-message');
+
+        if (status === 'error') {
+            statusIcon.classList.remove('success');
+            statusIcon.classList.add('error');
+            statusIcon.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
+            statusMessage.innerHTML = `
+                <h1>Oops! Something Went Wrong</h1>
+                <p>We apologize, but there was an error submitting your message. Please try again or contact us directly at <a href="tel:(618) 539-2098">(618) 539-2098</a>. Thank you for your patience.</p>
+            `;
+        }
+    </script>
+</body>
+</html>
