@@ -7,6 +7,13 @@
       "$submission": {
         ".validate": "newData.hasChildren(['name', 'email', 'message', 'timestamp']) && newData.child('name').isString() && newData.child('email').isString() && newData.child('message').isString() && newData.child('timestamp').isNumber()"
       }
+    },
+    "email_recipients": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$recipient": {
+        ".validate": "newData.hasChildren(['name', 'email']) && newData.child('name').isString() && newData.child('email').isString()"
+      }
     }
   }
 }
