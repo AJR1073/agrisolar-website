@@ -1,9 +1,11 @@
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('contactForm');
+    console.log('Form handler initialized');
     
     if (form) {
         form.addEventListener('submit', async function(event) {
             event.preventDefault();
+            console.log('Form submitted');
             
             // Get form values
             const name = document.getElementById('name').value.trim();
@@ -12,8 +14,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const service = document.getElementById('service').value.trim();
             const message = document.getElementById('message').value.trim();
             
+            console.log('Form values:', { name, email, phone, service, message });
+            
             // Validate required fields
             if (!name || !email || !service || !message) {
+                console.error('Missing required fields');
                 showMessage('Please fill in all required fields.', 'error');
                 return;
             }
@@ -30,6 +35,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 viewed: false
             };
             
+            console.log('Data to save:', data);
+            
             // Save to Firebase and send email
             const submitButton = form.querySelector('button[type="submit"]');
             const originalButtonText = submitButton.textContent;
@@ -39,40 +46,40 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 // Save to Firebase
                 const db = firebase.database();
-                await db.ref('contact_submissions').push().set(data);
-                
-                // Send email notification
-                await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        service_id: 'YOUR_SERVICE_ID',
-                        template_id: 'YOUR_TEMPLATE_ID',
-                        user_id: 'YOUR_PUBLIC_KEY',
-                        template_params: {
-                            to_email: 'aaronreifschneider@outlook.com',
-                            from_name: name,
-                            from_email: email,
-                            phone: phone || 'Not provided',
-                            service: service,
-                            message: message,
-                            admin_url: 'https://agrisolar-website.web.app/admin/'
-                        }
-                    })
-                });
+                console.log('Saving to Firebase...');
+                const newSubmissionRef = await db.ref('contact_submissions').push();
+                await newSubmissionRef.set(data);
+                console.log('Saved to Firebase with ID:', newSubmissionRef.key);
+
+                // For now, let's skip EmailJS and use a simpler approach
+                const emailBody = `
+                    New Contact Form Submission
+
+                    Name: ${name}
+                    Email: ${email}
+                    Phone: ${phone || 'Not provided'}
+                    Service: ${service}
+                    Message: ${message}
+
+                    View submission at: https://agrisolar-website.web.app/admin/
+                `;
+
+                // Open default email client
+                const mailtoLink = `mailto:aaronreifschneider@outlook.com?subject=New Contact Form Submission&body=${encodeURIComponent(emailBody)}`;
+                window.open(mailtoLink);
                 
                 showMessage('Thank you for your message! We will get back to you soon.', 'success');
                 form.reset();
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error saving submission:', error);
                 showMessage('Error sending your message. Please try again.', 'error');
             } finally {
                 submitButton.textContent = originalButtonText;
                 submitButton.disabled = false;
             }
         });
+    } else {
+        console.error('Contact form not found');
     }
 });
 
