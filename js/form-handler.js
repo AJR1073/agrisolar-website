@@ -27,8 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 message,
                 timestamp: firebase.database.ServerValue.TIMESTAMP,
                 status: 'new',
-                viewed: false,
-                notifyEmail: 'aaronreifschneider@outlook.com'
+                viewed: false
             };
             
             // Save to Firebase and send email
@@ -40,33 +39,76 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 // Save to Firebase
                 const db = firebase.database();
-                await db.ref('contact_submissions').push().set(data);
+                const submissionRef = await db.ref('contact_submissions').push();
+                await submissionRef.set(data);
+
+                // Get email recipients
+                const recipientsSnapshot = await db.ref('email_recipients').once('value');
+                const recipients = recipientsSnapshot.val() || {};
                 
-                // Send email using EmailJS
-                await emailjs.send(
-                    'YOUR_SERVICE_ID',
-                    'YOUR_TEMPLATE_ID',
-                    {
-                        to_email: 'aaronreifschneider@outlook.com',
-                        from_name: name,
-                        from_email: email,
-                        phone: phone || 'Not provided',
-                        service: service,
-                        message: message
-                    }
-                );
+                // Format email content
+                const emailContent = `
+New Contact Form Submission
+
+Name: ${name}
+Email: ${email}
+Phone: ${phone || 'Not provided'}
+Service: ${service}
+Message: ${message}
+
+Submitted at: ${new Date().toLocaleString()}
+
+View all submissions at: https://agrisolar-website.web.app/admin/
+`;
                 
+                // Send emails to all recipients
+                const emailPromises = Object.values(recipients).map(recipient => {
+                    return fetch('https://api.emailjs.com/api/v1.0/email/send', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            service_id: 'YOUR_SERVICE_ID',
+                            template_id: 'YOUR_TEMPLATE_ID',
+                            user_id: 'YOUR_PUBLIC_KEY',
+                            template_params: {
+                                to_name: recipient.name,
+                                to_email: recipient.email,
+                                from_name: name,
+                                from_email: email,
+                                phone: phone || 'Not provided',
+                                service: service,
+                                message: message,
+                                content: emailContent
+                            }
+                        })
+                    });
+                });
+
                 // Send confirmation email to customer
-                await emailjs.send(
-                    'YOUR_SERVICE_ID',
-                    'YOUR_CONFIRMATION_TEMPLATE_ID',
-                    {
-                        to_name: name,
-                        to_email: email,
-                        service: service,
-                        message: message
-                    }
+                emailPromises.push(
+                    fetch('https://api.emailjs.com/api/v1.0/email/send', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            service_id: 'YOUR_SERVICE_ID',
+                            template_id: 'YOUR_CONFIRMATION_TEMPLATE_ID',
+                            user_id: 'YOUR_PUBLIC_KEY',
+                            template_params: {
+                                to_name: name,
+                                to_email: email,
+                                service: service,
+                                message: message
+                            }
+                        })
+                    })
                 );
+
+                // Wait for all emails to be sent
+                await Promise.all(emailPromises);
                 
                 showMessage('Thank you for your message! We will get back to you soon.', 'success');
                 form.reset();

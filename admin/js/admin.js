@@ -6,12 +6,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginError = document.getElementById('loginError');
     const userEmail = document.getElementById('userEmail');
     const signOutBtn = document.getElementById('signOutBtn');
-    const googleSignInBtn = document.getElementById('googleSignIn');
     const statusFilter = document.getElementById('statusFilter');
     const searchInput = document.getElementById('searchInput');
     const submissionsList = document.getElementById('submissionsList');
+    const addRecipientBtn = document.getElementById('addRecipientBtn');
+    const addRecipientForm = document.getElementById('addRecipientForm');
+    const recipientForm = document.getElementById('recipientForm');
+    const cancelAddRecipient = document.getElementById('cancelAddRecipient');
+    const recipientsList = document.getElementById('recipientsList');
+    const navButtons = document.querySelectorAll('.nav-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
 
-    // Initialize Firebase Auth
+    // Initialize Firebase
     const auth = firebase.auth();
     const database = firebase.database();
     let currentUser = null;
@@ -24,6 +30,33 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             showLogin();
         }
+    });
+
+    // Tab Navigation
+    navButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const tabId = button.dataset.tab;
+            
+            // Update button states
+            navButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            
+            // Update tab content
+            tabContents.forEach(tab => {
+                if (tab.id === tabId + 'Tab') {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+
+            // Load content if needed
+            if (tabId === 'distribution') {
+                loadRecipients();
+            } else if (tabId === 'submissions') {
+                loadSubmissions();
+            }
+        });
     });
 
     // Login form handler
@@ -44,13 +77,50 @@ document.addEventListener('DOMContentLoaded', function() {
         } finally {
             const button = loginForm.querySelector('button[type="submit"]');
             button.disabled = false;
-            button.textContent = 'Login with Email';
+            button.textContent = 'Login';
         }
     });
 
     // Sign out handler
     signOutBtn.addEventListener('click', function() {
         auth.signOut();
+    });
+
+    // Add Recipient Form
+    addRecipientBtn.addEventListener('click', () => {
+        addRecipientForm.style.display = 'block';
+        addRecipientBtn.style.display = 'none';
+    });
+
+    cancelAddRecipient.addEventListener('click', () => {
+        addRecipientForm.style.display = 'none';
+        addRecipientBtn.style.display = 'block';
+        recipientForm.reset();
+    });
+
+    recipientForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const name = document.getElementById('recipientName').value.trim();
+        const email = document.getElementById('recipientEmail').value.trim();
+
+        try {
+            const newRecipient = {
+                name,
+                email,
+                addedBy: currentUser.email,
+                addedAt: firebase.database.ServerValue.TIMESTAMP
+            };
+
+            await database.ref('email_recipients').push().set(newRecipient);
+            showMessage('Recipient added successfully!', 'success');
+            recipientForm.reset();
+            addRecipientForm.style.display = 'none';
+            addRecipientBtn.style.display = 'block';
+            loadRecipients();
+        } catch (error) {
+            console.error('Error adding recipient:', error);
+            showMessage('Error adding recipient. Please try again.', 'error');
+        }
     });
 
     // Filter and search handlers
@@ -108,6 +178,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    async function loadRecipients() {
+        try {
+            const snapshot = await database.ref('email_recipients').once('value');
+            const recipients = snapshot.val() || {};
+            
+            // Convert to array and sort by name
+            const recipientsArray = Object.entries(recipients)
+                .map(([id, data]) => ({ id, ...data }))
+                .sort((a, b) => a.name.localeCompare(b.name));
+
+            displayRecipients(recipientsArray);
+        } catch (error) {
+            console.error('Error loading recipients:', error);
+            recipientsList.innerHTML = '<p class="error">Error loading recipients. Please try again.</p>';
+        }
+    }
+
     function displaySubmissions(submissions) {
         if (!submissions.length) {
             submissionsList.innerHTML = '<p class="no-data">No submissions found.</p>';
@@ -138,16 +225,78 @@ document.addEventListener('DOMContentLoaded', function() {
         submissionsList.innerHTML = html;
     }
 
-    // Make markAsViewed function globally available
+    function displayRecipients(recipients) {
+        if (!recipients.length) {
+            recipientsList.innerHTML = '<p class="no-data">No recipients found.</p>';
+            return;
+        }
+
+        const html = recipients.map(recipient => `
+            <div class="recipient-card" data-id="${recipient.id}">
+                <div class="recipient-info">
+                    <h4>${recipient.name}</h4>
+                    <p>${recipient.email}</p>
+                </div>
+                <div class="recipient-actions">
+                    <button onclick="deleteRecipient('${recipient.id}')" class="delete" title="Delete Recipient">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+        recipientsList.innerHTML = html;
+    }
+
+    function showMessage(message, type) {
+        let messageContainer = document.getElementById('messageContainer');
+        
+        if (!messageContainer) {
+            messageContainer = document.createElement('div');
+            messageContainer.id = 'messageContainer';
+            messageContainer.className = 'message-container';
+            document.body.appendChild(messageContainer);
+        }
+        
+        const messageElement = document.createElement('div');
+        messageElement.className = `message ${type}`;
+        messageElement.textContent = message;
+        
+        messageContainer.appendChild(messageElement);
+        
+        setTimeout(() => {
+            messageElement.remove();
+            if (!messageContainer.hasChildNodes()) {
+                messageContainer.remove();
+            }
+        }, 5000);
+    }
+
+    // Make functions globally available
     window.markAsViewed = async function(submissionId) {
         try {
             await database.ref(`contact_submissions/${submissionId}`).update({
                 status: 'viewed'
             });
-            loadSubmissions(); // Reload the list
+            loadSubmissions();
         } catch (error) {
             console.error('Error marking submission as viewed:', error);
-            alert('Error updating submission status. Please try again.');
+            showMessage('Error updating submission status. Please try again.', 'error');
+        }
+    };
+
+    window.deleteRecipient = async function(recipientId) {
+        if (!confirm('Are you sure you want to delete this recipient?')) {
+            return;
+        }
+
+        try {
+            await database.ref(`email_recipients/${recipientId}`).remove();
+            showMessage('Recipient deleted successfully!', 'success');
+            loadRecipients();
+        } catch (error) {
+            console.error('Error deleting recipient:', error);
+            showMessage('Error deleting recipient. Please try again.', 'error');
         }
     };
 });
