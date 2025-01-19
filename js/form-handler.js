@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('contactForm');
     
     if (form) {
-        form.addEventListener('submit', function(event) {
+        form.addEventListener('submit', async function(event) {
             event.preventDefault();
             
             // Get form values
@@ -31,26 +31,52 @@ document.addEventListener('DOMContentLoaded', function() {
                 notifyEmail: 'aaronreifschneider@outlook.com'
             };
             
-            // Save to Firebase
+            // Save to Firebase and send email
             const submitButton = form.querySelector('button[type="submit"]');
             const originalButtonText = submitButton.textContent;
             submitButton.textContent = 'Sending...';
             submitButton.disabled = true;
             
-            const db = firebase.database();
-            db.ref('contact_submissions').push().set(data)
-                .then(() => {
-                    showMessage('Thank you for your message! We will get back to you soon.', 'success');
-                    form.reset();
-                })
-                .catch((error) => {
-                    console.error('Error saving to Firebase:', error);
-                    showMessage('Error saving your message. Please try again.', 'error');
-                })
-                .finally(() => {
-                    submitButton.textContent = originalButtonText;
-                    submitButton.disabled = false;
-                });
+            try {
+                // Save to Firebase
+                const db = firebase.database();
+                await db.ref('contact_submissions').push().set(data);
+                
+                // Send email using EmailJS
+                await emailjs.send(
+                    'YOUR_SERVICE_ID',
+                    'YOUR_TEMPLATE_ID',
+                    {
+                        to_email: 'aaronreifschneider@outlook.com',
+                        from_name: name,
+                        from_email: email,
+                        phone: phone || 'Not provided',
+                        service: service,
+                        message: message
+                    }
+                );
+                
+                // Send confirmation email to customer
+                await emailjs.send(
+                    'YOUR_SERVICE_ID',
+                    'YOUR_CONFIRMATION_TEMPLATE_ID',
+                    {
+                        to_name: name,
+                        to_email: email,
+                        service: service,
+                        message: message
+                    }
+                );
+                
+                showMessage('Thank you for your message! We will get back to you soon.', 'success');
+                form.reset();
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Error sending your message. Please try again.', 'error');
+            } finally {
+                submitButton.textContent = originalButtonText;
+                submitButton.disabled = false;
+            }
         });
     }
 });
