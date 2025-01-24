@@ -295,18 +295,26 @@ document.addEventListener('DOMContentLoaded', function() {
             
             try {
                 const replyText = replyMessage.value;
-                const emailSubject = `Re: Your Message to AgriSolar LLC`;
+                const emailSubject = `Re: Your Inquiry - AgriSolar LLC`;
                 const emailBody = `Dear ${email},
 
-Thank you for reaching out to AgriSolar LLC. We appreciate your interest in our services.
+Thank you for contacting AgriSolar LLC. We greatly appreciate your interest in our solar energy solutions for agricultural applications.
 
 ${replyText}
 
+If you have any additional questions or would like to schedule a consultation, please don't hesitate to reach out. We're here to help you explore sustainable energy solutions for your agricultural needs.
+
 Best regards,
+
 Aaron Reifler
+Chief Executive Officer
 AgriSolar LLC
-www.agrisolarllc.com
-aaron@agrisolarllc.com`;
+
+Phone: (715) 255-9300
+Email: aaron@agrisolarllc.com
+Website: www.agrisolarllc.com
+
+This email and any files transmitted with it are confidential and intended solely for the use of the individual or entity to whom they are addressed. If you have received this email in error, please notify the sender immediately and delete this email from your system.`;
 
                 const result = await sendReply({
                     submissionId: submissionId,
