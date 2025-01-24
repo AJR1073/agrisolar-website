@@ -71,9 +71,21 @@
             
             <!-- Submissions Tab -->
             <div id="submissionsTab" class="tab-content active">
-                <div id="main-content">
+                <div class="submissions-header">
                     <h2>Contact Form Submissions</h2>
-                    <div id="submissions-container"></div>
+                    <div class="filters">
+                        <select id="statusFilter">
+                            <option value="all">All Submissions</option>
+                            <option value="new">New</option>
+                            <option value="viewed">Viewed</option>
+                            <option value="replied">Replied</option>
+                        </select>
+                        <input type="text" id="searchInput" placeholder="Search submissions...">
+                    </div>
+                </div>
+
+                <div id="submissionsList" class="submissions-list">
+                    <!-- Submissions will be populated here -->
                 </div>
             </div>
 
@@ -110,19 +122,34 @@
     </div>
 
     <!-- Reply Modal -->
-    <div id="replyModal" class="modal">
+    <div id="replyModal" class="modal" style="display: none;">
         <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Reply to Contact</h2>
-            <form id="replyForm" onsubmit="submitReply(event)">
-                <input type="hidden" id="submissionId">
+            <div class="modal-header">
+                <h3>Reply to Message</h3>
+                <span class="close">&times;</span>
+            </div>
+            <form id="replyForm">
+                <input type="hidden" id="replyToSubmissionId">
                 <div class="form-group">
-                    <label for="replyMessage">Your Reply:</label>
-                    <textarea id="replyMessage" rows="8" class="form-control" 
-                        placeholder="Enter your response here..."></textarea>
-                    <small class="form-text text-muted">Your message will be automatically formatted with a professional greeting and signature.</small>
+                    <label>To:</label>
+                    <div id="replyToEmail" class="reply-field"></div>
                 </div>
-                <button type="submit" class="btn btn-primary">Send Reply</button>
+                <div class="form-group">
+                    <label>From:</label>
+                    <div class="reply-field">info@agrisolarllc.com</div>
+                </div>
+                <div class="form-group">
+                    <label for="replySubject">Subject:</label>
+                    <input type="text" id="replySubject" required>
+                </div>
+                <div class="form-group">
+                    <label for="replyMessage">Message:</label>
+                    <textarea id="replyMessage" rows="6" required></textarea>
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="action-btn">Send Reply</button>
+                    <button type="button" class="action-btn cancel" id="cancelReply">Cancel</button>
+                </div>
             </form>
         </div>
     </div>

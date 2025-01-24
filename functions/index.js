@@ -7,33 +7,44 @@ const cors = require('cors')({ origin: true });
 // Initialize Firebase Admin
 admin.initializeApp();
 
-// Email configuration
-const emailConfig = {
-    host: 'mail.privateemail.com',
-    port: 465,
-    secure: true,
-    auth: {
-        user: 'aaron@agrisolarllc.com',
-        pass: process.env.NAMECHEAP_PASSWORD
-    },
-    debug: true, // Enable debug output
-    logger: true // Log information about the transport
-};
-
 // Create email transporter
 const createTransporter = async () => {
     console.log('Creating email transporter...');
     console.log('Using email: aaron@agrisolarllc.com');
-    console.log('Using host: mail.privateemail.com');
+    console.log('Using host: agrisolarllc.com');
     
-    // Create transporter with the working configuration
-    const transporter = nodemailer.createTransport(emailConfig);
-    
-    // Verify connection configuration
-    await transporter.verify();
-    console.log('SMTP connection test successful!');
-    
-    return transporter;
+    // Test SMTP config
+    const testConfig = {
+        host: "agrisolarllc.com",
+        port: 465,
+        secure: true,
+        auth: {
+            type: 'LOGIN',
+            user: "aaron@agrisolarllc.com",
+            pass: process.env.NAMECHEAP_PASSWORD
+        },
+        debug: true,
+        logger: true
+    };
+
+    try {
+        console.log('Testing SMTP connection...');
+        const transporter = nodemailer.createTransport(testConfig);
+        
+        // Verify connection configuration
+        await transporter.verify();
+        console.log('SMTP connection test successful!');
+        
+        return transporter;
+    } catch (error) {
+        console.error('Failed to create transporter:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        if (error.response) {
+            console.error('SMTP Response:', error.response);
+        }
+        throw error;
+    }
 };
 
 // Function to send email on new contact form submission
@@ -124,9 +135,9 @@ exports.sendReply = onRequest({
                     return;
                 }
 
-                const { submissionId, subject, message, to } = req.body;
-                if (!submissionId || !subject || !message || !to) {
-                    console.error('Missing required fields:', { submissionId, subject, message, to });
+                const { submissionId, subject, message } = req.body;
+                if (!submissionId || !subject || !message) {
+                    console.error('Missing required fields:', { submissionId, subject, message });
                     res.status(400).json({ error: 'Missing required fields' });
                     return;
                 }
@@ -146,31 +157,24 @@ exports.sendReply = onRequest({
                 console.log('Found submission:', submission);
 
                 try {
-                    // Create transporter with the working configuration
+                    // Create and verify transporter
                     console.log('Creating transporter for reply...');
-                    const transporter = nodemailer.createTransport(emailConfig);
+                    const transporter = await createTransporter();
                     console.log('Transporter created successfully');
 
-                    // Convert plain text to HTML with proper formatting
-                    const htmlMessage = message.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
-
+                    // Send the reply email
                     const mailOptions = {
-                        from: {
-                            name: 'Aaron Reifler',
-                            address: 'aaron@agrisolarllc.com'
-                        },
-                        to: to,
+                        from: 'aaron@agrisolarllc.com',
+                        to: submission.email,
                         subject: subject,
-                        text: message, // Plain text version
-                        html: `
-                            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
-                                <p>${htmlMessage}</p>
-                                <div style="color: #666; font-size: 12px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
-                                    <p style="margin: 0;">This communication is intended only for the use of the individual or entity to which it is addressed and may contain information that is privileged, confidential or exempt from disclosure under applicable law. If you have received this communication in error, please notify us immediately.</p>
-                                </div>
-                            </div>
-                        ` // HTML version with enhanced formatting
+                        text: message
                     };
+
+                    console.log('Sending reply email with options:', {
+                        from: mailOptions.from,
+                        to: mailOptions.to,
+                        subject: mailOptions.subject
+                    });
 
                     await transporter.sendMail(mailOptions);
                     console.log('Reply email sent successfully');
@@ -210,71 +214,35 @@ exports.sendReply = onRequest({
 
 // Test function for email sending
 exports.testEmailSending = onRequest({
-    cors: true
+    region: 'us-central1',
+    memory: '256MiB',
+    secrets: ["NAMECHEAP_PASSWORD"]
 }, async (req, res) => {
     try {
         console.log('Testing email sending...');
-        // Create transporter with the working configuration
-        const transporter = nodemailer.createTransport(emailConfig);
-        
-        const testMessage = `This is a test message to verify our email system.
-
-We're testing the following features:
-- Professional formatting
-- Line breaks
-- Signature block
-
-Please let me know if you receive this test email.`;
-
-        // Convert plain text to HTML with proper formatting
-        const htmlMessage = testMessage.replace(/\n/g, '<br>');
+        const transporter = await createTransporter();
         
         const mailOptions = {
-            from: {
-                name: 'Aaron Reifler',
-                address: 'aaron@agrisolarllc.com'
-            },
+            from: 'aaron@agrisolarllc.com',
             to: 'aaron@agrisolarllc.com',
-            subject: 'Test Email - AgriSolar LLC',
-            text: `Dear Aaron,
-
-Thank you for testing the AgriSolar LLC email system.
-
-${testMessage}
-
-Best regards,
-Aaron Reifler
-AgriSolar LLC
-www.agrisolarllc.com
-aaron@agrisolarllc.com`,
-            html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
-                    <p>Dear Aaron,</p>
-                    
-                    <p>Thank you for testing the AgriSolar LLC email system.</p>
-
-                    <p>${htmlMessage}</p>
-
-                    <p>Best regards,<br>
-                    Aaron Reifler<br>
-                    AgriSolar LLC<br>
-                    <a href="http://www.agrisolarllc.com">www.agrisolarllc.com</a><br>
-                    <a href="mailto:aaron@agrisolarllc.com">aaron@agrisolarllc.com</a></p>
-                </div>
-            `
+            subject: 'Test Email',
+            text: 'This is a test email to verify the email sending functionality.'
         };
-
-        console.log('Attempting to send test email...');
+        
+        console.log('Sending test email with options:', {
+            from: mailOptions.from,
+            to: mailOptions.to,
+            subject: mailOptions.subject
+        });
+        
         await transporter.sendMail(mailOptions);
         console.log('Test email sent successfully');
         res.json({ success: true });
     } catch (error) {
         console.error('Error sending test email:', error);
-        console.error('Error details:', {
-            code: error.code,
-            message: error.message,
-            response: error.response
-        });
+        if (error.code === 'EAUTH') {
+            console.error('Authentication failed. Please check email credentials.');
+        }
         res.status(500).json({ error: error.message });
     }
 });
