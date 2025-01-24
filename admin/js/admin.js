@@ -49,13 +49,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
-    const submissionsList = document.getElementById('submissionsList');
+    const submissionsList = document.getElementById('submissions-container');
     const recipientsList = document.getElementById('recipientsList');
     const addRecipientForm = document.getElementById('addRecipientForm');
     const replyModal = document.getElementById('replyModal');
     const replyForm = document.getElementById('replyForm');
-    const replyToSubmissionId = document.getElementById('replyToSubmissionId');
-    const replySubject = document.getElementById('replySubject');
     const replyMessage = document.getElementById('replyMessage');
     const closeModal = document.querySelector('.close');
     const cancelReply = document.getElementById('cancelReply');
@@ -171,36 +169,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Display submissions
     function displaySubmissions(submissions) {
-        submissionsList.innerHTML = Object.entries(submissions).reverse().map(([id, submission]) => `
-            <div class="submission-item ${submission.status === 'new' ? 'new' : ''} ${submission.replied ? 'replied' : ''}">
-                <div class="submission-header">
-                    <span class="timestamp">${new Date(submission.timestamp).toLocaleString()}</span>
-                    <span class="status">${submission.status === 'new' ? 'New' : 'Viewed'}</span>
-                    ${submission.replied ? '<span class="replied-badge">Replied</span>' : ''}
+        const submissionsContainer = document.getElementById('submissions-container');
+        submissionsContainer.innerHTML = '';
+
+        Object.entries(submissions).forEach(([id, submission]) => {
+            const messageDiv = document.createElement('div');
+            messageDiv.id = `message-${id}`;
+            messageDiv.className = 'message-card';
+            
+            const date = new Date(submission.timestamp);
+            const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+
+            messageDiv.innerHTML = `
+                <div class="message-header">
+                    <span class="timestamp">${formattedDate}</span>
+                    <span class="reply-status">${submission.replied ? 'Replied' : 'New'}</span>
                 </div>
-                <div class="submission-content">
+                <div class="message-content">
                     <p><strong>Name:</strong> ${submission.name}</p>
                     <p><strong>Email:</strong> ${submission.email}</p>
-                    <p><strong>Phone:</strong> ${submission.phone || 'Not provided'}</p>
-                    <p><strong>Service:</strong> ${submission.service}</p>
+                    <p><strong>Phone:</strong> ${submission.phone}</p>
                     <p><strong>Message:</strong> ${submission.message}</p>
-                    ${submission.replied ? `
-                        <div class="reply-details">
-                            <p><strong>Reply Sent:</strong> ${new Date(submission.replyTimestamp).toLocaleString()}</p>
-                            <p><strong>Subject:</strong> ${submission.replySubject}</p>
-                            <p><strong>Message:</strong> ${submission.replyMessage}</p>
-                        </div>
-                    ` : ''}
                 </div>
-                <div class="submission-actions">
-                    ${submission.status === 'new' ? 
-                        `<button onclick="markAsViewed('${id}')">Mark as Viewed</button>` : 
-                        ''}
-                    ${!submission.replied ? 
-                        `<button onclick="showReplyModal('${id}', '${submission.email}')">Reply</button>` : ''}
+                <div class="message-actions">
+                    <button onclick="openReplyModal('${id}', ${JSON.stringify(submission).replace(/"/g, '&quot;')})">Reply</button>
                 </div>
-            </div>
-        `).join('');
+            `;
+
+            submissionsContainer.appendChild(messageDiv);
+        });
     }
 
     // Display recipients
@@ -247,60 +244,79 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Function to show reply modal
-    window.showReplyModal = function(submissionId, email) {
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2>Reply to ${email}</h2>
-                <form id="replyForm">
-                    <input type="hidden" id="replyToSubmissionId" value="${submissionId}">
-                    <div class="form-group">
-                        <label for="replySubject">Subject:</label>
-                        <input type="text" id="replySubject" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="replyMessage">Message:</label>
-                        <textarea id="replyMessage" required></textarea>
-                    </div>
-                    <button type="submit">Send Reply</button>
-                </form>
-            </div>
-        `;
+    window.openReplyModal = function(submissionId, submission) {
+        const modal = document.getElementById('replyModal');
+        const form = document.getElementById('replyForm');
+        const replyMessage = document.getElementById('replyMessage');
+        
+        // Set submission ID for reference
+        document.getElementById('submissionId').value = submissionId;
+        
+        // Pre-fill the reply message with a template
+        replyMessage.value = `Thank you for your interest in our solar energy solutions. I understand you'd like to learn more about ${getTopicFromMessage(submission.message)}.
 
-        document.body.appendChild(modal);
+I'd be happy to discuss this with you in detail. Based on your message, I believe we can help you ${getValuePropositionFromMessage(submission.message)}.
+
+Would you be available for a brief phone call to discuss your specific needs and how we can best assist you? I can explain our solutions in more detail and answer any questions you may have.`;
+
         modal.style.display = 'block';
+    };
 
-        const form = modal.querySelector('#replyForm');
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const closeBtn = modal.querySelector('.close');
+    // Helper function to identify the main topic from the message
+    function getTopicFromMessage(message) {
+        message = message.toLowerCase();
+        if (message.includes('cost') || message.includes('price') || message.includes('expensive')) {
+            return 'solar energy investment and cost savings';
+        } else if (message.includes('install') || message.includes('setup')) {
+            return 'our solar installation process';
+        } else if (message.includes('farm') || message.includes('agriculture') || message.includes('crop')) {
+            return 'agricultural solar solutions';
+        } else {
+            return 'solar energy solutions for your property';
+        }
+    }
 
-        closeBtn.onclick = function() {
-            modal.style.display = 'none';
-            modal.remove();
-        };
+    // Helper function to generate a relevant value proposition
+    function getValuePropositionFromMessage(message) {
+        message = message.toLowerCase();
+        if (message.includes('cost') || message.includes('price') || message.includes('expensive')) {
+            return 'maximize your energy savings while minimizing upfront costs';
+        } else if (message.includes('install') || message.includes('setup')) {
+            return 'ensure a smooth and efficient installation process';
+        } else if (message.includes('farm') || message.includes('agriculture') || message.includes('crop')) {
+            return 'optimize your agricultural operations with solar energy';
+        } else {
+            return 'create a customized solar solution that meets your specific needs';
+        }
+    }
 
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = 'none';
-                modal.remove();
+    // Function to submit reply
+    async function submitReply(event) {
+        event.preventDefault();
+        
+        const submissionId = document.getElementById('submissionId').value;
+        const replyMessage = document.getElementById('replyMessage');
+        const submitBtn = event.submitter;
+        
+        if (!submissionId || !replyMessage.value.trim()) {
+            showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+        
+        submitBtn.disabled = true;
+        
+        try {
+            const submission = await getSubmissionById(submissionId);
+            if (!submission) {
+                throw new Error('Submission not found');
             }
-        };
 
-        form.onsubmit = async function(e) {
-            e.preventDefault();
-            submitBtn.textContent = 'Sending...';
-            submitBtn.disabled = true;
-            
-            try {
-                const replyText = replyMessage.value;
-                const emailSubject = `Re: Your Inquiry - AgriSolar LLC`;
-                const emailBody = `Dear ${email},
+            const emailSubject = `Re: Your Inquiry - AgriSolar LLC`;
+            const emailBody = `Dear ${submission.name},
 
 Thank you for contacting AgriSolar LLC. We greatly appreciate your interest in our solar energy solutions for agricultural applications.
 
-${replyText}
+${replyMessage.value}
 
 If you have any additional questions or would like to schedule a consultation, please don't hesitate to reach out. We're here to help you explore sustainable energy solutions for your agricultural needs.
 
@@ -316,35 +332,80 @@ Website: www.agrisolarllc.com
 
 This email and any files transmitted with it are confidential and intended solely for the use of the individual or entity to whom they are addressed. If you have received this email in error, please notify the sender immediately and delete this email from your system.`;
 
-                const result = await sendReply({
-                    submissionId: submissionId,
-                    subject: emailSubject,
-                    message: emailBody
-                });
+            const sendReplyFunction = httpsCallable(functions, 'sendReply');
+            const result = await sendReplyFunction({
+                to: submission.email,
+                subject: emailSubject,
+                message: emailBody
+            });
 
-                if (result.success) {
-                    showMessage('Reply sent successfully!', 'success');
-                    modal.remove();
-                    loadSubmissions(); // Refresh the submissions list
-                } else {
-                    throw new Error('Failed to send reply');
+            if (result.data.success) {
+                // Update submission status in database
+                await updateSubmissionStatus(submissionId, true);
+                
+                // Update UI
+                const messageElement = document.getElementById(`message-${submissionId}`);
+                if (messageElement) {
+                    const replyStatus = messageElement.querySelector('.reply-status');
+                    if (replyStatus) {
+                        replyStatus.textContent = 'Replied';
+                        replyStatus.style.color = 'green';
+                    }
                 }
-            } catch (error) {
-                console.error('Error sending reply:', error);
-                showMessage(error.message || 'Failed to send reply. Please try again.', 'error');
-            } finally {
-                submitBtn.textContent = 'Send Reply';
-                submitBtn.disabled = false;
+                
+                // Close modal
+                const modal = document.getElementById('replyModal');
+                modal.style.display = 'none';
+                
+                showNotification('Reply sent successfully!', 'success');
+            } else {
+                throw new Error('Failed to send reply');
             }
-        };
-    };
-});
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Error sending reply: ' + error.message, 'error');
+        } finally {
+            submitBtn.disabled = false;
+        }
+    }
 
-// Helper function to show messages
-function showMessage(message, type = 'info') {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${type}`;
-    messageDiv.textContent = message;
-    document.body.appendChild(messageDiv);
-    setTimeout(() => messageDiv.remove(), 5000);
-}
+    // Function to get submission by ID
+    async function getSubmissionById(submissionId) {
+        try {
+            const snapshot = await database.ref(`contact_submissions/${submissionId}`).once('value');
+            return snapshot.val();
+        } catch (error) {
+            console.error('Error getting submission:', error);
+            return null;
+        }
+    }
+
+    // Function to update submission status
+    async function updateSubmissionStatus(submissionId, replied) {
+        try {
+            await database.ref(`contact_submissions/${submissionId}`).update({
+                replied: replied
+            });
+        } catch (error) {
+            console.error('Error updating submission status:', error);
+        }
+    }
+
+    // Helper function to show messages
+    function showMessage(message, type = 'info') {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}`;
+        messageDiv.textContent = message;
+        document.body.appendChild(messageDiv);
+        setTimeout(() => messageDiv.remove(), 5000);
+    }
+
+    // Helper function to show notifications
+    function showNotification(message, type = 'info') {
+        const notificationDiv = document.createElement('div');
+        notificationDiv.className = `notification ${type}`;
+        notificationDiv.textContent = message;
+        document.body.appendChild(notificationDiv);
+        setTimeout(() => notificationDiv.remove(), 5000);
+    }
+});

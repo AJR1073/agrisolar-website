@@ -71,21 +71,9 @@
             
             <!-- Submissions Tab -->
             <div id="submissionsTab" class="tab-content active">
-                <div class="submissions-header">
+                <div id="main-content">
                     <h2>Contact Form Submissions</h2>
-                    <div class="filters">
-                        <select id="statusFilter">
-                            <option value="all">All Submissions</option>
-                            <option value="new">New</option>
-                            <option value="viewed">Viewed</option>
-                            <option value="replied">Replied</option>
-                        </select>
-                        <input type="text" id="searchInput" placeholder="Search submissions...">
-                    </div>
-                </div>
-
-                <div id="submissionsList" class="submissions-list">
-                    <!-- Submissions will be populated here -->
+                    <div id="submissions-container"></div>
                 </div>
             </div>
 
@@ -126,11 +114,13 @@
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2>Reply to Contact</h2>
-            <form id="replyForm">
+            <form id="replyForm" onsubmit="submitReply(event)">
                 <input type="hidden" id="submissionId">
                 <div class="form-group">
                     <label for="replyMessage">Your Reply:</label>
-                    <textarea id="replyMessage" rows="6" class="form-control" placeholder="Enter your response here..."></textarea>
+                    <textarea id="replyMessage" rows="8" class="form-control" 
+                        placeholder="Enter your response here..."></textarea>
+                    <small class="form-text text-muted">Your message will be automatically formatted with a professional greeting and signature.</small>
                 </div>
                 <button type="submit" class="btn btn-primary">Send Reply</button>
             </form>
