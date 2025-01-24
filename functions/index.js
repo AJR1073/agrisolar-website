@@ -9,21 +9,22 @@ admin.initializeApp();
 
 // Email configuration
 const emailConfig = {
-    host: "agrisolarllc.com",
+    host: 'mail.privateemail.com',
     port: 465,
     secure: true,
     auth: {
-        type: 'LOGIN',
-        user: "aaron@agrisolarllc.com",
+        user: 'aaron@agrisolarllc.com',
         pass: process.env.NAMECHEAP_PASSWORD
-    }
+    },
+    debug: true, // Enable debug output
+    logger: true // Log information about the transport
 };
 
 // Create email transporter
 const createTransporter = async () => {
     console.log('Creating email transporter...');
     console.log('Using email: aaron@agrisolarllc.com');
-    console.log('Using host: agrisolarllc.com');
+    console.log('Using host: mail.privateemail.com');
     
     // Create transporter with the working configuration
     const transporter = nodemailer.createTransport(emailConfig);
@@ -247,7 +248,7 @@ AgriSolar LLC
 www.agrisolarllc.com
 aaron@agrisolarllc.com`,
             html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
                     <p>Dear Aaron,</p>
                     
                     <p>Thank you for testing the AgriSolar LLC email system.</p>
@@ -263,11 +264,17 @@ aaron@agrisolarllc.com`,
             `
         };
 
+        console.log('Attempting to send test email...');
         await transporter.sendMail(mailOptions);
         console.log('Test email sent successfully');
         res.json({ success: true });
     } catch (error) {
         console.error('Error sending test email:', error);
+        console.error('Error details:', {
+            code: error.code,
+            message: error.message,
+            response: error.response
+        });
         res.status(500).json({ error: error.message });
     }
 });
