@@ -1,107 +1,102 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('contactForm');
-    console.log('Form handler initialized');
+// Get form element
+const form = document.getElementById('contactForm');
+
+if (form) {
+    console.log('Form found, attaching handler');
     
-    if (form) {
-        form.addEventListener('submit', async function(event) {
-            event.preventDefault();
-            console.log('Form submitted');
-            
-            // Get form values
-            const name = document.getElementById('name').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const phone = document.getElementById('phone').value.trim();
-            const service = document.getElementById('service').value.trim();
-            const message = document.getElementById('message').value.trim();
-            
-            console.log('Form values:', { name, email, phone, service, message });
-            
-            // Validate required fields
-            if (!name || !email || !service || !message) {
-                console.error('Missing required fields');
-                showMessage('Please fill in all required fields.', 'error');
-                return;
-            }
-            
-            // Create data object
-            const data = {
-                name,
-                email,
-                phone: phone || 'Not provided',
-                service,
-                message,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                status: 'new',
-                viewed: false
-            };
-            
-            console.log('Data to save:', data);
-            
-            // Save to Firebase and send email
-            const submitButton = form.querySelector('button[type="submit"]');
-            const originalButtonText = submitButton.textContent;
-            submitButton.textContent = 'Sending...';
-            submitButton.disabled = true;
-            
-            try {
-                // Save to Firebase
-                const db = firebase.database();
-                console.log('Saving to Firebase...');
-                const newSubmissionRef = await db.ref('contact_submissions').push();
-                await newSubmissionRef.set(data);
-                console.log('Saved to Firebase with ID:', newSubmissionRef.key);
-
-                // For now, let's skip EmailJS and use a simpler approach
-                const emailBody = `
-                    New Contact Form Submission
-
-                    Name: ${name}
-                    Email: ${email}
-                    Phone: ${phone || 'Not provided'}
-                    Service: ${service}
-                    Message: ${message}
-
-                    View submission at: https://agrisolar-website.web.app/admin/
-                `;
-
-                // Open default email client
-                const mailtoLink = `mailto:aaronreifschneider@outlook.com?subject=New Contact Form Submission&body=${encodeURIComponent(emailBody)}`;
-                window.open(mailtoLink);
-                
-                showMessage('Thank you for your message! We will get back to you soon.', 'success');
-                form.reset();
-            } catch (error) {
-                console.error('Error saving submission:', error);
-                showMessage('Error sending your message. Please try again.', 'error');
-            } finally {
-                submitButton.textContent = originalButtonText;
-                submitButton.disabled = false;
-            }
+    form.onsubmit = function(e) {
+        e.preventDefault();
+        console.log('Form submitted');
+        
+        // Get values directly from form fields
+        const nameField = document.getElementById('name');
+        const emailField = document.getElementById('email');
+        const phoneField = document.getElementById('phone');
+        const serviceField = document.getElementById('service');
+        const messageField = document.getElementById('message');
+        
+        console.log('Form fields found:', {
+            name: nameField,
+            email: emailField,
+            phone: phoneField,
+            service: serviceField,
+            message: messageField
         });
-    } else {
-        console.error('Contact form not found');
-    }
-});
-
-function showMessage(message, type) {
-    let formStatus = document.getElementById('formStatus');
-    
-    if (!formStatus) {
-        formStatus = document.createElement('div');
-        formStatus.id = 'formStatus';
-        formStatus.className = 'form-status';
-        const form = document.getElementById('contactForm');
-        if (form) {
-            form.parentNode.insertBefore(formStatus, form.nextSibling);
+        
+        // Get values
+        const name = nameField ? nameField.value.trim() : '';
+        const email = emailField ? emailField.value.trim() : '';
+        const phone = phoneField ? phoneField.value.trim() : '';
+        const service = serviceField ? serviceField.value.trim() : '';
+        const message = messageField ? messageField.value.trim() : '';
+        
+        console.log('Form values:', {
+            name,
+            email,
+            phone,
+            service,
+            message
+        });
+        
+        // Validate required fields
+        if (!name || !email || !service || !message) {
+            const missing = [];
+            if (!name) missing.push('Name');
+            if (!email) missing.push('Email');
+            if (!service) missing.push('Service');
+            if (!message) missing.push('Message');
+            
+            alert('Please fill in all required fields: ' + missing.join(', '));
+            return false;
         }
-    }
-    
-    formStatus.textContent = message;
-    formStatus.className = `form-status ${type}`;
-    formStatus.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    
-    setTimeout(() => {
-        formStatus.textContent = '';
-        formStatus.className = 'form-status';
-    }, 5000);
+        
+        // Create submission data
+        const data = {
+            name,
+            email,
+            phone: phone || 'Not provided',
+            service,
+            message,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            status: 'new',
+            viewed: false
+        };
+        
+        console.log('Data to save:', data);
+        
+        // Save to Firebase
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.textContent;
+        submitButton.textContent = 'Sending...';
+        submitButton.disabled = true;
+        
+        try {
+            const db = firebase.database();
+            const newSubmissionRef = db.ref('contact_submissions').push();
+            
+            newSubmissionRef.set(data)
+                .then(() => {
+                    console.log('Saved successfully');
+                    alert('Thank you for your message! We will get back to you soon.');
+                    form.reset();
+                })
+                .catch((error) => {
+                    console.error('Save error:', error);
+                    alert('There was an error sending your message. Please try again.');
+                })
+                .finally(() => {
+                    submitButton.textContent = originalButtonText;
+                    submitButton.disabled = false;
+                });
+        } catch (error) {
+            console.error('Firebase error:', error);
+            alert('There was an error sending your message. Please try again.');
+            submitButton.textContent = originalButtonText;
+            submitButton.disabled = false;
+        }
+        
+        return false;
+    };
+} else {
+    console.error('Contact form not found!');
 }

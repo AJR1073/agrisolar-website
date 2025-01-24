@@ -1,34 +1,93 @@
+// Firebase configuration and initialization
+let auth;
+let database;
+let functions;
+
+// Helper function to send replies
+async function sendReply(data) {
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            throw new Error('User must be authenticated to send replies');
+        }
+
+        // Get a fresh token
+        const idToken = await user.getIdToken();
+        console.log('Got fresh token for user:', user.email);
+
+        const response = await fetch('https://us-central1-agrisolar-website.cloudfunctions.net/sendReply', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}`
+            },
+            body: JSON.stringify(data)
+        });
+
+        const responseData = await response.json();
+        if (!response.ok) {
+            console.error('Server error:', responseData);
+            throw new Error(responseData.error || `Server error: ${response.status}`);
+        }
+
+        return responseData;
+    } catch (error) {
+        console.error('Error sending reply:', error);
+        throw error;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Firebase services
+    auth = firebase.auth();
+    database = firebase.database();
+    functions = firebase.functions();
+
     // DOM Elements
     const loginContainer = document.getElementById('loginContainer');
     const dashboardContainer = document.getElementById('dashboardContainer');
     const loginForm = document.getElementById('loginForm');
-    const loginError = document.getElementById('loginError');
-    const userEmail = document.getElementById('userEmail');
-    const signOutBtn = document.getElementById('signOutBtn');
-    const statusFilter = document.getElementById('statusFilter');
-    const searchInput = document.getElementById('searchInput');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
     const submissionsList = document.getElementById('submissionsList');
-    const addRecipientBtn = document.getElementById('addRecipientBtn');
-    const addRecipientForm = document.getElementById('addRecipientForm');
-    const recipientForm = document.getElementById('recipientForm');
-    const cancelAddRecipient = document.getElementById('cancelAddRecipient');
     const recipientsList = document.getElementById('recipientsList');
+    const addRecipientForm = document.getElementById('addRecipientForm');
+    const replyModal = document.getElementById('replyModal');
+    const replyForm = document.getElementById('replyForm');
+    const replyToSubmissionId = document.getElementById('replyToSubmissionId');
+    const replySubject = document.getElementById('replySubject');
+    const replyMessage = document.getElementById('replyMessage');
+    const closeModal = document.querySelector('.close');
+    const cancelReply = document.getElementById('cancelReply');
+    const signOutBtn = document.getElementById('signOutBtn');
+    const userEmail = document.getElementById('userEmail');
     const navButtons = document.querySelectorAll('.nav-btn');
     const tabContents = document.querySelectorAll('.tab-content');
-
-    // Initialize Firebase
-    const auth = firebase.auth();
-    const database = firebase.database();
-    let currentUser = null;
+    const statusFilter = document.getElementById('statusFilter');
+    const searchInput = document.getElementById('searchInput');
 
     // Auth state observer
-    auth.onAuthStateChanged(function(user) {
+    auth.onAuthStateChanged(async (user) => {
         if (user) {
-            currentUser = user;
-            showDashboard(user);
+            console.log('User authenticated:', user.email);
+            try {
+                // Get a fresh token on login
+                const idToken = await user.getIdToken();
+                console.log('Got fresh token on login');
+                
+                loginContainer.style.display = 'none';
+                dashboardContainer.style.display = 'block';
+                loadSubmissions();
+                loadRecipients();
+            } catch (error) {
+                console.error('Error getting token:', error);
+                showMessage('Authentication error. Please try logging in again.', 'error');
+                await auth.signOut();
+            }
         } else {
-            showLogin();
+            console.log('User signed out');
+            loginContainer.style.display = 'block';
+            dashboardContainer.style.display = 'none';
         }
     });
 
@@ -60,216 +119,103 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Login form handler
-    loginForm.addEventListener('submit', async function(e) {
+    loginForm.onsubmit = async (e) => {
         e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
+        const email = emailInput.value;
+        const password = passwordInput.value;
 
         try {
-            const button = loginForm.querySelector('button[type="submit"]');
-            button.disabled = true;
-            button.textContent = 'Signing in...';
-            
             await auth.signInWithEmailAndPassword(email, password);
-            loginError.textContent = '';
+            showMessage('Logged in successfully!', 'success');
         } catch (error) {
-            loginError.textContent = error.message;
-        } finally {
-            const button = loginForm.querySelector('button[type="submit"]');
-            button.disabled = false;
-            button.textContent = 'Login';
+            console.error('Login error:', error);
+            showMessage(error.message, 'error');
         }
-    });
+    };
 
     // Sign out handler
-    signOutBtn.addEventListener('click', function() {
-        auth.signOut();
-    });
-
-    // Add Recipient Form
-    addRecipientBtn.addEventListener('click', () => {
-        addRecipientForm.style.display = 'block';
-        addRecipientBtn.style.display = 'none';
-    });
-
-    cancelAddRecipient.addEventListener('click', () => {
-        addRecipientForm.style.display = 'none';
-        addRecipientBtn.style.display = 'block';
-        recipientForm.reset();
-    });
-
-    recipientForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const name = document.getElementById('recipientName').value.trim();
-        const email = document.getElementById('recipientEmail').value.trim();
-
-        try {
-            const newRecipient = {
-                name,
-                email,
-                addedBy: currentUser.email,
-                addedAt: firebase.database.ServerValue.TIMESTAMP
-            };
-
-            await database.ref('email_recipients').push().set(newRecipient);
-            showMessage('Recipient added successfully!', 'success');
-            recipientForm.reset();
-            addRecipientForm.style.display = 'none';
-            addRecipientBtn.style.display = 'block';
-            loadRecipients();
-        } catch (error) {
-            console.error('Error adding recipient:', error);
-            showMessage('Error adding recipient. Please try again.', 'error');
-        }
-    });
-
-    // Filter and search handlers
-    statusFilter.addEventListener('change', loadSubmissions);
-    searchInput.addEventListener('input', loadSubmissions);
-
-    function showLogin() {
-        loginContainer.style.display = 'flex';
-        dashboardContainer.style.display = 'none';
-        signOutBtn.style.display = 'none';
-        userEmail.textContent = '';
+    if (signOutBtn) {
+        signOutBtn.onclick = () => {
+            auth.signOut().then(() => {
+                showMessage('Signed out successfully', 'success');
+            }).catch(error => {
+                console.error('Sign out error:', error);
+                showMessage(error.message, 'error');
+            });
+        };
     }
 
-    function showDashboard(user) {
-        loginContainer.style.display = 'none';
-        dashboardContainer.style.display = 'block';
-        signOutBtn.style.display = 'block';
-        userEmail.textContent = user.email;
-        loadSubmissions();
-    }
-
+    // Load submissions from database
     async function loadSubmissions() {
-        const statusValue = statusFilter.value;
-        const searchValue = searchInput.value.toLowerCase();
-
         try {
             const snapshot = await database.ref('contact_submissions').once('value');
             const submissions = snapshot.val() || {};
-            
-            // Convert to array and sort by timestamp
-            let submissionsArray = Object.entries(submissions)
-                .map(([id, data]) => ({ id, ...data }))
-                .sort((a, b) => b.timestamp - a.timestamp);
-
-            // Filter by status
-            if (statusValue !== 'all') {
-                submissionsArray = submissionsArray.filter(s => s.status === statusValue);
-            }
-
-            // Filter by search
-            if (searchValue) {
-                submissionsArray = submissionsArray.filter(s => 
-                    s.name?.toLowerCase().includes(searchValue) ||
-                    s.email?.toLowerCase().includes(searchValue) ||
-                    s.phone?.toLowerCase().includes(searchValue) ||
-                    s.service?.toLowerCase().includes(searchValue) ||
-                    s.message?.toLowerCase().includes(searchValue)
-                );
-            }
-
-            displaySubmissions(submissionsArray);
+            displaySubmissions(submissions);
         } catch (error) {
             console.error('Error loading submissions:', error);
-            submissionsList.innerHTML = '<p class="error">Error loading submissions. Please try again.</p>';
+            showMessage('Error loading submissions. Please try again.', 'error');
         }
     }
 
+    // Load recipients from database
     async function loadRecipients() {
         try {
             const snapshot = await database.ref('email_recipients').once('value');
             const recipients = snapshot.val() || {};
-            
-            // Convert to array and sort by name
-            const recipientsArray = Object.entries(recipients)
-                .map(([id, data]) => ({ id, ...data }))
-                .sort((a, b) => a.name.localeCompare(b.name));
-
-            displayRecipients(recipientsArray);
+            displayRecipients(recipients);
         } catch (error) {
             console.error('Error loading recipients:', error);
-            recipientsList.innerHTML = '<p class="error">Error loading recipients. Please try again.</p>';
+            showMessage('Error loading recipients. Please try again.', 'error');
         }
     }
 
+    // Display submissions
     function displaySubmissions(submissions) {
-        if (!submissions.length) {
-            submissionsList.innerHTML = '<p class="no-data">No submissions found.</p>';
-            return;
-        }
-
-        const html = submissions.map(submission => `
-            <div class="submission-card ${submission.status}" data-id="${submission.id}">
+        submissionsList.innerHTML = Object.entries(submissions).reverse().map(([id, submission]) => `
+            <div class="submission-item ${submission.status === 'new' ? 'new' : ''} ${submission.replied ? 'replied' : ''}">
                 <div class="submission-header">
-                    <h3>${submission.name}</h3>
                     <span class="timestamp">${new Date(submission.timestamp).toLocaleString()}</span>
+                    <span class="status">${submission.status === 'new' ? 'New' : 'Viewed'}</span>
+                    ${submission.replied ? '<span class="replied-badge">Replied</span>' : ''}
                 </div>
                 <div class="submission-content">
+                    <p><strong>Name:</strong> ${submission.name}</p>
                     <p><strong>Email:</strong> ${submission.email}</p>
                     <p><strong>Phone:</strong> ${submission.phone || 'Not provided'}</p>
                     <p><strong>Service:</strong> ${submission.service}</p>
                     <p><strong>Message:</strong> ${submission.message}</p>
+                    ${submission.replied ? `
+                        <div class="reply-details">
+                            <p><strong>Reply Sent:</strong> ${new Date(submission.replyTimestamp).toLocaleString()}</p>
+                            <p><strong>Subject:</strong> ${submission.replySubject}</p>
+                            <p><strong>Message:</strong> ${submission.replyMessage}</p>
+                        </div>
+                    ` : ''}
                 </div>
-                <div class="submission-footer">
-                    <span class="status">${submission.status}</span>
+                <div class="submission-actions">
                     ${submission.status === 'new' ? 
-                        `<button onclick="markAsViewed('${submission.id}')">Mark as Viewed</button>` : 
+                        `<button onclick="markAsViewed('${id}')">Mark as Viewed</button>` : 
                         ''}
+                    ${!submission.replied ? 
+                        `<button onclick="showReplyModal('${id}', '${submission.email}')">Reply</button>` : ''}
                 </div>
             </div>
         `).join('');
-
-        submissionsList.innerHTML = html;
     }
 
+    // Display recipients
     function displayRecipients(recipients) {
-        if (!recipients.length) {
-            recipientsList.innerHTML = '<p class="no-data">No recipients found.</p>';
+        if (!recipients) {
+            recipientsList.innerHTML = '<p>No recipients found</p>';
             return;
         }
 
-        const html = recipients.map(recipient => `
-            <div class="recipient-card" data-id="${recipient.id}">
-                <div class="recipient-info">
-                    <h4>${recipient.name}</h4>
-                    <p>${recipient.email}</p>
-                </div>
-                <div class="recipient-actions">
-                    <button onclick="deleteRecipient('${recipient.id}')" class="delete" title="Delete Recipient">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
+        recipientsList.innerHTML = Object.entries(recipients).map(([id, recipient]) => `
+            <div class="recipient-item">
+                <span>${recipient.email}</span>
+                <button onclick="deleteRecipient('${id}')">Delete</button>
             </div>
         `).join('');
-
-        recipientsList.innerHTML = html;
-    }
-
-    function showMessage(message, type) {
-        let messageContainer = document.getElementById('messageContainer');
-        
-        if (!messageContainer) {
-            messageContainer = document.createElement('div');
-            messageContainer.id = 'messageContainer';
-            messageContainer.className = 'message-container';
-            document.body.appendChild(messageContainer);
-        }
-        
-        const messageElement = document.createElement('div');
-        messageElement.className = `message ${type}`;
-        messageElement.textContent = message;
-        
-        messageContainer.appendChild(messageElement);
-        
-        setTimeout(() => {
-            messageElement.remove();
-            if (!messageContainer.hasChildNodes()) {
-                messageContainer.remove();
-            }
-        }, 5000);
     }
 
     // Make functions globally available
@@ -299,4 +245,98 @@ document.addEventListener('DOMContentLoaded', function() {
             showMessage('Error deleting recipient. Please try again.', 'error');
         }
     };
+
+    // Function to show reply modal
+    window.showReplyModal = function(submissionId, email) {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Reply to ${email}</h2>
+                <form id="replyForm">
+                    <input type="hidden" id="replyToSubmissionId" value="${submissionId}">
+                    <div class="form-group">
+                        <label for="replySubject">Subject:</label>
+                        <input type="text" id="replySubject" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="replyMessage">Message:</label>
+                        <textarea id="replyMessage" required></textarea>
+                    </div>
+                    <button type="submit">Send Reply</button>
+                </form>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        modal.style.display = 'block';
+
+        const form = modal.querySelector('#replyForm');
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const closeBtn = modal.querySelector('.close');
+
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+            modal.remove();
+        };
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+                modal.remove();
+            }
+        };
+
+        form.onsubmit = async function(e) {
+            e.preventDefault();
+            submitBtn.textContent = 'Sending...';
+            submitBtn.disabled = true;
+            
+            try {
+                const replyText = replyMessage.value;
+                const emailSubject = `Re: Your Message to AgriSolar LLC`;
+                const emailBody = `Dear ${email},
+
+Thank you for reaching out to AgriSolar LLC. We appreciate your interest in our services.
+
+${replyText}
+
+Best regards,
+Aaron Reifler
+AgriSolar LLC
+www.agrisolarllc.com
+aaron@agrisolarllc.com`;
+
+                const result = await sendReply({
+                    submissionId: submissionId,
+                    subject: emailSubject,
+                    message: emailBody
+                });
+
+                if (result.success) {
+                    showMessage('Reply sent successfully!', 'success');
+                    modal.remove();
+                    loadSubmissions(); // Refresh the submissions list
+                } else {
+                    throw new Error('Failed to send reply');
+                }
+            } catch (error) {
+                console.error('Error sending reply:', error);
+                showMessage(error.message || 'Failed to send reply. Please try again.', 'error');
+            } finally {
+                submitBtn.textContent = 'Send Reply';
+                submitBtn.disabled = false;
+            }
+        };
+    };
 });
+
+// Helper function to show messages
+function showMessage(message, type = 'info') {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${type}`;
+    messageDiv.textContent = message;
+    document.body.appendChild(messageDiv);
+    setTimeout(() => messageDiv.remove(), 5000);
+}

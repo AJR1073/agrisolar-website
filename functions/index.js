@@ -123,9 +123,9 @@ exports.sendReply = onRequest({
                     return;
                 }
 
-                const { submissionId, subject, message } = req.body;
-                if (!submissionId || !subject || !message) {
-                    console.error('Missing required fields:', { submissionId, subject, message });
+                const { submissionId, subject, message, to } = req.body;
+                if (!submissionId || !subject || !message || !to) {
+                    console.error('Missing required fields:', { submissionId, subject, message, to });
                     res.status(400).json({ error: 'Missing required fields' });
                     return;
                 }
@@ -150,12 +150,22 @@ exports.sendReply = onRequest({
                     const transporter = nodemailer.createTransport(emailConfig);
                     console.log('Transporter created successfully');
 
-                    // Send the reply email
+                    // Convert plain text to HTML with proper formatting
+                    const htmlMessage = message.replace(/\n/g, '<br>');
+
                     const mailOptions = {
-                        from: 'aaron@agrisolarllc.com',
-                        to: submission.email,
+                        from: {
+                            name: 'Aaron Reifler',
+                            address: 'aaron@agrisolarllc.com'
+                        },
+                        to: to,
                         subject: subject,
-                        text: message
+                        text: message, // Plain text version
+                        html: `
+                            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                                ${htmlMessage}
+                            </div>
+                        ` // HTML version
                     };
 
                     console.log('Sending reply email with options:', {
