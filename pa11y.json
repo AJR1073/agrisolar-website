@@ -1,0 +1,13 @@
+{
+  "standard": "WCAG2AA",
+  "runners": [
+    "axe",
+    "htmlcs"
+  ],
+  "chromeLaunchConfig": {
+    "args": [
+      "--no-sandbox",
+      "--disable-gpu"
+    ]
+  }
+}

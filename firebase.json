@@ -1,23 +1,101 @@
 {
   "hosting": {
-    "public": ".",
+    "public": "dist",
+    "predeploy": [
+      "npm run build:hosting"
+    ],
+    "cleanUrls": true,
+    "trailingSlash": true,
     "ignore": [
       "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
+      ".firebaserc",
+      ".firebase/**",
+      ".git/**",
+      ".github/**",
+      ".env",
+      ".env.*",
+      "functions/**",
+      "database.rules.json",
+      "package.json",
+      "package-lock.json",
+      "README.md",
+      "node_modules/**",
+      "y/**",
+      "doc/**",
+      "test/**",
+      "**/*.test.*",
+      "firebase-debug.log",
+      "*.log"
     ],
-    "rewrites": [
+    "headers": [
       {
         "source": "**",
-        "destination": "/index.html"
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex, nofollow, noarchive"
+          },
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "X-Frame-Options",
+            "value": "SAMEORIGIN"
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "strict-origin-when-cross-origin"
+          },
+          {
+            "key": "Permissions-Policy",
+            "value": "camera=(), microphone=(), geolocation=(), payment=()"
+          }
+        ]
+      },
+      {
+        "source": "**/*.{css,js,jpg,jpeg,png,webp,svg,woff2,mp4}",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=604800"
+          }
+        ]
       }
     ]
   },
   "database": {
     "rules": "database.rules.json"
   },
+  "storage": {
+    "rules": "storage.rules"
+  },
   "functions": {
     "source": "functions",
-    "runtime": "nodejs18"
+    "runtime": "nodejs22"
+  },
+  "emulators": {
+    "hosting": {
+      "host": "127.0.0.1",
+      "port": 5100
+    },
+    "database": {
+      "host": "127.0.0.1",
+      "port": 9100
+    },
+    "storage": {
+      "host": "127.0.0.1",
+      "port": 9200
+    },
+    "functions": {
+      "host": "127.0.0.1",
+      "port": 5101
+    },
+    "ui": {
+      "enabled": true,
+      "host": "127.0.0.1",
+      "port": 4101
+    },
+    "singleProjectMode": true
   }
 }

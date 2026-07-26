@@ -1,0 +1,28 @@
+name: Firebase Hosting preview
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+concurrency:
+  group: firebase-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    name: Deploy temporary preview
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out pull-request branch
+        uses: actions/checkout@v4
+
+      - name: Deploy Firebase Hosting preview
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_AGRISOLAR_WEBSITE }}
+          projectId: agrisolar-website

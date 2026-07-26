@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    <url>
-        <loc>https://agrisolarllc.com/</loc>
-        <lastmod>2025-01-18</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>1.0</priority>
-    </url>
-    <url>
-        <loc>https://agrisolarllc.com/about.html</loc>
-        <lastmod>2025-01-18</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.8</priority>
-    </url>
+  <url><loc>https://agrisolarllc.com/</loc></url>
+  <url><loc>https://agrisolarllc.com/services/</loc></url>
+  <url><loc>https://agrisolarllc.com/services/commercial-mowing/</loc></url>
+  <url><loc>https://agrisolarllc.com/services/vegetation-herbicide-management/</loc></url>
+  <url><loc>https://agrisolarllc.com/services/native-planting/</loc></url>
+  <url><loc>https://agrisolarllc.com/services/erosion-control/</loc></url>
+  <url><loc>https://agrisolarllc.com/services/site-maintenance-reporting/</loc></url>
+  <url><loc>https://agrisolarllc.com/about/</loc></url>
+  <url><loc>https://agrisolarllc.com/service-area/</loc></url>
+  <url><loc>https://agrisolarllc.com/projects/</loc></url>
+  <url><loc>https://agrisolarllc.com/faq/</loc></url>
+  <url><loc>https://agrisolarllc.com/contact/</loc></url>
+  <url><loc>https://agrisolarllc.com/privacy/</loc></url>
 </urlset>

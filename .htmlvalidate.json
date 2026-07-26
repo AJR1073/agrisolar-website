@@ -1,0 +1,9 @@
+{
+  "extends": [
+    "html-validate:recommended"
+  ],
+  "rules": {
+    "no-autoplay": "off",
+    "tel-non-breaking": "off"
+  }
+}

@@ -6,12 +6,13 @@
     <title>AgriSolar LLC - Admin Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/admin.css?v=20260726-attachments">
     
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
 
     <!-- Initialize Firebase -->
@@ -139,7 +140,7 @@
                 </div>
                 <div class="form-group">
                     <label>From:</label>
-                    <div class="reply-field">info@agrisolarllc.com</div>
+                    <div class="reply-field">aaron@agrisolarllc.com</div>
                 </div>
                 <div class="form-group">
                     <label for="emailTemplate">Template:</label>
@@ -159,6 +160,10 @@
                     <label for="replyMessage">Message:</label>
                     <textarea id="replyMessage" rows="6" required></textarea>
                 </div>
+                <div class="form-group" id="replyAttachmentsGroup" hidden>
+                    <span class="form-label">Files supplied with this request:</span>
+                    <div id="replyAttachments" class="attachment-list"></div>
+                </div>
                 <p class="send-warning">
                     <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
                     Sending will immediately email this contact through the live AgriSolar mailbox.
@@ -171,6 +176,6 @@
         </div>
     </div>
 
-    <script src="js/admin.js"></script>
+    <script src="js/admin.js?v=20260726-attachments"></script>
 </body>
 </html>
