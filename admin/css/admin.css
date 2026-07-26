@@ -178,6 +178,73 @@ button[type="submit"]:disabled {
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 }
 
+.submission-item {
+    padding: 1.25rem;
+    border-radius: 8px;
+    border-left: 4px solid #87928c;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.submission-item.new {
+    border-left-color: #087f3f;
+}
+
+.submission-message {
+    white-space: pre-wrap;
+}
+
+.submission-attachments {
+    margin-top: 1rem;
+}
+
+.attachment-list {
+    display: grid;
+    gap: 0.55rem;
+    margin-top: 0.6rem;
+}
+
+.attachment-button {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.55rem;
+    width: 100%;
+    padding: 0.7rem 0.8rem;
+    align-items: center;
+    border: 1px solid #b8c4bd;
+    border-radius: 5px;
+    background: #f5faf7;
+    color: #1a4731;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.attachment-button span {
+    overflow-wrap: anywhere;
+}
+
+.attachment-button small {
+    color: #59645e;
+}
+
+.attachment-button:hover,
+.attachment-button:focus {
+    border-color: #1a4731;
+    background: #eaf4ee;
+}
+
+.attachment-button:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #555;
+}
+
 .submission-card {
     background: #fff;
     border-radius: 8px;

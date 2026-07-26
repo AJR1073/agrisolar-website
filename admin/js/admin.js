@@ -2,6 +2,54 @@
 let auth;
 let database;
 let functions;
+let storage;
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
+function formatFileSize(bytes) {
+    if (!Number.isFinite(Number(bytes))) {
+        return 'Unknown size';
+    }
+
+    const size = Number(bytes);
+    return size >= 1024 * 1024
+        ? `${(size / (1024 * 1024)).toFixed(1)} MB`
+        : `${Math.max(1, Math.ceil(size / 1024))} KB`;
+}
+
+function renderAttachments(submissionId, attachments) {
+    if (!Array.isArray(attachments) || !attachments.length) {
+        return '';
+    }
+
+    return `
+        <div class="submission-attachments">
+            <strong>Attachments:</strong>
+            <div class="attachment-list">
+                ${attachments.map((attachment, index) => `
+                    <button
+                        type="button"
+                        class="attachment-button"
+                        data-action="view-attachment"
+                        data-submission-id="${escapeHtml(submissionId)}"
+                        data-attachment-index="${index}"
+                    >
+                        <i class="fas fa-paperclip" aria-hidden="true"></i>
+                        <span>${escapeHtml(attachment.name)}</span>
+                        <small>${escapeHtml(formatFileSize(attachment.size))}</small>
+                    </button>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
 
 // Helper function to send replies
 async function sendReply(data) {
@@ -54,7 +102,7 @@ AgriSolar LLC Team`
         subject: "Your Quote Request - AgriSolar LLC",
         message: `Dear [Name],
 
-Thank you for requesting a quote from AgriSolar LLC. We're excited to help you with your solar energy needs.
+Thank you for requesting a quote from AgriSolar LLC. We're ready to learn more about your solar-site vegetation management needs.
 
 To provide you with an accurate quote, we would like to schedule a brief consultation to discuss your specific requirements in detail. Please let us know what time works best for you in the next few days.
 
@@ -81,6 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
     auth = firebase.auth();
     database = firebase.database();
     functions = firebase.functions();
+    storage = firebase.storage();
 
     // DOM Elements
     const loginContainer = document.getElementById('loginContainer');
@@ -107,6 +156,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusFilter = document.getElementById('statusFilter');
     const searchInput = document.getElementById('searchInput');
     const emailTemplateSelect = document.getElementById('emailTemplate');
+    const replyAttachmentsGroup = document.getElementById('replyAttachmentsGroup');
+    const replyAttachments = document.getElementById('replyAttachments');
+    let submissionsCache = {};
 
     // Auth state observer
     auth.onAuthStateChanged(async (user) => {
@@ -239,33 +291,44 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Display submissions
     function displaySubmissions(submissions) {
+        submissionsCache = submissions;
+        if (!Object.keys(submissions).length) {
+            submissionsList.innerHTML = '<p>No quote requests found.</p>';
+            return;
+        }
+
         submissionsList.innerHTML = Object.entries(submissions).reverse().map(([id, submission]) => `
             <div class="submission-item ${submission.status === 'new' ? 'new' : ''} ${submission.replied ? 'replied' : ''}">
                 <div class="submission-header">
                     <span class="timestamp">${new Date(submission.timestamp).toLocaleString()}</span>
-                    <span class="status">${submission.status === 'new' ? 'New' : 'Viewed'}</span>
+                    <span class="status">${submission.status === 'new' ? 'New' : submission.status === 'replied' ? 'Replied' : 'Viewed'}</span>
                     ${submission.replied ? '<span class="replied-badge">Replied</span>' : ''}
                 </div>
                 <div class="submission-content">
-                    <p><strong>Name:</strong> ${submission.name}</p>
-                    <p><strong>Email:</strong> ${submission.email}</p>
-                    <p><strong>Phone:</strong> ${submission.phone || 'Not provided'}</p>
-                    <p><strong>Service:</strong> ${submission.service}</p>
-                    <p><strong>Message:</strong> ${submission.message}</p>
+                    <p><strong>Name:</strong> ${escapeHtml(submission.name)}</p>
+                    <p><strong>Company:</strong> ${escapeHtml(submission.company || 'Not provided')}</p>
+                    <p><strong>Email:</strong> ${escapeHtml(submission.email)}</p>
+                    <p><strong>Phone:</strong> ${escapeHtml(submission.phone || 'Not provided')}</p>
+                    <p><strong>Solar-site location:</strong> ${escapeHtml(submission.siteLocation || 'Not provided')}</p>
+                    <p><strong>Approximate acreage:</strong> ${escapeHtml(submission.acreage || 'Not provided')}</p>
+                    <p><strong>Service:</strong> ${escapeHtml(submission.service)}</p>
+                    <p><strong>Desired schedule:</strong> ${escapeHtml(submission.schedule || 'Not provided')}</p>
+                    <p class="submission-message"><strong>Message:</strong> ${escapeHtml(submission.message)}</p>
+                    ${renderAttachments(id, submission.attachments)}
                     ${submission.replied ? `
                         <div class="reply-details">
-                            <p><strong>Reply Sent:</strong> ${new Date(submission.replyTimestamp).toLocaleString()}</p>
-                            <p><strong>Subject:</strong> ${submission.replySubject}</p>
-                            <p><strong>Message:</strong> ${submission.replyMessage}</p>
+                            ${submission.replyTimestamp ? `<p><strong>Reply Sent:</strong> ${new Date(submission.replyTimestamp).toLocaleString()}</p>` : ''}
+                            ${submission.replySubject ? `<p><strong>Subject:</strong> ${escapeHtml(submission.replySubject)}</p>` : ''}
+                            ${submission.replyMessage ? `<p><strong>Message:</strong> ${escapeHtml(submission.replyMessage)}</p>` : ''}
                         </div>
                     ` : ''}
                 </div>
                 <div class="submission-actions">
-                    ${submission.status === 'new' ? 
-                        `<button onclick="markAsViewed('${id}')">Mark as Viewed</button>` : 
+                    ${submission.status === 'new' ?
+                        `<button type="button" data-action="mark-viewed" data-submission-id="${escapeHtml(id)}">Mark as Viewed</button>` :
                         ''}
-                    ${!submission.replied ? 
-                        `<button onclick="showReplyModal('${id}', '${submission.email}')">Reply</button>` : ''}
+                    ${!submission.replied ?
+                        `<button type="button" data-action="reply" data-submission-id="${escapeHtml(id)}">Reply</button>` : ''}
                 </div>
             </div>
         `).join('');
@@ -280,8 +343,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         recipientsList.innerHTML = Object.entries(recipients).map(([id, recipient]) => `
             <div class="recipient-item">
-                <span>${recipient.email}</span>
-                <button onclick="deleteRecipient('${id}')">Delete</button>
+                <span>${escapeHtml(recipient.email)}</span>
+                <button type="button" data-action="delete-recipient" data-recipient-id="${escapeHtml(id)}">Delete</button>
             </div>
         `).join('');
     }
@@ -321,6 +384,8 @@ document.addEventListener('DOMContentLoaded', function() {
         replyForm.reset();
         replyToSubmissionId.value = '';
         replyToEmail.textContent = '';
+        replyAttachments.innerHTML = '';
+        replyAttachmentsGroup.hidden = true;
         currentSubmission = null;
     }
 
@@ -334,7 +399,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Function to show reply modal
-    window.showReplyModal = async function(submissionId, email) {
+    window.showReplyModal = async function(submissionId) {
         try {
             const snapshot = await database.ref(`contact_submissions/${submissionId}`).once('value');
             const submission = snapshot.val();
@@ -343,7 +408,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentSubmission = submission;
                 replyModal.style.display = 'block';
                 replyToSubmissionId.value = submissionId;
-                document.getElementById('replyToEmail').textContent = email;
+                document.getElementById('replyToEmail').textContent = submission.email;
+                replyAttachments.innerHTML = renderAttachments(
+                    submissionId,
+                    submission.attachments
+                );
+                replyAttachmentsGroup.hidden = !Array.isArray(submission.attachments)
+                    || !submission.attachments.length;
 
                 // Reset form and template selection
                 replyForm.reset();
@@ -356,6 +427,66 @@ document.addEventListener('DOMContentLoaded', function() {
             showMessage('Error loading submission details', 'error');
         }
     };
+
+    async function openAttachment(submissionId, attachmentIndex, button) {
+        const submission = submissionsCache[submissionId] || currentSubmission;
+        const attachment = submission?.attachments?.[attachmentIndex];
+        const expectedPrefix = `quote-attachments/${submissionId}/`;
+
+        if (!attachment?.path?.startsWith(expectedPrefix)) {
+            showMessage('This attachment reference is invalid.', 'error');
+            return;
+        }
+
+        const previewWindow = window.open('about:blank', '_blank');
+        if (previewWindow) {
+            previewWindow.opener = null;
+            previewWindow.document.title = 'Loading attachment…';
+            previewWindow.document.body.textContent = 'Loading attachment…';
+        }
+
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.textContent = 'Opening…';
+
+        try {
+            const url = await storage.ref(attachment.path).getDownloadURL();
+            if (previewWindow) {
+                previewWindow.location.replace(url);
+            } else {
+                showMessage('Allow pop-ups to view this attachment.', 'error');
+            }
+        } catch (error) {
+            previewWindow?.close();
+            console.error('Error opening attachment.');
+            showMessage('Unable to open this attachment. Please try again.', 'error');
+        } finally {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    }
+
+    document.addEventListener('click', (event) => {
+        const button = event.target.closest('button[data-action]');
+        if (!button) {
+            return;
+        }
+
+        const submissionId = button.dataset.submissionId;
+        if (button.dataset.action === 'mark-viewed') {
+            window.markAsViewed(submissionId);
+        } else if (button.dataset.action === 'reply') {
+            window.showReplyModal(submissionId);
+        } else if (button.dataset.action === 'view-attachment') {
+            openAttachment(
+                submissionId,
+                Number(button.dataset.attachmentIndex),
+                button
+            );
+        } else if (button.dataset.action === 'delete-recipient') {
+            window.deleteRecipient(button.dataset.recipientId);
+        }
+    });
 
     // Add template selection handler
     if (emailTemplateSelect) {

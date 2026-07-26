@@ -3,816 +3,314 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="canonical" href="https://agrisolarllc.com/" />
-    <meta name="description" content="Professional solar farm vegetation management in Illinois. Expert mowing, maintenance, and vegetation control services for optimal solar panel performance. Family-operated business with extensive agricultural experience. Contact (618) 539-2098.">
-    <meta name="keywords" content="solar farm vegetation management, solar panel maintenance, agricultural solar maintenance, solar farm mowing, Illinois solar maintenance, agrivoltaics, native plant seeding, erosion control, Belleville IL">
-    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
-    <meta property="og:locale" content="en_US">
-    <meta property="og:title" content="AgriSolar LLC - Professional Solar Farm Vegetation Management">
-    <meta property="og:description" content="Expert vegetation control and maintenance services for solar farms in Illinois. Maximize your solar investment with our professional management services.">
+    <title>AgriSolar LLC | Solar Farm Vegetation Management</title>
+    <meta name="description" content="AgriSolar LLC provides solar-farm mowing, vegetation control, native planting, erosion control, and site maintenance support from Belleville, Illinois.">
+    <link rel="canonical" href="https://agrisolarllc.com/">
+    <meta property="og:title" content="AgriSolar LLC | Solar Farm Vegetation Management">
+    <meta property="og:description" content="Family-operated solar-farm vegetation management based in Belleville, Illinois.">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://agrisolarllc.com">
+    <meta property="og:url" content="https://agrisolarllc.com/">
     <meta property="og:site_name" content="AgriSolar LLC">
-    
-    <!-- Schema.org markup for Google -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "LocalBusiness",
+      "@type": ["ProfessionalService", "LocalBusiness"],
       "name": "AgriSolar LLC",
-      "description": "Professional solar farm vegetation management and maintenance services. Family-operated business with extensive agricultural experience.",
-      "image": "images/logo.png",
+      "url": "https://agrisolarllc.com/",
+      "telephone": "+1-618-539-2098",
+      "email": "info@agrisolarllc.com",
       "address": {
         "@type": "PostalAddress",
         "addressLocality": "Belleville",
         "addressRegion": "IL",
-        "addressCountry": "USA"
+        "addressCountry": "US"
       },
-      "url": "https://agrisolarllc.com",
-      "telephone": "(618) 539-2098",
-      "priceRange": "$$",
-      "sameAs": [],
-      "areaServed": "Illinois and surrounding areas",
-      "serviceType": ["Solar Farm Vegetation Management", "Native Plant Seeding", "Erosion Control"],
-      "knowsAbout": ["Solar Panel Maintenance", "Agricultural Equipment Operation", "Vegetation Management", "Sustainable Farming Practices"]
+      "description": "Solar-farm mowing, vegetation control, native planting, erosion control, and ongoing site maintenance."
     }
     </script>
-    <title>AgriSolar LLC - Professional Solar Farm Vegetation Management</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/contact-form.css">
+    <link rel="stylesheet" href="css/pages.css?v=20260726-attachments">
+    <link rel="stylesheet" href="css/contact-form.css?v=20260726-attachments">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        html {
-            scroll-behavior: smooth;
-        }
-        
-        /* Offset anchor links to account for fixed header */
-        section {
-            scroll-margin-top: 80px;
-        }
-        
-        /* Ensure sections take full viewport height minus header */
-        .hero {
-            min-height: calc(100vh - 80px);
-            margin-top: 80px;
-        }
-
-        /* Enhanced Navigation Styles */
-        .navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: rgba(255, 255, 255, 0.95);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            z-index: 1000;
-            transition: all 0.3s ease;
-        }
-
-        .navbar.scrolled {
-            background: rgba(255, 255, 255, 0.98);
-            padding: 10px 0;
-        }
-
-        .navbar .container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            transition: transform 0.3s ease;
-        }
-
-        .logo:hover {
-            transform: scale(1.02);
-        }
-
-        .logo-text {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 28px;
-            font-weight: 700;
-            color: #2ecc71;
-            margin: 0;
-            line-height: 1.2;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .logo-text span {
-            font-size: 14px;
-            color: #666;
-            font-weight: 500;
-        }
-
-        @media (max-width: 768px) {
-            .logo-text {
-                font-size: 24px;
-            }
-            .logo-text span {
-                font-size: 12px;
-            }
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 25px;
-            align-items: center;
-        }
-
-        .nav-links a {
-            color: #333;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 16px;
-            padding: 8px 12px;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .nav-links a:not(.cta-button):after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 2px;
-            bottom: 0;
-            left: 50%;
-            background-color: #2ecc71;
-            transition: all 0.3s ease;
-            transform: translateX(-50%);
-        }
-
-        .nav-links a:not(.cta-button):hover:after {
-            width: 100%;
-        }
-
-        .nav-links a.active {
-            color: #2ecc71;
-        }
-
-        .nav-links a.cta-button {
-            background-color: #2ecc71;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-weight: 600;
-            box-shadow: 0 2px 8px rgba(46, 204, 113, 0.2);
-        }
-
-        .nav-links a.cta-button:hover {
-            background-color: #27ae60;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
-        }
-
-        .menu-toggle {
-            display: none;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 10px;
-            z-index: 1001;
-        }
-
-        /* Mobile Menu Styles */
-        @media (max-width: 768px) {
-            .menu-toggle {
-                display: block;
-                position: relative;
-                z-index: 1002;
-                background: none;
-                border: none;
-                padding: 10px;
-            }
-
-            .menu-toggle.active {
-                position: fixed;
-                right: 20px;
-                top: 20px;
-            }
-
-            .nav-links {
-                position: fixed;
-                top: 0;
-                right: -100%;
-                height: 100vh;
-                width: 100%;
-                max-width: 100%;
-                background: rgba(255, 255, 255, 0.98);
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                padding: 80px 20px;
-                transition: all 0.3s ease;
-                opacity: 0;
-                visibility: hidden;
-                z-index: 1001;
-            }
-
-            .nav-links.active {
-                right: 0;
-                opacity: 1;
-                visibility: visible;
-            }
-
-            .nav-links a {
-                width: auto;
-                text-align: center;
-                padding: 15px;
-                font-size: 24px;
-                margin: 10px 0;
-            }
-
-            .nav-links a.cta-button {
-                margin-top: 20px;
-                padding: 15px 30px;
-            }
-
-            body.menu-open {
-                overflow: hidden;
-            }
-
-            .navbar {
-                padding: 10px 0;
-            }
-
-            .logo-text {
-                font-size: 20px;
-            }
-
-            .logo-text span {
-                font-size: 12px;
-            }
-        }
-
-        /* Approach Section Styles */
-        .approach-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
-            margin-top: 40px;
-            width: 100%;
-            max-width: 100%;
-            overflow-x: hidden;
-        }
-
-        .approach-item {
-            background: #fff;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            width: 100%;
-        }
-
-        .approach-item:hover {
-            transform: translateY(-5px);
-        }
-
-        .approach-item h3 {
-            color: #2ecc71;
-            margin-bottom: 15px;
-            font-size: 20px;
-        }
-
-        .approach-item p {
-            color: #666;
-            line-height: 1.6;
-            margin: 0;
-            font-size: 16px;
-        }
-
-        @media (max-width: 768px) {
-            .approach-grid {
-                grid-template-columns: 1fr;
-                padding: 0 20px;
-                margin: 20px 0;
-            }
-
-            .approach-item {
-                padding: 20px;
-            }
-
-            .approach-item h3 {
-                font-size: 18px;
-            }
-
-            .approach-item p {
-                font-size: 15px;
-            }
-
-            .container {
-                padding: 0 15px;
-                width: 100%;
-                max-width: 100%;
-                overflow-x: hidden;
-            }
-
-            section {
-                padding: 40px 0;
-                width: 100%;
-                max-width: 100%;
-                overflow-x: hidden;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600&display=swap">
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
     <header>
-        <nav class="navbar">
+        <nav class="navbar" aria-label="Primary navigation">
             <div class="container">
-                <a href="#home" class="logo">
-                    <div class="logo-text">
-                        AgriSolar LLC
-                        <span>Professional Solar Farm Management</span>
-                    </div>
+                <a href="/" class="logo" aria-label="AgriSolar LLC home">
+                    <span class="logo-text">AgriSolar LLC<span>Professional Solar Farm Management</span></span>
                 </a>
-                <button class="menu-toggle" aria-label="Toggle navigation">
-                    <i class="fas fa-bars"></i>
+                <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="primary-menu">
+                    <i class="fas fa-bars" aria-hidden="true"></i>
                 </button>
-                <div class="nav-links">
-                    <a href="#home" class="active">Home</a>
-                    <a href="#about">About</a>
-                    <a href="#services">Services</a>
-                    <a href="#equipment-fleet">Equipment</a>
-                    <a href="#before-after">Impact</a>
-                    <a href="#testimonials">Testimonials</a>
-                    <a href="#contact" class="cta-button">Contact Us</a>
+                <div class="nav-links" id="primary-menu">
+                    <a href="/" aria-current="page">Home</a>
+                    <a href="/services/">Services</a>
+                    <a href="/about/">About</a>
+                    <a href="/service-area/">Service Area</a>
+                    <a href="/projects/">Projects</a>
+                    <a href="/faq/">FAQ</a>
+                    <a href="/contact/" class="cta-button">Request a Quote</a>
                 </div>
             </div>
         </nav>
     </header>
 
-    <main>
-        <section id="home" class="hero">
-            <div class="video-background">
-                <video class="hero-video" autoplay loop muted playsinline>
+    <main id="main-content">
+        <section class="hero" aria-labelledby="home-heading">
+            <div class="video-background" aria-hidden="true">
+                <video class="hero-video" autoplay loop muted playsinline poster="images/SolarFarmMain.webp">
                     <source src="gallery/solar-farm-video.mp4" type="video/mp4">
                 </video>
                 <div class="video-overlay"></div>
             </div>
             <div class="hero-content">
-                <h1>Professional Solar Farm<br>Vegetation Management</h1>
-                <p>Professional vegetation control and maintenance services for optimal solar farm performance</p>
+                <h1 id="home-heading">Professional Solar Farm<br>Vegetation Management</h1>
+                <p>Mowing, vegetation control, native planting, erosion control, and ongoing site support.</p>
                 <div class="hero-buttons">
-                    <a href="#services" class="btn btn-primary">
-                        <span>Explore Our Services</span>
-                    </a>
-                    <a href="#contact" class="btn btn-secondary">
-                        <span>Request a Quote</span>
-                    </a>
+                    <a href="/services/" class="btn btn-primary">Explore Our Services</a>
+                    <a href="/contact/" class="btn btn-secondary">Request a Quote</a>
                 </div>
             </div>
         </section>
 
-        <section id="about" class="about">
+        <section class="page-section" aria-labelledby="about-heading">
             <div class="container">
                 <div class="section-title">
-                    <h2>About AgriSolar LLC</h2>
-                    <p>Your Trusted Partner in Solar Farm Management</p>
+                    <h2 id="about-heading">Agricultural Experience for Solar Sites</h2>
+                    <p>Family-operated in Belleville, Illinois</p>
                 </div>
-                
-                <div class="about-grid">
+                <div class="content-grid">
                     <div class="about-text">
-                        <h3>Our Story</h3>
-                        <p>Founded with a vision to bridge the gap between agricultural expertise and solar energy maintenance, AgriSolar LLC has grown to become a trusted partner in the renewable energy sector. We specialize in vegetation management and maintenance services for solar farms across the region.</p>
-                        
-                        <h3>Our Mission</h3>
-                        <p>To provide professional, reliable, and environmentally conscious maintenance services that optimize the performance of solar installations while preserving the agricultural value of the land.</p>
-                        
-                        <h3>Professional Excellence</h3>
-                        <p>Our team brings years of experience in both agricultural management and solar farm maintenance. We utilize commercial-grade equipment and follow industry best practices to ensure the highest quality service for our clients.</p>
+                        <p>AgriSolar LLC brings practical land-management experience from a 1,000-acre agricultural operation to the specialized conditions found at solar facilities.</p>
+                        <p>Our work focuses on the ground around solar infrastructure: planned mowing, targeted vegetation management, native planting, erosion-control support, and clear communication with site managers.</p>
+                        <p>Team members hold commercial pesticide licensing for herbicide work performed within label directions and site requirements.</p>
+                        <a class="text-link" href="/about/">Learn more about AgriSolar LLC →</a>
                     </div>
                     <div class="about-image">
-                        <img src="images/about-hero.jpg" alt="AgriSolar LLC team performing professional solar farm vegetation management with specialized equipment" loading="lazy">
-                    </div>
-                </div>
-
-                <div class="values-section">
-                    <h2>Our Core Values</h2>
-                    <div class="values-grid">
-                        <div class="value-item">
-                            <i class="fas fa-leaf"></i>
-                            <h3>Environmental Stewardship</h3>
-                            <p>We prioritize sustainable practices that protect both the solar infrastructure and the natural environment.</p>
-                        </div>
-                        <div class="value-item">
-                            <i class="fas fa-handshake"></i>
-                            <h3>Reliability</h3>
-                            <p>Consistent, dependable service you can count on for all your maintenance needs.</p>
-                        </div>
-                        <div class="value-item">
-                            <i class="fas fa-certificate"></i>
-                            <h3>Quality</h3>
-                            <p>Professional-grade equipment and experienced operators for superior results.</p>
-                        </div>
-                        <div class="value-item">
-                            <i class="fas fa-users"></i>
-                            <h3>Customer Focus</h3>
-                            <p>Dedicated to meeting our clients' needs with responsive, professional service.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="team-section">
-                    <h2>Our Approach</h2>
-                    <div class="approach-grid">
-                        <div class="approach-item">
-                            <h3>Customized Solutions</h3>
-                            <p>We understand that each solar farm has unique needs. Our team develops tailored vegetation management plans that consider your specific site conditions, environmental factors, and operational requirements.</p>
-                        </div>
-                        <div class="approach-item">
-                            <h3>Sustainable Practices</h3>
-                            <p>Our methods focus on long-term sustainability, incorporating native plant species and environmentally friendly maintenance techniques that promote biodiversity while ensuring optimal solar panel performance.</p>
-                        </div>
-                        <div class="approach-item">
-                            <h3>Proactive Maintenance</h3>
-                            <p>Regular monitoring and preventive maintenance help us identify and address potential issues before they impact your solar farm's efficiency, saving you time and resources in the long run.</p>
-                        </div>
-                        <div class="approach-item">
-                            <h3>Quality Assurance</h3>
-                            <p>We maintain high standards through rigorous quality control processes, ensuring consistent and reliable service delivery that meets or exceeds industry standards.</p>
-                        </div>
+                        <img src="images/about-hero.webp" alt="Mowing equipment working between rows at a solar facility" width="1200" height="800" loading="lazy">
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="services" class="services">
+        <section class="services page-section page-section--light" aria-labelledby="services-heading">
             <div class="container">
                 <div class="section-title">
-                    <h2>Our Services</h2>
+                    <h2 id="services-heading">Solar Vegetation Management Services</h2>
+                    <p>Scope is planned around site conditions, access, and the facility manager’s requirements.</p>
                 </div>
-                <div class="services-grid">
-                    <div class="service-card">
-                        <div class="service-image">
-                            <img src="images/john-deere-z994r.jpg" alt="Professional Zero-Turn Mower - John Deere Z994R with 72-inch deck for precise solar farm vegetation management" loading="lazy">
-                        </div>
-                        <div class="service-content">
-                            <h3>Professional Mowing</h3>
-                            <p>Using our commercial-grade John Deere Z994R with a 72-inch deck, we provide efficient and precise mowing services for solar farm vegetation management.</p>
-                        </div>
-                    </div>
-                    <div class="service-card">
-                        <div class="service-image">
-                            <img src="images/SolarFarmMaint.webp" alt="Solar Farm Maintenance - Professional vegetation control and panel maintenance for optimal performance" loading="lazy">
-                        </div>
-                        <div class="service-content">
-                            <h3>Ongoing Maintenance</h3>
-                            <p>Regular maintenance and vegetation control using professional equipment to ensure optimal solar farm performance and accessibility.</p>
-                        </div>
-                    </div>
+                <div class="card-grid">
+                    <article class="content-card">
+                        <i class="fas fa-tractor" aria-hidden="true"></i>
+                        <h3>Commercial Mowing</h3>
+                        <p>Scheduled, corrective, and first-time mowing around panel rows, fence lines, equipment areas, and site perimeters.</p>
+                        <a class="text-link" href="/services/commercial-mowing/">Commercial mowing details →</a>
+                    </article>
+                    <article class="content-card">
+                        <i class="fas fa-seedling" aria-hidden="true"></i>
+                        <h3>Vegetation &amp; Herbicide Management</h3>
+                        <p>Integrated mechanical and targeted chemical planning for invasive, noxious, and hard-to-reach vegetation.</p>
+                        <a class="text-link" href="/services/vegetation-herbicide-management/">Vegetation management details →</a>
+                    </article>
+                    <article class="content-card">
+                        <i class="fas fa-leaf" aria-hidden="true"></i>
+                        <h3>Native Planting</h3>
+                        <p>Native grasses and flowering species, pollinator habitat support, establishment mowing, and soil stabilization.</p>
+                        <a class="text-link" href="/services/native-planting/">Native planting details →</a>
+                    </article>
+                    <article class="content-card">
+                        <i class="fas fa-water" aria-hidden="true"></i>
+                        <h3>Erosion Control</h3>
+                        <p>Bare-soil identification, drainage observations, reseeding when requested, and stabilization support.</p>
+                        <a class="text-link" href="/services/erosion-control/">Erosion control details →</a>
+                    </article>
+                    <article class="content-card">
+                        <i class="fas fa-camera" aria-hidden="true"></i>
+                        <h3>Site Maintenance Reporting</h3>
+                        <p>Site observations, before-and-after photographs, access notes, and communication about vegetation problem areas.</p>
+                        <a class="text-link" href="/services/site-maintenance-reporting/">Reporting details →</a>
+                    </article>
                 </div>
+                <p class="section-action"><a class="btn btn-primary" href="/services/">View All Services</a></p>
             </div>
         </section>
 
-        <section id="why-us" class="why-us">
+        <section class="page-section" aria-labelledby="why-heading">
             <div class="container">
                 <div class="section-title">
-                    <h2>Why Choose AgriSolar LLC?</h2>
+                    <h2 id="why-heading">A Grounded, Site-Specific Approach</h2>
                 </div>
                 <div class="features-grid">
                     <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-building"></i>
-                        </div>
-                        <p>Strong foundation in large-scale land management</p>
+                        <div class="feature-icon"><i class="fas fa-map-marker-alt" aria-hidden="true"></i></div>
+                        <p>Based in Belleville, Illinois</p>
                     </div>
                     <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-leaf"></i>
-                        </div>
-                        <p>Commitment to sustainable practices</p>
+                        <div class="feature-icon"><i class="fas fa-home" aria-hidden="true"></i></div>
+                        <p>Family-operated business</p>
                     </div>
                     <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-solar-panel"></i>
-                        </div>
-                        <p>Professional panel monitoring</p>
+                        <div class="feature-icon"><i class="fas fa-wheat-awn" aria-hidden="true"></i></div>
+                        <p>Experience managing a 1,000-acre agricultural operation</p>
                     </div>
                     <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-certificate"></i>
-                        </div>
-                        <p>Commercial Pesticide License holders</p>
+                        <div class="feature-icon"><i class="fas fa-certificate" aria-hidden="true"></i></div>
+                        <p>Commercial pesticide licensing</p>
                     </div>
                     <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-home"></i>
-                        </div>
-                        <p>Family-operated business values</p>
+                        <div class="feature-icon"><i class="fas fa-comments" aria-hidden="true"></i></div>
+                        <p>Direct communication with site managers</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="equipment-fleet" class="equipment-fleet">
+        <section class="page-section page-section--light" aria-labelledby="quote-heading">
             <div class="container">
                 <div class="section-title">
-                    <h2>Our Equipment Fleet</h2>
+                    <h2 id="quote-heading">Request a Quote</h2>
+                    <p>Share the site basics and the work you need. We’ll use the information to begin the conversation.</p>
                 </div>
-                <div class="fleet-grid">
-                    <div class="fleet-card">
-                        <div class="fleet-image">
-                            <img src="images/Bad Boy Rebel 72 Commercial Zero-Turn Mower.png" alt="Bad Boy Rebel 72 Commercial Zero-Turn Mower" style="width: 350px; height: 250px;">
-                        </div>
-                        <div class="fleet-info">
-                            <h3>Commercial Zero Turn Mower</h3>
-                            <p>72" Professional Cutting Deck</p>
-                            <ul class="fleet-features">
-                                <li><i class="fas fa-check"></i> Professional-grade construction</li>
-                                <li><i class="fas fa-check"></i> High maneuverability</li>
-                                <li><i class="fas fa-check"></i> Optimal for solar field maintenance</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="fleet-card">
-                        <div class="fleet-image">
-                            <img src="images/Vertex S-Series VXS740EKC52400 52 In Stand-On Mower.png" alt="Vertex S-Series VXS740EKC52400 52 In. Stand-On Mower">
-                        </div>
-                        <div class="fleet-info">
-                            <h3>Stand-On Mower</h3>
-                            <p>Efficient and Precise Operation</p>
-                            <ul class="fleet-features">
-                                <li><i class="fas fa-check"></i> Superior visibility</li>
-                                <li><i class="fas fa-check"></i> Precise control</li>
-                                <li><i class="fas fa-check"></i> Compact design</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="fleet-card">
-                        <div class="fleet-image">
-                            <img src="images/96-inch-mower.jpg" alt="96-inch Zero Turn Mower">
-                        </div>
-                        <div class="fleet-info">
-                            <h3>96-inch Zero Turn Mower</h3>
-                            <p>Heavy Duty Equipment for Large-Scale Operations</p>
-                            <ul class="fleet-features">
-                                <li><i class="fas fa-check"></i> 96-inch cutting deck for maximum efficiency</li>
-                                <li><i class="fas fa-check"></i> Professional-grade construction</li>
-                                <li><i class="fas fa-check"></i> Precision cutting technology</li>
-                                <li><i class="fas fa-check"></i> High-performance engine</li>
-                                <li><i class="fas fa-check"></i> Superior maneuverability</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="mowing-gallery" class="mowing-gallery">
-            <div class="container">
-                <div class="section-title">
-                    <h2>Our Mowing Equipment & Services</h2>
-                    <p>Professional-Grade Zero Turn Mowers for Solar Farm Maintenance</p>
-                </div>
-                <div class="gallery-grid">
-                    <div class="gallery-item" style="display: flex; justify-content: center; align-items: center; width: 90%;">
-                        <img src="images/Commercial Zero Turn Slope Mower Pro Z 972 SDL EFI Cub Cadet US.png" alt="Commercial Zero Turn Slope Mower Pro Z 972 SDL EFI Cub Cadet US" style="width: 90%;">
-                        <div class="gallery-overlay">
-                            <h3>Professional Zero Turn Mowers</h3>
-                            <p>Commercial-grade equipment for precision mowing</p>
-                        </div>
-                    </div>
-                    <div class="gallery-item">
-                        <img src="images/SolarFarmMain.webp" alt="Solar Farm Maintenance">
-                        <div class="gallery-overlay">
-                            <h3>Solar Farm Maintenance</h3>
-                            <p>Professional vegetation management for solar installations</p>
-                        </div>
-                    </div>
-                    <div class="gallery-item">
-                        <img src="images/bobcat-zs4000-cn4a4408-20m2.jpeg" alt="Commercial Zero Turn Mower">
-                        <div class="gallery-overlay">
-                            <h3>Commercial Grade Equipment</h3>
-                            <p>72-inch professional mowing deck for large areas</p>
-                        </div>
-                    </div>
-                    <div class="gallery-item">
-                        <img src="https://images.pexels.com/photos/356036/pexels-photo-356036.jpeg" alt="Solar Farm Overview">
-                        <div class="gallery-overlay">
-                            <h3>Solar Farm Management</h3>
-                            <p>Comprehensive vegetation management solutions</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="before-after" class="before-after">
-            <div class="container">
-                <div class="section-title">
-                    <h2>Our Impact</h2>
-                    <p>See the Difference Professional Vegetation Management Makes</p>
-                </div>
-                <div class="comparison-grid">
-                    <div class="comparison-card">
-                        <div class="comparison-images">
-                            <div class="image-container before">
-                                <img src="images/overgrown-solar.jpg" alt="Overgrown solar farm with tall grass and weeds affecting panel efficiency">
-                                <div class="image-label">Before</div>
-                            </div>
-                            <div class="image-container after">
-                                <img src="images/maintained-solar.jpg" alt="Well-maintained solar farm with properly mowed grass">
-                                <div class="image-label">After</div>
-                            </div>
-                        </div>
-                        <div class="comparison-text">
-                            <h3>Enhanced Panel Efficiency</h3>
-                            <p>Overgrown vegetation can significantly reduce solar panel efficiency. Our professional maintenance ensures optimal performance.</p>
-                        </div>
-                    </div>
-
-                    <div class="comparison-card">
-                        <div class="comparison-images">
-                            <div class="image-container before">
-                                <img src="images/unmaintained-ground.jpg" alt="Solar farm with poor ground maintenance and access issues">
-                                <div class="image-label">Before</div>
-                            </div>
-                            <div class="image-container after">
-                                <img src="images/clean-ground.jpg" alt="Solar farm with clean, well-maintained grounds">
-                                <div class="image-label">After</div>
-                            </div>
-                        </div>
-                        <div class="comparison-text">
-                            <h3>Improved Site Access</h3>
-                            <p>Well-maintained grounds provide better access for maintenance and inspections, ensuring long-term site health.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="testimonials" class="testimonials">
-            <div class="container">
-                <div class="section-title">
-                    <h2>Client Testimonials</h2>
-                    <p>What Our Clients Say About Our Services</p>
-                </div>
-                <div class="testimonials-grid">
-                    <div class="testimonial-card">
-                        <div class="testimonial-content">
-                            <i class="fas fa-quote-left"></i>
-                            <p>"Partnering with AgriSolar LLC has been a game-changer for our solar farm. Their meticulous mowing and vegetation management have significantly improved our panels' efficiency. The team's professionalism and attention to detail are truly commendable."</p>
-                        </div>
-                        <div class="testimonial-author">
-                            <div class="author-info">
-                                <i class="fas fa-solar-panel"></i>
-                                <h4>Solar Farm Operator</h4>
-                                <p>Efficiency Enhancement Project</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="testimonial-card">
-                        <div class="testimonial-content">
-                            <i class="fas fa-quote-left"></i>
-                            <p>"We were facing challenges with overgrown vegetation affecting our solar panels' performance. AgriSolar LLC's expertise in solar farm maintenance not only resolved these issues but also implemented sustainable practices that have enhanced our site's overall health. Their commitment to excellence is evident in every aspect of their work."</p>
-                        </div>
-                        <div class="testimonial-author">
-                            <div class="author-info">
-                                <i class="fas fa-leaf"></i>
-                                <h4>Facility Manager</h4>
-                                <p>Vegetation Management Success</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="testimonial-card">
-                        <div class="testimonial-content">
-                            <i class="fas fa-quote-left"></i>
-                            <p>"AgriSolar LLC's comprehensive vegetation management services have been instrumental in maintaining the efficiency and longevity of our solar energy facility. Their proactive approach and knowledgeable team have made a noticeable difference in our operations. We highly recommend their services to any solar farm operator seeking reliable and sustainable solutions."</p>
-                        </div>
-                        <div class="testimonial-author">
-                            <div class="author-info">
-                                <i class="fas fa-sun"></i>
-                                <h4>Operations Director</h4>
-                                <p>Long-term Maintenance Partner</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="contact" class="contact">
-            <div class="container">
-                <div class="section-title">
-                    <h2>Contact Us</h2>
-                    <p>Get in Touch for Professional Solar Farm Management</p>
-                </div>
-                <div class="contact-grid">
-                    <div class="contact-info">
+                <div class="contact-layout">
+                    <div class="contact-details">
                         <div class="info-card">
-                            <i class="fas fa-phone"></i>
-                            <h3>Call Us</h3>
-                            <p>(618) 539-2098</p>
+                            <i class="fas fa-phone" aria-hidden="true"></i>
+                            <h3>Call</h3>
+                            <p><a href="tel:+16185392098">(618) 539-2098</a></p>
                         </div>
                         <div class="info-card">
-                            <i class="fas fa-envelope"></i>
-                            <h3>Email Us</h3>
-                            <p>info@agrisolarllc.com</p>
+                            <i class="fas fa-envelope" aria-hidden="true"></i>
+                            <h3>Email</h3>
+                            <p><a href="mailto:info@agrisolarllc.com">info@agrisolarllc.com</a></p>
                         </div>
                         <div class="info-card">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <h3>Location</h3>
+                            <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                            <h3>Office</h3>
                             <p>Belleville, Illinois</p>
                         </div>
                     </div>
                     <div class="contact-form">
-                        <form id="contactForm" method="post" onsubmit="return false;">
-                            <div class="form-group">
-                                <label for="name">Name *</label>
-                                <input type="text" id="name" name="name" required>
+                        <form class="quote-form" novalidate>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="home-name">Name *</label>
+                                    <input id="home-name" name="name" type="text" maxlength="100" autocomplete="name" aria-describedby="home-name-error" required>
+                                    <span class="field-error" id="home-name-error"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="home-company">Company</label>
+                                    <input id="home-company" name="company" type="text" maxlength="120" autocomplete="organization" aria-describedby="home-company-error">
+                                    <span class="field-error" id="home-company-error"></span>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="home-email">Email *</label>
+                                    <input id="home-email" name="email" type="email" maxlength="254" autocomplete="email" aria-describedby="home-email-error" required>
+                                    <span class="field-error" id="home-email-error"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="home-phone">Phone</label>
+                                    <input id="home-phone" name="phone" type="tel" maxlength="30" autocomplete="tel" aria-describedby="home-phone-error">
+                                    <span class="field-error" id="home-phone-error"></span>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="home-location">Solar-site location *</label>
+                                    <input id="home-location" name="siteLocation" type="text" maxlength="160" aria-describedby="home-location-error" required>
+                                    <span class="field-error" id="home-location-error"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="home-acreage">Approximate acreage</label>
+                                    <input id="home-acreage" name="acreage" type="text" maxlength="50" inputmode="decimal" aria-describedby="home-acreage-error">
+                                    <span class="field-error" id="home-acreage-error"></span>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="home-service">Service requested *</label>
+                                    <select id="home-service" name="service" aria-describedby="home-service-error" required>
+                                        <option value="">Select a service</option>
+                                        <option>Commercial Mowing</option>
+                                        <option>Vegetation &amp; Herbicide Management</option>
+                                        <option>Native Planting</option>
+                                        <option>Erosion Control</option>
+                                        <option>Site Maintenance &amp; Reporting</option>
+                                        <option>Multiple Services</option>
+                                        <option>Other</option>
+                                    </select>
+                                    <span class="field-error" id="home-service-error"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="home-schedule">Desired start date or schedule</label>
+                                    <input id="home-schedule" name="schedule" type="text" maxlength="100" aria-describedby="home-schedule-error" placeholder="For example: Spring 2027">
+                                    <span class="field-error" id="home-schedule-error"></span>
+                                </div>
                             </div>
                             <div class="form-group">
-                                <label for="email">Email *</label>
-                                <input type="email" id="email" name="email" required>
+                                <label for="home-message">Project description *</label>
+                                <textarea id="home-message" name="message" maxlength="2000" aria-describedby="home-message-hint home-message-error" required></textarea>
+                                <span class="field-hint" id="home-message-hint">Include current site conditions, access considerations, or known problem areas.</span>
+                                <span class="field-error" id="home-message-error"></span>
                             </div>
                             <div class="form-group">
-                                <label for="phone">Phone</label>
-                                <input type="tel" id="phone" name="phone">
+                                <label for="home-attachments">Attachments</label>
+                                <input class="attachment-input" id="home-attachments" name="attachments" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp" aria-describedby="home-attachments-hint home-attachments-error" multiple>
+                                <span class="field-hint" id="home-attachments-hint">Optional: add up to 10 PDF, JPG, PNG, or WebP files, no more than 5 MB each or 15 MB combined.</span>
+                                <span class="field-error" id="home-attachments-error"></span>
                             </div>
-                            <div class="form-group">
-                                <label for="service">Service Needed *</label>
-                                <select id="service" name="service" required>
-                                    <option value="">Select a Service</option>
-                                    <option value="Vegetation Management">Vegetation Management</option>
-                                    <option value="Native Plant Seeding">Native Plant Seeding</option>
-                                    <option value="Erosion Control">Erosion Control</option>
-                                    <option value="Other">Other</option>
-                                </select>
+                            <div class="website-check" aria-hidden="true">
+                                <label for="home-website">Leave this field empty</label>
+                                <input class="website-field" id="home-website" name="website" type="text" tabindex="-1" autocomplete="off">
                             </div>
-                            <div class="form-group">
-                                <label for="message">Message *</label>
-                                <textarea id="message" name="message" rows="5" required></textarea>
+                            <p class="privacy-note">By submitting this form, you agree that AgriSolar LLC may use the information to respond to your request. See our <a href="/privacy/">Privacy Policy</a>.</p>
+                            <div class="form-status" role="status" aria-live="polite" hidden></div>
+                            <div class="form-recovery" hidden>
+                                Email <a href="mailto:info@agrisolarllc.com">info@agrisolarllc.com</a> or call <a href="tel:+16185392098">(618) 539-2098</a>.
                             </div>
-                            <button type="submit">Send Message</button>
+                            <button type="submit">Send Quote Request</button>
                         </form>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="service-areas" class="service-areas">
-            <div class="container">
-                <div class="section-title">
-                    <h2>Our Service Areas</h2>
-                    <p>Serving the Greater St. Louis Metropolitan Area</p>
-                </div>
-                <div class="areas-grid">
-                    <div class="area-item">
-                        <i class="fas fa-map-marked-alt"></i>
-                        <h3>Illinois</h3>
-                        <ul>
-                            <li>Belleville</li>
-                            <li>Waterloo</li>
-                            <li>Columbia</li>
-                            <li>Southern Illinois</li>
-                        </ul>
-                    </div>
-                    <div class="area-item">
-                        <i class="fas fa-map-marked-alt"></i>
-                        <h3>Missouri</h3>
-                        <ul>
-                            <li>St. Louis</li>
-                            <li>Greater St. Louis Area</li>
-                        </ul>
                     </div>
                 </div>
             </div>
         </section>
     </main>
 
-    <footer>
+    <footer class="footer">
         <div class="container">
-            <div class="footer-content">
-                <p>&copy; 2024 AgriSolar LLC. All rights reserved.</p>
+            <div class="footer-grid">
+                <div>
+                    <h2>AgriSolar LLC</h2>
+                    <p>Solar-farm vegetation management from Belleville, Illinois.</p>
+                </div>
+                <div>
+                    <h3>Contact</h3>
+                    <p><a href="tel:+16185392098">(618) 539-2098</a><br><a href="mailto:info@agrisolarllc.com">info@agrisolarllc.com</a></p>
+                </div>
+                <div>
+                    <h3>Explore</h3>
+                    <nav class="footer-links" aria-label="Footer navigation">
+                        <a href="/services/">Services</a>
+                        <a href="/about/">About</a>
+                        <a href="/faq/">FAQ</a>
+                        <a href="/contact/">Request a Quote</a>
+                        <a href="/privacy/">Privacy</a>
+                    </nav>
+                </div>
             </div>
+            <p class="footer-bottom">&copy; <span data-current-year></span> AgriSolar LLC. All rights reserved.</p>
         </div>
     </footer>
 
-    <!-- Firebase Scripts -->
     <script src="/__/firebase/9.6.10/firebase-app-compat.js"></script>
     <script src="/__/firebase/9.6.10/firebase-database-compat.js"></script>
+    <script src="/__/firebase/9.6.10/firebase-storage-compat.js"></script>
     <script src="/__/firebase/init.js"></script>
-    
-    <!-- Form Scripts -->
-    <script defer src="js/form-handler.js"></script>
+    <script src="/js/main.js" defer></script>
+    <script src="/js/form-handler.js?v=20260726-attachments" defer></script>
 </body>
 </html>

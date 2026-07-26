@@ -1,0 +1,355 @@
+You are maintaining the AgriSolar LLC website.
+
+Repository:
+https://github.com/AJR1073/agrisolar-website
+
+Firebase project:
+agrisolar-website
+
+Firebase development URLs:
+https://agrisolar-website.web.app/
+https://agrisolar-website.firebaseapp.com/
+
+Current public Namecheap website:
+https://agrisolarllc.com/
+
+PRIMARY OBJECTIVE
+
+Improve the AgriSolar website’s content, page structure, contact workflow, security, SEO, accessibility, and Firebase deployment process while preserving the restored Firebase website’s current visual appearance.
+
+The previous redesign was rejected because it changed the look and feel too much. Do not redesign the site.
+
+NON-NEGOTIABLE REQUIREMENTS
+
+1. Preserve the existing Firebase site’s:
+
+   * Color palette
+   * Logo treatment
+   * Fonts
+   * Hero appearance
+   * Header and navigation styling
+   * Buttons
+   * Card appearance
+   * Image style
+   * Spacing rhythm
+   * Desktop and mobile character
+
+2. Use https://agrisolarllc.com/ as a content and business reference, but do not modify, deploy to, log into, or otherwise touch:
+
+   * Namecheap
+   * cPanel
+   * Site Maker
+   * Namecheap email
+   * DNS records
+   * MX records
+   * Domain registration
+   * FTP accounts
+
+3. Never invent:
+
+   * Customers
+   * Testimonials
+   * Project sizes
+   * Equipment ownership
+   * Safety certifications
+   * Insurance coverage
+   * Licenses
+   * Performance improvements
+   * Years of experience
+   * Service-area claims
+
+4. If a business fact is uncertain, add it to a “Business facts requiring confirmation” list instead of publishing it.
+
+5. Do not merge into main or deploy to the Firebase live channel until the owner has reviewed a Firebase preview URL and explicitly approved it.
+
+VERIFIED BUSINESS INFORMATION
+
+* Business name: AgriSolar LLC
+* Location: Belleville, Illinois
+* Phone: (618) 539-2098
+* Public email: [info@agrisolarllc.com](mailto:info@agrisolarllc.com)
+* Authenticated SMTP sender: [aaron@agrisolarllc.com](mailto:aaron@agrisolarllc.com)
+* Administrative Firebase account: [aaronreifschneider@outlook.com](mailto:aaronreifschneider@outlook.com)
+* Family-operated Illinois business
+* Team has experience managing a 1,000-acre agricultural operation
+* Team holds commercial pesticide licensing
+* Primary work includes solar-farm mowing, vegetation control, native planting, erosion control, and ongoing site maintenance
+* Namecheap currently handles agrisolarllc.com email and must remain unchanged
+
+PHASE 1 — BASELINE AND VISUAL LOCK
+
+1. Pull the latest main branch.
+2. Confirm that main contains the restored website and the revert commit.
+3. Create a new branch named:
+   improve/preserve-agrisolar-style
+4. Capture desktop and mobile screenshots of:
+
+   * Firebase homepage
+   * Public Namecheap homepage
+   * Existing About page
+   * Existing contact form
+5. Document the existing design tokens:
+
+   * Colors
+   * Fonts
+   * Button styles
+   * Widths
+   * Breakpoints
+   * Header/footer construction
+   * Common section spacing
+6. Do not change those design tokens without owner approval.
+
+PHASE 2 — CONTENT CORRECTIONS
+
+Correct the existing Firebase About page:
+
+* Replace every “AgriSolar Solutions” reference with “AgriSolar LLC.”
+* Replace [info@agrisolarsolutions.com](mailto:info@agrisolarsolutions.com) with [info@agrisolarllc.com](mailto:info@agrisolarllc.com).
+* Replace every placeholder phone number with (618) 539-2098.
+* Fix navigation and CTA links so they work from standalone pages.
+* Update the copyright automatically.
+* Remove unsupported claims.
+* Retain the current visual styling.
+
+Review the public Namecheap pages for useful content:
+
+* /
+* /Solar-Vegetation-Management/
+* /About-us/
+* /Products/
+* /Contact-Us/
+* /Testimonials/
+* /Resources/
+* /Solutions/
+* /Before-and-After/
+
+Do not copy contradictory or weak content. In particular:
+
+* Do not repeat the statement that mechanical mowing is unsuitable for large solar sites.
+* Do not broadly characterize all herbicide application as environmentally harmful.
+* Remove the unsourced 33% annual-growth statistic.
+* Do not publish anonymous testimonials as verified customer reviews.
+* Do not claim electrical solar-panel monitoring, electrical repair, or panel maintenance services unless confirmed.
+* Move honey content to a secondary “Honey” or “Our Farm” page rather than keeping “Products” in the primary commercial-services navigation.
+
+PHASE 3 — PAGE STRUCTURE
+
+Create the following static pages using the existing header, footer, typography, colors, components, and image treatment:
+
+* /services/
+* /services/commercial-mowing/
+* /services/vegetation-herbicide-management/
+* /services/native-planting/
+* /services/erosion-control/
+* /services/site-maintenance-reporting/
+* /about/
+* /service-area/
+* /projects/
+* /faq/
+* /contact/
+* /privacy/
+* /404.html
+
+Required topics:
+
+Commercial Mowing:
+
+* Utility-scale solar mowing
+* Under-panel and perimeter access
+* Fence lines and equipment areas
+* Scheduled and corrective mowing
+* Avoiding damage around solar infrastructure
+* Add First Time Mowint for Overgrown Sites
+
+Vegetation and Herbicide Management:
+
+* Licensed application
+* Targeted treatment
+* Invasive and noxious weeds
+* Fence-line and equipment-pad control
+* Integrated mechanical and chemical planning
+* Compliance with labels and site requirements
+* Add Herbisite Certified Operators and Certified Applicator
+
+Native Planting:
+
+* Native grasses and flowering species
+* Pollinator habitat
+* Establishment mowing
+* Soil stabilization
+
+Erosion Control:
+
+* Bare-soil identification
+* Washout and drainage observations
+* Reseeding if requested
+* Temporary and permanent stabilization
+* Reporting problems outside AgriSolar’s contracted scope
+
+Maintenance Reporting:
+
+* Site observations
+* Before/after photographs
+* Access-condition reporting
+* Vegetation problem areas
+* Communication with site managers
+* Do not claim electrical inspection or engineering services
+
+Every page must have a clear Request a Quote CTA.
+
+PHASE 4 — CONTACT AND EMAIL
+
+Expand the quote form to collect:
+
+* Name
+* Company
+* Email
+* Phone
+* Solar-site location
+* Approximate acreage
+* Service requested
+* Desired start date or schedule
+* Project description
+
+Add:
+
+* Accessible inline validation
+* Accessible success and failure messages
+* Honeypot field
+* Length limits
+* Duplicate-submission prevention
+* Privacy Policy link
+* Loading state
+* Recovery if Firebase fails
+
+Continue showing [info@agrisolarllc.com](mailto:info@agrisolarllc.com) publicly.
+
+In the administrator reply interface, display the actual authenticated sender:
+[aaron@agrisolarllc.com](mailto:aaron@agrisolarllc.com)or ryan@agrisolarllc.com](mailto:ryan@agrisolarllc.com)
+
+Do not change Namecheap email, SMTP hosting, DNS, or MX records.
+
+FIREBASE BACKEND FIXES
+
+1. Correct the Realtime Database v2 trigger:
+   const submission = event.data.val();
+
+2. Change database rules so:
+
+   * The public can create a new contact submission.
+   * The public cannot read submissions.
+   * The public cannot overwrite an existing submission.
+   * The public cannot delete a submission.
+   * Only the approved administrator can read or update submissions.
+   * Field types and maximum lengths are validated.
+   * Rules are tested with the Firebase Emulator Suite before deployment.
+
+3. Remove the unauthenticated testEmailSending HTTP endpoint.
+
+4. Reduce SMTP/debug logging and never log:
+
+   * Passwords
+   * Tokens
+   * Full submissions
+   * Credential configuration
+
+5. Keep NAMECHEAP_PASSWORD in Firebase Secrets. Never commit it.
+
+6. Send notification email to the configured AgriSolar recipient and set replyTo to the visitor’s validated email.
+
+7. Upgrade the Functions runtime from Node 18 to Node 22 only after updating compatible dependencies and passing emulator tests.
+
+8. Do not deploy database rules or Functions automatically. Prepare them in the pull request and request separate approval for each backend deployment.
+
+FIREBASE HOSTING SECURITY
+
+Update firebase.json so Hosting does not publish:
+
+* functions/**
+* database.rules.json
+* package.json
+* package-lock.json
+* README.md
+* .env files
+* node_modules/**
+* y/**
+* internal documentation
+* test files
+* GitHub configuration
+
+Add a custom 404 page and appropriate security headers.
+
+Because agrisolarllc.com remains the primary Namecheap site, add an X-Robots-Tag noindex/nofollow header to the Firebase development site to prevent duplicate indexing. Document that this must be removed before agrisolarllc.com is moved to Firebase.
+
+SEO AND ACCESSIBILITY
+
+* One H1 per page
+* Unique page title and meta description
+* Correct canonical URL plan
+* ProfessionalService/LocalBusiness structured data using verified facts only
+* Updated sitemap.xml
+* Updated robots.txt
+* Descriptive alt text
+* Visible keyboard focus
+* Keyboard-operable mobile navigation
+* Proper labels and error associations
+* Adequate contrast
+* Reduced-motion support
+* Clickable tel: and mailto: links
+* Optimized local WebP/AVIF images
+* No third-party image hotlinking
+
+FIREBASE PREVIEW WORKFLOW
+
+If .github/workflows/firebase-hosting-pull-request.yml does not exist, create it.
+
+It must:
+
+* Run on pull_request.
+* Check out the pull-request branch.
+* Use FirebaseExtended/action-hosting-deploy@v0.
+* Use secret FIREBASE_SERVICE_ACCOUNT_AGRISOLAR_WEBSITE.
+* Use projectId agrisolar-website.
+* Use the GitHub token for the preview comment.
+* Omit channelId: live so it creates a temporary preview channel.
+* Never deploy a pull request directly to the Firebase live channel.
+
+The existing main-branch workflow may deploy Firebase Hosting after an approved PR is merged.
+
+SAFE DEPLOYMENT PROCEDURE
+
+1. Work only on improve/preserve-agrisolar-style.
+2. Run HTML, CSS, JavaScript, accessibility, link, and Firebase configuration validation.
+3. Run the Firebase emulators for Hosting, Realtime Database, and Functions.
+4. Compare before-and-after screenshots at desktop and mobile sizes.
+5. Confirm that the homepage still looks like the restored baseline.
+6. Commit the changes.
+7. Push the branch.
+8. Open a draft pull request.
+9. Wait for the Firebase preview-channel URL.
+10. Report:
+
+    * Preview URL
+    * Pages added
+    * Content corrected
+    * Visual differences
+    * Tests completed
+    * Unverified business facts
+    * Backend changes that still require approval
+11. Stop and wait for owner approval.
+12. Do not merge the pull request yourself.
+13. Do not deploy to Namecheap.
+14. Do not deploy Functions or database rules without separate explicit approval.
+
+FINAL ACCEPTANCE CRITERIA
+
+* Existing look and feel remains recognizable and substantially unchanged.
+* No invented business claims.
+* Every navigation link works.
+* Every page works on mobile.
+* Contact submissions are protected from overwrite and deletion.
+* Email sender identities are accurate.
+* Firebase secrets are not exposed.
+* No internal/backend source files are publicly hosted.
+* Firebase preview is reviewed before main is changed.
+* Namecheap website and email remain completely untouched.
