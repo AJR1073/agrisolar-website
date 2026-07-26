@@ -7,42 +7,30 @@ const cors = require('cors')({ origin: true });
 // Initialize Firebase Admin
 admin.initializeApp();
 
+const SMTP_HOST = 'agrisolarllc.com';
+const OUTBOUND_EMAIL = 'aaron@agrisolarllc.com';
+const CONTACT_RECIPIENT = 'aaron@agrisolarllc.com';
+const ADMIN_EMAIL = 'aaronreifschneider@outlook.com';
+
 // Create email transporter
 const createTransporter = async () => {
-    console.log('Creating email transporter...');
-    console.log('Using email: aaron@agrisolarllc.com');
-    console.log('Using host: agrisolarllc.com');
-    
-    // Test SMTP config
-    const testConfig = {
-        host: "agrisolarllc.com",
+    const smtpConfig = {
+        host: SMTP_HOST,
         port: 465,
         secure: true,
         auth: {
             type: 'LOGIN',
-            user: "aaron@agrisolarllc.com",
+            user: OUTBOUND_EMAIL,
             pass: process.env.NAMECHEAP_PASSWORD
-        },
-        debug: true,
-        logger: true
+        }
     };
 
     try {
-        console.log('Testing SMTP connection...');
-        const transporter = nodemailer.createTransport(testConfig);
-        
-        // Verify connection configuration
+        const transporter = nodemailer.createTransport(smtpConfig);
         await transporter.verify();
-        console.log('SMTP connection test successful!');
-        
         return transporter;
     } catch (error) {
         console.error('Failed to create transporter:', error);
-        console.error('Error code:', error.code);
-        console.error('Error message:', error.message);
-        if (error.response) {
-            console.error('SMTP Response:', error.response);
-        }
         throw error;
     }
 };
@@ -55,17 +43,21 @@ exports.sendEmailOnNewContactSubmission = onValueCreated({
     secrets: ["NAMECHEAP_PASSWORD"]
 }, async (event) => {
     console.log('Received new contact submission event:', event);
-    const submission = event.data;
+    const submission = event.data.val();
     const submissionId = event.params.submissionId;
 
     const mailOptions = {
-        from: 'aaron@agrisolarllc.com',
-        to: 'aaron@agrisolarllc.com',
+        from: `"AgriSolar website" <${OUTBOUND_EMAIL}>`,
+        to: CONTACT_RECIPIENT,
+        replyTo: submission.email,
         subject: `New Contact Form Submission: ${submission.service}`,
         text: `
 Name: ${submission.name}
+Company: ${submission.company || 'Not provided'}
 Email: ${submission.email}
 Phone: ${submission.phone || 'Not provided'}
+Site location: ${submission.siteLocation || 'Not provided'}
+Approximate acreage: ${submission.acreage ?? 'Not provided'}
 Service: ${submission.service}
 Message: ${submission.message}
 
@@ -129,7 +121,7 @@ exports.sendReply = onRequest({
                 console.log('Successfully verified token for user:', decodedToken.uid, decodedToken.email);
 
                 // Check if the user has admin access
-                if (!decodedToken.email || decodedToken.email !== 'aaronreifschneider@outlook.com') {
+                if (!decodedToken.email || decodedToken.email !== ADMIN_EMAIL) {
                     console.error('User not authorized:', decodedToken.email);
                     res.status(403).json({ error: 'Not authorized to send replies' });
                     return;
@@ -164,8 +156,9 @@ exports.sendReply = onRequest({
 
                     // Send the reply email
                     const mailOptions = {
-                        from: 'aaron@agrisolarllc.com',
+                        from: `"AgriSolar LLC" <${OUTBOUND_EMAIL}>`,
                         to: submission.email,
+                        replyTo: OUTBOUND_EMAIL,
                         subject: subject,
                         text: message
                     };
@@ -210,39 +203,4 @@ exports.sendReply = onRequest({
             res.status(500).json({ error: error.message });
         }
     });
-});
-
-// Test function for email sending
-exports.testEmailSending = onRequest({
-    region: 'us-central1',
-    memory: '256MiB',
-    secrets: ["NAMECHEAP_PASSWORD"]
-}, async (req, res) => {
-    try {
-        console.log('Testing email sending...');
-        const transporter = await createTransporter();
-        
-        const mailOptions = {
-            from: 'aaron@agrisolarllc.com',
-            to: 'aaron@agrisolarllc.com',
-            subject: 'Test Email',
-            text: 'This is a test email to verify the email sending functionality.'
-        };
-        
-        console.log('Sending test email with options:', {
-            from: mailOptions.from,
-            to: mailOptions.to,
-            subject: mailOptions.subject
-        });
-        
-        await transporter.sendMail(mailOptions);
-        console.log('Test email sent successfully');
-        res.json({ success: true });
-    } catch (error) {
-        console.error('Error sending test email:', error);
-        if (error.code === 'EAUTH') {
-            console.error('Authentication failed. Please check email credentials.');
-        }
-        res.status(500).json({ error: error.message });
-    }
 });

@@ -1,16 +1,16 @@
 {
-  /* Visit https://firebase.google.com/docs/database/security to learn more about security rules. */
   "rules": {
     "contact_submissions": {
-      ".write": true,
-      ".read": "auth != null",
+      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".write": false,
       "$submission": {
-        ".validate": "newData.hasChildren(['name', 'email', 'message', 'timestamp']) && newData.child('name').isString() && newData.child('email').isString() && newData.child('message').isString() && newData.child('timestamp').isNumber()"
+        ".write": "(!data.exists() && newData.exists()) || (auth != null && auth.token.email == 'aaronreifschneider@outlook.com')",
+        ".validate": "data.exists() || (newData.hasChildren(['name', 'email', 'service', 'message', 'timestamp']) && newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 100 && newData.child('email').isString() && newData.child('email').val().length > 3 && newData.child('email').val().length <= 160 && newData.child('service').isString() && newData.child('service').val().length > 0 && newData.child('service').val().length <= 100 && newData.child('message').isString() && newData.child('message').val().length >= 10 && newData.child('message').val().length <= 3000 && newData.child('timestamp').isNumber())"
       }
     },
     "email_recipients": {
-      ".read": "auth != null",
-      ".write": "auth != null",
+      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".write": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
       "$recipient": {
         ".validate": "newData.hasChildren(['name', 'email']) && newData.child('name').isString() && newData.child('email').isString()"
       }
