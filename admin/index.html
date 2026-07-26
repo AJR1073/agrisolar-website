@@ -58,6 +58,9 @@
                     </div>
                     <div id="loginError" class="error-message"></div>
                     <button type="submit">Login</button>
+                    <button type="button" id="forgotPasswordBtn" class="forgot-password-btn">
+                        Forgot password?
+                    </button>
                 </form>
             </div>
         </div>
@@ -139,6 +142,16 @@
                     <div class="reply-field">info@agrisolarllc.com</div>
                 </div>
                 <div class="form-group">
+                    <label for="emailTemplate">Template:</label>
+                    <select id="emailTemplate" class="form-control">
+                        <option value="">Select a template...</option>
+                        <option value="general">General Response</option>
+                        <option value="quote">Quote Request</option>
+                        <option value="followup">Follow-up Meeting</option>
+                        <option value="custom">Custom Message</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="replySubject">Subject:</label>
                     <input type="text" id="replySubject" required>
                 </div>
@@ -146,6 +159,10 @@
                     <label for="replyMessage">Message:</label>
                     <textarea id="replyMessage" rows="6" required></textarea>
                 </div>
+                <p class="send-warning">
+                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                    Sending will immediately email this contact through the live AgriSolar mailbox.
+                </p>
                 <div class="form-buttons">
                     <button type="submit" class="action-btn">Send Reply</button>
                     <button type="button" class="action-btn cancel" id="cancelReply">Cancel</button>

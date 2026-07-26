@@ -116,6 +116,28 @@ button[type="submit"]:disabled {
     cursor: not-allowed;
 }
 
+.forgot-password-btn {
+    display: block;
+    margin: 0.9rem auto 0;
+    padding: 0.25rem;
+    border: 0;
+    background: transparent;
+    color: #1a4731;
+    font-size: 0.95rem;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.forgot-password-btn:hover,
+.forgot-password-btn:focus {
+    color: #0f2b1d;
+}
+
+.forgot-password-btn:disabled {
+    color: #777;
+    cursor: wait;
+}
+
 /* Dashboard Styles */
 .dashboard-container {
     padding: 2rem;
@@ -510,6 +532,74 @@ button[type="submit"]:disabled {
     justify-content: flex-end;
     gap: 10px;
     margin-top: 20px;
+}
+
+/* Form Controls */
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    background-color: white;
+    color: #333;
+}
+
+.form-control:focus {
+    border-color: #1a4731;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(26, 71, 49, 0.2);
+}
+
+select.form-control {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1em;
+    padding-right: 2.5rem;
+}
+
+select.form-control::-ms-expand {
+    display: none;
+}
+
+select.form-control option {
+    padding: 0.5rem;
+}
+
+/* Reply Modal Styles */
+.modal .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.modal select.form-control {
+    margin-bottom: 1rem;
+}
+
+.modal textarea.form-control {
+    min-height: 150px;
+    resize: vertical;
+}
+
+.send-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin: 1rem 0 0;
+    padding: 0.75rem;
+    border: 1px solid #e0a800;
+    border-radius: 4px;
+    background: #fff8db;
+    color: #664d03;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.send-warning i {
+    margin-top: 0.15rem;
 }
 
 /* Responsive Design */

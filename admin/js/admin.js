@@ -37,6 +37,45 @@ async function sendReply(data) {
     }
 }
 
+// Email templates
+const emailTemplates = {
+    general: {
+        subject: "Thank you for contacting AgriSolar LLC",
+        message: `Dear [Name],
+
+Thank you for reaching out to AgriSolar LLC. We have received your message and appreciate your interest in our services.
+
+We will review your inquiry and get back to you with more detailed information shortly.
+
+Best regards,
+AgriSolar LLC Team`
+    },
+    quote: {
+        subject: "Your Quote Request - AgriSolar LLC",
+        message: `Dear [Name],
+
+Thank you for requesting a quote from AgriSolar LLC. We're excited to help you with your solar energy needs.
+
+To provide you with an accurate quote, we would like to schedule a brief consultation to discuss your specific requirements in detail. Please let us know what time works best for you in the next few days.
+
+Best regards,
+AgriSolar LLC Team`
+    },
+    followup: {
+        subject: "Follow-up Meeting - AgriSolar LLC",
+        message: `Dear [Name],
+
+Thank you for your interest in AgriSolar LLC's services. We would like to schedule a follow-up meeting to discuss your project in more detail.
+
+Please let us know your availability for a meeting in the coming days. We can conduct this either virtually or in person, based on your preference.
+
+Looking forward to speaking with you.
+
+Best regards,
+AgriSolar LLC Team`
+    }
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize Firebase services
     auth = firebase.auth();
@@ -49,12 +88,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
+    const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
     const submissionsList = document.getElementById('submissionsList');
     const recipientsList = document.getElementById('recipientsList');
     const addRecipientForm = document.getElementById('addRecipientForm');
     const replyModal = document.getElementById('replyModal');
     const replyForm = document.getElementById('replyForm');
     const replyToSubmissionId = document.getElementById('replyToSubmissionId');
+    const replyToEmail = document.getElementById('replyToEmail');
     const replySubject = document.getElementById('replySubject');
     const replyMessage = document.getElementById('replyMessage');
     const closeModal = document.querySelector('.close');
@@ -65,6 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabContents = document.querySelectorAll('.tab-content');
     const statusFilter = document.getElementById('statusFilter');
     const searchInput = document.getElementById('searchInput');
+    const emailTemplateSelect = document.getElementById('emailTemplate');
 
     // Auth state observer
     auth.onAuthStateChanged(async (user) => {
@@ -121,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Login form handler
     loginForm.onsubmit = async (e) => {
         e.preventDefault();
-        const email = emailInput.value;
+        const email = emailInput.value.trim();
         const password = passwordInput.value;
 
         try {
@@ -132,6 +174,32 @@ document.addEventListener('DOMContentLoaded', function() {
             showMessage(error.message, 'error');
         }
     };
+
+    // Password reset handler
+    forgotPasswordBtn.addEventListener('click', async () => {
+        const email = emailInput.value.trim();
+
+        if (!email) {
+            showMessage('Enter your admin email address first.', 'error');
+            emailInput.focus();
+            return;
+        }
+
+        const originalText = forgotPasswordBtn.textContent;
+        forgotPasswordBtn.textContent = 'Sending reset email...';
+        forgotPasswordBtn.disabled = true;
+
+        try {
+            await auth.sendPasswordResetEmail(email);
+            showMessage('Password reset email sent. Check your inbox and spam folder.', 'success');
+        } catch (error) {
+            console.error('Password reset error:', error);
+            showMessage(error.message, 'error');
+        } finally {
+            forgotPasswordBtn.textContent = originalText;
+            forgotPasswordBtn.disabled = false;
+        }
+    });
 
     // Sign out handler
     if (signOutBtn) {
@@ -246,75 +314,112 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
+    let currentSubmission = null;
+
+    function closeReplyModal() {
+        replyModal.style.display = 'none';
+        replyForm.reset();
+        replyToSubmissionId.value = '';
+        replyToEmail.textContent = '';
+        currentSubmission = null;
+    }
+
+    closeModal.addEventListener('click', closeReplyModal);
+    cancelReply.addEventListener('click', closeReplyModal);
+
+    window.addEventListener('click', function(event) {
+        if (event.target === replyModal) {
+            closeReplyModal();
+        }
+    });
+
     // Function to show reply modal
-    window.showReplyModal = function(submissionId, email) {
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2>Reply to ${email}</h2>
-                <form id="replyForm">
-                    <input type="hidden" id="replyToSubmissionId" value="${submissionId}">
-                    <div class="form-group">
-                        <label for="replySubject">Subject:</label>
-                        <input type="text" id="replySubject" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="replyMessage">Message:</label>
-                        <textarea id="replyMessage" required></textarea>
-                    </div>
-                    <button type="submit">Send Reply</button>
-                </form>
-            </div>
-        `;
+    window.showReplyModal = async function(submissionId, email) {
+        try {
+            const snapshot = await database.ref(`contact_submissions/${submissionId}`).once('value');
+            const submission = snapshot.val();
 
-        document.body.appendChild(modal);
-        modal.style.display = 'block';
+            if (submission) {
+                currentSubmission = submission;
+                replyModal.style.display = 'block';
+                replyToSubmissionId.value = submissionId;
+                document.getElementById('replyToEmail').textContent = email;
 
-        const form = modal.querySelector('#replyForm');
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const closeBtn = modal.querySelector('.close');
-
-        closeBtn.onclick = function() {
-            modal.style.display = 'none';
-            modal.remove();
-        };
-
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = 'none';
-                modal.remove();
+                // Reset form and template selection
+                replyForm.reset();
+                emailTemplateSelect.value = '';
+                replySubject.value = '';
+                replyMessage.value = '';
             }
-        };
+        } catch (error) {
+            console.error('Error loading submission:', error);
+            showMessage('Error loading submission details', 'error');
+        }
+    };
 
-        form.onsubmit = async function(e) {
-            e.preventDefault();
-            submitBtn.textContent = 'Sending...';
-            submitBtn.disabled = true;
-            
-            try {
-                const result = await sendReply({
-                    submissionId: submissionId,
-                    subject: form.querySelector('#replySubject').value,
-                    message: form.querySelector('#replyMessage').value
-                });
+    // Add template selection handler
+    if (emailTemplateSelect) {
+        emailTemplateSelect.addEventListener('change', function() {
+            const selectedTemplate = this.value;
+            if (selectedTemplate && selectedTemplate !== 'custom') {
+                const template = emailTemplates[selectedTemplate];
+                const submission = currentSubmission;
 
-                if (result.success) {
-                    showMessage('Reply sent successfully!', 'success');
-                    modal.remove();
-                    loadSubmissions(); // Refresh the submissions list
-                } else {
-                    throw new Error('Failed to send reply');
+                if (template) {
+                    replySubject.value = template.subject;
+                    let message = template.message;
+
+                    // Replace placeholders with actual values
+                    if (submission) {
+                        message = message.replace('[Name]', submission.name);
+                    }
+
+                    replyMessage.value = message;
                 }
-            } catch (error) {
-                console.error('Error sending reply:', error);
-                showMessage(error.message || 'Failed to send reply. Please try again.', 'error');
-            } finally {
-                submitBtn.textContent = 'Send Reply';
-                submitBtn.disabled = false;
+            } else if (selectedTemplate === 'custom') {
+                replySubject.value = '';
+                replyMessage.value = '';
             }
-        };
+        });
+    }
+
+    // Update reply form handler
+    replyForm.onsubmit = async function(e) {
+        e.preventDefault();
+
+        const recipientEmail = replyToEmail.textContent.trim();
+        const confirmed = window.confirm(
+            `Send this email now to ${recipientEmail}? This will use the live AgriSolar mailbox.`
+        );
+        if (!confirmed) {
+            return;
+        }
+
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.textContent = 'Sending...';
+        submitBtn.disabled = true;
+
+        try {
+            const result = await sendReply({
+                submissionId: replyToSubmissionId.value,
+                subject: replySubject.value,
+                message: replyMessage.value
+            });
+
+            if (result.success) {
+                showMessage('Reply sent successfully!', 'success');
+                closeReplyModal();
+                loadSubmissions(); // Refresh the submissions list
+            } else {
+                throw new Error('Failed to send reply');
+            }
+        } catch (error) {
+            console.error('Error sending reply:', error);
+            showMessage(error.message || 'Failed to send reply. Please try again.', 'error');
+        } finally {
+            submitBtn.textContent = 'Send Reply';
+            submitBtn.disabled = false;
+        }
     };
 });
 
