@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "AgriSolar LLC Website",
   "scripts": {
-    "build": "mkdir -p y && cp -r css js images gallery index.html form-submitted.html y/",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npm run validate",
+    "validate": "node --check js/main.js && node --check js/form-handler.js && node --check functions/index.js",
+    "test": "npm run validate"
   },
   "dependencies": {
     "firebase": "^9.23.0"

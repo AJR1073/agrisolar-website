@@ -1,102 +1,86 @@
-// Get form element
-const form = document.getElementById('contactForm');
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('contactForm');
+    const status = document.getElementById('formStatus');
 
-if (form) {
-    console.log('Form found, attaching handler');
-    
-    form.onsubmit = function(e) {
-        e.preventDefault();
-        console.log('Form submitted');
-        
-        // Get values directly from form fields
-        const nameField = document.getElementById('name');
-        const emailField = document.getElementById('email');
-        const phoneField = document.getElementById('phone');
-        const serviceField = document.getElementById('service');
-        const messageField = document.getElementById('message');
-        
-        console.log('Form fields found:', {
-            name: nameField,
-            email: emailField,
-            phone: phoneField,
-            service: serviceField,
-            message: messageField
+    if (!form || !status) return;
+
+    const setStatus = (message, type = '') => {
+        status.textContent = message;
+        status.className = `form-status${type ? ` is-${type}` : ''}`;
+    };
+
+    const validate = () => {
+        let firstInvalid = null;
+
+        form.querySelectorAll('[required]').forEach((field) => {
+            field.setAttribute('aria-invalid', String(!field.validity.valid));
+            if (!field.validity.valid && !firstInvalid) firstInvalid = field;
         });
-        
-        // Get values
-        const name = nameField ? nameField.value.trim() : '';
-        const email = emailField ? emailField.value.trim() : '';
-        const phone = phoneField ? phoneField.value.trim() : '';
-        const service = serviceField ? serviceField.value.trim() : '';
-        const message = messageField ? messageField.value.trim() : '';
-        
-        console.log('Form values:', {
-            name,
-            email,
-            phone,
-            service,
-            message
-        });
-        
-        // Validate required fields
-        if (!name || !email || !service || !message) {
-            const missing = [];
-            if (!name) missing.push('Name');
-            if (!email) missing.push('Email');
-            if (!service) missing.push('Service');
-            if (!message) missing.push('Message');
-            
-            alert('Please fill in all required fields: ' + missing.join(', '));
+
+        if (firstInvalid) {
+            firstInvalid.focus();
+            setStatus('Please complete the required fields before sending.', 'error');
             return false;
         }
-        
-        // Create submission data
-        const data = {
-            name,
-            email,
-            phone: phone || 'Not provided',
-            service,
-            message,
+
+        return true;
+    };
+
+    form.addEventListener('input', (event) => {
+        if (event.target.matches('[aria-invalid="true"]') && event.target.validity.valid) {
+            event.target.setAttribute('aria-invalid', 'false');
+        }
+    });
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        setStatus('');
+
+        if (!validate()) return;
+
+        const honeypot = form.elements.website?.value.trim();
+        if (honeypot) {
+            form.reset();
+            setStatus('Thank you. Your request has been received.', 'success');
+            return;
+        }
+
+        if (typeof firebase === 'undefined' || !firebase.database) {
+            setStatus('The quote form is temporarily unavailable. Please call (618) 539-2098 or email info@agrisolarllc.com.', 'error');
+            return;
+        }
+
+        const submitButton = form.querySelector('button[type="submit"]');
+        const formData = new FormData(form);
+        const submission = {
+            name: formData.get('name').trim(),
+            company: formData.get('company').trim(),
+            email: formData.get('email').trim(),
+            phone: formData.get('phone').trim() || 'Not provided',
+            siteLocation: formData.get('siteLocation').trim(),
+            acreage: formData.get('acreage') ? Number(formData.get('acreage')) : null,
+            service: formData.get('service').trim(),
+            message: formData.get('message').trim(),
             timestamp: firebase.database.ServerValue.TIMESTAMP,
             status: 'new',
-            viewed: false
+            viewed: false,
+            source: 'website-quote-form'
         };
-        
-        console.log('Data to save:', data);
-        
-        // Save to Firebase
-        const submitButton = form.querySelector('button[type="submit"]');
-        const originalButtonText = submitButton.textContent;
-        submitButton.textContent = 'Sending...';
+
         submitButton.disabled = true;
-        
+        submitButton.textContent = 'Sending…';
+        setStatus('Sending your request…');
+
         try {
-            const db = firebase.database();
-            const newSubmissionRef = db.ref('contact_submissions').push();
-            
-            newSubmissionRef.set(data)
-                .then(() => {
-                    console.log('Saved successfully');
-                    alert('Thank you for your message! We will get back to you soon.');
-                    form.reset();
-                })
-                .catch((error) => {
-                    console.error('Save error:', error);
-                    alert('There was an error sending your message. Please try again.');
-                })
-                .finally(() => {
-                    submitButton.textContent = originalButtonText;
-                    submitButton.disabled = false;
-                });
+            await firebase.database().ref('contact_submissions').push(submission);
+            form.reset();
+            setStatus('Thank you. Your quote request was sent successfully. We’ll follow up soon.', 'success');
         } catch (error) {
-            console.error('Firebase error:', error);
-            alert('There was an error sending your message. Please try again.');
-            submitButton.textContent = originalButtonText;
+            console.error('Contact submission failed:', error);
+            setStatus('We could not send the form. Please call (618) 539-2098 or email info@agrisolarllc.com.', 'error');
+        } finally {
             submitButton.disabled = false;
+            submitButton.textContent = 'Send quote request';
         }
-        
-        return false;
-    };
-} else {
-    console.error('Contact form not found!');
-}
+    });
+});
