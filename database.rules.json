@@ -71,6 +71,246 @@
         }
       }
     },
+    "companies": {
+      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      "$company": {
+        ".write": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com' && newData.exists()",
+        ".validate": "newData.hasChildren(['name', 'createdAt', 'updatedAt', 'administratorUid']) && (!data.exists() || newData.child('createdAt').val() == data.child('createdAt').val()) && newData.child('administratorUid').val() == auth.uid",
+        "name": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 60000"
+        },
+        "updatedAt": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 60000"
+        },
+        "administratorUid": {
+          ".validate": "newData.isString() && newData.val() == auth.uid"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "solar_sites": {
+      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      "$site": {
+        ".write": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com' && newData.exists()",
+        ".validate": "newData.hasChildren(['companyId', 'name', 'location', 'acreage', 'targetVegetationHeight', 'active', 'createdAt', 'updatedAt', 'administratorUid']) && (!data.exists() || newData.child('createdAt').val() == data.child('createdAt').val()) && newData.child('administratorUid').val() == auth.uid",
+        "companyId": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+        },
+        "name": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120"
+        },
+        "location": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 180"
+        },
+        "acreage": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 100000"
+        },
+        "targetVegetationHeight": {
+          ".validate": "newData.isString() && newData.val().length <= 60"
+        },
+        "active": {
+          ".validate": "newData.isBoolean()"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 60000"
+        },
+        "updatedAt": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 60000"
+        },
+        "administratorUid": {
+          ".validate": "newData.isString() && newData.val() == auth.uid"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "service_seasons": {
+      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".indexOn": [
+        "serviceYear",
+        "solarSiteId",
+        "contractStatus",
+        "renewalStatus"
+      ],
+      "$season": {
+        ".write": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com' && newData.exists()",
+        ".validate": "newData.hasChildren(['serviceYear', 'companyId', 'solarSiteId', 'plannedMowingCycles', 'plannedOtherServices', 'contractAcreage', 'targetVegetationHeight', 'contractStatus', 'renewalStatus', 'renewalNotes', 'createdAt', 'updatedAt', 'administratorUid']) && (!data.exists() || newData.child('createdAt').val() == data.child('createdAt').val()) && newData.child('administratorUid').val() == auth.uid",
+        "serviceYear": {
+          ".validate": "newData.isNumber() && newData.val() >= 2020 && newData.val() <= 2100"
+        },
+        "companyId": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+        },
+        "solarSiteId": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+        },
+        "contractStartOn": {
+          ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}$/)"
+        },
+        "contractEndOn": {
+          ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}$/)"
+        },
+        "plannedMowingCycles": {
+          ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 20"
+        },
+        "plannedOtherServices": {
+          ".validate": "newData.isString() && newData.val().length <= 1000"
+        },
+        "contractAcreage": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 100000"
+        },
+        "targetVegetationHeight": {
+          ".validate": "newData.isString() && newData.val().length <= 60"
+        },
+        "contractStatus": {
+          ".validate": "newData.isString() && (newData.val() == 'Prospect' || newData.val() == 'Proposed' || newData.val() == 'Active' || newData.val() == 'Completed' || newData.val() == 'Expired' || newData.val() == 'Cancelled')"
+        },
+        "renewalStatus": {
+          ".validate": "newData.isString() && (newData.val() == 'Not reviewed' || newData.val() == 'Renewal follow-up needed' || newData.val() == 'Customer contacted' || newData.val() == 'Renewal proposed' || newData.val() == 'Renewed' || newData.val() == 'Not renewed' || newData.val() == 'Decision pending')"
+        },
+        "renewalFollowUpOn": {
+          ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}$/)"
+        },
+        "renewalNotes": {
+          ".validate": "newData.isString() && newData.val().length <= 2000"
+        },
+        "renewalApprovedByUid": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 128"
+        },
+        "renewalApprovedAt": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 60000"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 60000"
+        },
+        "updatedAt": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 60000"
+        },
+        "administratorUid": {
+          ".validate": "newData.isString() && newData.val() == auth.uid"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "scheduled_services": {
+      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".indexOn": [
+        "serviceYear",
+        "solarSiteId",
+        "serviceSeasonId",
+        "status",
+        "confirmedScheduledOn",
+        "readyForInvoicing"
+      ],
+      "$service": {
+        ".write": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com' && newData.exists()",
+        ".validate": "newData.hasChildren(['serviceSeasonId', 'serviceYear', 'companyId', 'solarSiteId', 'mowingCycleNumber', 'serviceType', 'status', 'siteAcreage', 'estimatedAcresToService', 'actualAcresCompleted', 'targetVegetationHeight', 'completionDatePrecision', 'assignedCrew', 'assignedEquipment', 'reschedulingReason', 'completionNotes', 'problemsOrHazards', 'weatherDelay', 'followUpRequired', 'readyForInvoicing', 'createdAt', 'updatedAt', 'administratorUid']) && (!data.exists() || newData.child('createdAt').val() == data.child('createdAt').val()) && newData.child('administratorUid').val() == auth.uid && (newData.child('readyForInvoicing').val() == false || newData.child('status').val() == 'Completed') && ((newData.child('completionDatePrecision').val() == 'exact_date' && newData.child('completedOn').exists()) || (newData.child('completionDatePrecision').val() == 'month_only' && !newData.child('completedOn').exists() && newData.child('completionMonth').exists()) || (newData.child('completionDatePrecision').val() == 'unknown' && !newData.child('completedOn').exists() && !newData.child('completionMonth').exists()))",
+        "serviceSeasonId": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+        },
+        "serviceYear": {
+          ".validate": "newData.isNumber() && newData.val() >= 2020 && newData.val() <= 2100"
+        },
+        "companyId": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+        },
+        "solarSiteId": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+        },
+        "mowingCycleNumber": {
+          ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 50"
+        },
+        "serviceType": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+        },
+        "plannedMonth": {
+          ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}$/)"
+        },
+        "tentativeScheduledOn": {
+          ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}$/)"
+        },
+        "confirmedScheduledOn": {
+          ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}$/)"
+        },
+        "startedOn": {
+          ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}$/)"
+        },
+        "completedOn": {
+          ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}-\\d{2}$/)"
+        },
+        "completionMonth": {
+          ".validate": "newData.isString() && newData.val().matches(/^\\d{4}-\\d{2}$/)"
+        },
+        "completionDatePrecision": {
+          ".validate": "newData.isString() && (newData.val() == 'exact_date' || newData.val() == 'month_only' || newData.val() == 'unknown')"
+        },
+        "siteAcreage": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 100000"
+        },
+        "estimatedAcresToService": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000"
+        },
+        "actualAcresCompleted": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000"
+        },
+        "targetVegetationHeight": {
+          ".validate": "newData.isString() && newData.val().length <= 60"
+        },
+        "status": {
+          ".validate": "newData.isString() && (newData.val() == 'Planned' || newData.val() == 'Scheduling needed' || newData.val() == 'Scheduled' || newData.val() == 'In progress' || newData.val() == 'Partially completed' || newData.val() == 'Completed' || newData.val() == 'Weather delayed' || newData.val() == 'Customer delayed' || newData.val() == 'Rescheduled' || newData.val() == 'Cancelled')"
+        },
+        "assignedCrew": {
+          ".validate": "newData.isString() && newData.val().length <= 160"
+        },
+        "assignedEquipment": {
+          ".validate": "newData.isString() && newData.val().length <= 240"
+        },
+        "weatherDelay": {
+          ".validate": "newData.isBoolean()"
+        },
+        "reschedulingReason": {
+          ".validate": "newData.isString() && newData.val().length <= 500"
+        },
+        "completionNotes": {
+          ".validate": "newData.isString() && newData.val().length <= 2000"
+        },
+        "problemsOrHazards": {
+          ".validate": "newData.isString() && newData.val().length <= 2000"
+        },
+        "followUpRequired": {
+          ".validate": "newData.isBoolean()"
+        },
+        "readyForInvoicing": {
+          ".validate": "newData.isBoolean()"
+        },
+        "serviceVisitId": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+        },
+        "followUpOfScheduledServiceId": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 60000"
+        },
+        "updatedAt": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 60000"
+        },
+        "administratorUid": {
+          ".validate": "newData.isString() && newData.val() == auth.uid"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
     "email_recipients": {
       ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
       "$recipient": {

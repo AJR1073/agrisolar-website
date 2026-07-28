@@ -171,6 +171,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 loginContainer.style.display = 'none';
                 dashboardContainer.style.display = 'block';
+                userEmail.textContent = user.email || '';
+                signOutBtn.style.display = 'inline-block';
                 loadSubmissions();
                 loadRecipients();
             } catch (error) {
@@ -182,6 +184,8 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('User signed out');
             loginContainer.style.display = 'block';
             dashboardContainer.style.display = 'none';
+            userEmail.textContent = '';
+            signOutBtn.style.display = 'none';
         }
     });
 

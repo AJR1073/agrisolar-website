@@ -38,6 +38,8 @@ async function run() {
         '/storage.rules',
         '/package.json',
         '/doc/prd.txt',
+        '/doc/prd.md',
+        '/doc/annual-schedule-implementation-plan.md',
         '/.github/workflows/firebase-hosting-merge.yml'
     ]) {
         const response = await request(path);

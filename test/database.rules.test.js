@@ -56,6 +56,79 @@ function attachmentSet(submissionId, count) {
     }));
 }
 
+function validCompany(overrides = {}) {
+    return {
+        name: 'Example Solar Company',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        administratorUid: 'approved-admin',
+        ...overrides
+    };
+}
+
+function validSolarSite(overrides = {}) {
+    return {
+        companyId: 'company-1',
+        name: 'Example Solar Site',
+        location: 'Example County, Illinois',
+        acreage: 40,
+        targetVegetationHeight: '',
+        active: true,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        administratorUid: 'approved-admin',
+        ...overrides
+    };
+}
+
+function validServiceSeason(overrides = {}) {
+    return {
+        serviceYear: 2026,
+        companyId: 'company-1',
+        solarSiteId: 'site-1',
+        plannedMowingCycles: 4,
+        plannedOtherServices: '',
+        contractAcreage: 40,
+        targetVegetationHeight: '',
+        contractStatus: 'Active',
+        renewalStatus: 'Not reviewed',
+        renewalNotes: '',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        administratorUid: 'approved-admin',
+        ...overrides
+    };
+}
+
+function validScheduledService(overrides = {}) {
+    return {
+        serviceSeasonId: 'season-1',
+        serviceYear: 2026,
+        companyId: 'company-1',
+        solarSiteId: 'site-1',
+        mowingCycleNumber: 1,
+        serviceType: 'Commercial mowing',
+        status: 'Scheduling needed',
+        siteAcreage: 40,
+        estimatedAcresToService: 40,
+        actualAcresCompleted: 0,
+        targetVegetationHeight: '',
+        completionDatePrecision: 'unknown',
+        assignedCrew: '',
+        assignedEquipment: '',
+        reschedulingReason: '',
+        completionNotes: '',
+        problemsOrHazards: '',
+        weatherDelay: false,
+        followUpRequired: false,
+        readyForInvoicing: false,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        administratorUid: 'approved-admin',
+        ...overrides
+    };
+}
+
 describe('Realtime Database contact submission rules', () => {
     before(async () => {
         testEnv = await initializeTestEnvironment({
@@ -186,6 +259,142 @@ describe('Realtime Database contact submission rules', () => {
                 status: 'viewed',
                 viewed: true
             })
+        );
+    });
+
+    it('allows the approved administrator to create normalized schedule records', async () => {
+        const approvedDb = testEnv
+            .authenticatedContext('approved-admin', { email: adminEmail })
+            .database();
+
+        await assertSucceeds(
+            update(ref(approvedDb), {
+                'companies/company-1': validCompany(),
+                'solar_sites/site-1': validSolarSite(),
+                'service_seasons/season-1': validServiceSeason(),
+                'scheduled_services/service-1': validScheduledService()
+            })
+        );
+        await assertSucceeds(get(ref(approvedDb, 'scheduled_services/service-1')));
+    });
+
+    it('keeps operational schedule data private from public and unapproved users', async () => {
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+            await set(
+                ref(context.database(), 'scheduled_services/private-service'),
+                validScheduledService()
+            );
+        });
+
+        const publicDb = testEnv.unauthenticatedContext().database();
+        const otherDb = testEnv
+            .authenticatedContext('other-user', { email: 'other@example.com' })
+            .database();
+
+        await assertFails(
+            get(ref(publicDb, 'scheduled_services/private-service'))
+        );
+        await assertFails(
+            set(
+                ref(publicDb, 'scheduled_services/public-service'),
+                validScheduledService({ administratorUid: 'public-user' })
+            )
+        );
+        await assertFails(
+            get(ref(otherDb, 'scheduled_services/private-service'))
+        );
+        await assertFails(
+            set(
+                ref(otherDb, 'solar_sites/unapproved-site'),
+                validSolarSite({ administratorUid: 'other-user' })
+            )
+        );
+    });
+
+    it('preserves exact and month-only completion values separately', async () => {
+        const approvedDb = testEnv
+            .authenticatedContext('approved-admin', { email: adminEmail })
+            .database();
+
+        await assertSucceeds(
+            set(
+                ref(approvedDb, 'scheduled_services/month-only'),
+                validScheduledService({
+                    status: 'Completed',
+                    completionDatePrecision: 'month_only',
+                    completionMonth: '2026-06',
+                    actualAcresCompleted: 40
+                })
+            )
+        );
+        await assertSucceeds(
+            set(
+                ref(approvedDb, 'scheduled_services/exact-date'),
+                validScheduledService({
+                    status: 'Completed',
+                    completionDatePrecision: 'exact_date',
+                    completionMonth: '2026-07',
+                    completedOn: '2026-07-01',
+                    actualAcresCompleted: 40,
+                    readyForInvoicing: true
+                })
+            )
+        );
+        await assertFails(
+            set(
+                ref(approvedDb, 'scheduled_services/invented-day-shape'),
+                validScheduledService({
+                    status: 'Completed',
+                    completionDatePrecision: 'month_only',
+                    completionMonth: '2026-06',
+                    completedOn: '2026-06-01'
+                })
+            )
+        );
+    });
+
+    it('rejects invalid schedule statuses, fixed mow columns, and premature invoicing', async () => {
+        const approvedDb = testEnv
+            .authenticatedContext('approved-admin', { email: adminEmail })
+            .database();
+
+        await assertFails(
+            set(
+                ref(approvedDb, 'scheduled_services/invalid-status'),
+                validScheduledService({ status: 'Done' })
+            )
+        );
+        await assertFails(
+            set(
+                ref(approvedDb, 'scheduled_services/fixed-columns'),
+                validScheduledService({ mow1: '2026-06-24' })
+            )
+        );
+        await assertFails(
+            set(
+                ref(approvedDb, 'scheduled_services/not-completed'),
+                validScheduledService({ readyForInvoicing: true })
+            )
+        );
+    });
+
+    it('prevents deletion of permanent sites and schedule history', async () => {
+        const approvedDb = testEnv
+            .authenticatedContext('approved-admin', { email: adminEmail })
+            .database();
+
+        await assertSucceeds(
+            set(ref(approvedDb, 'solar_sites/permanent-site'), validSolarSite())
+        );
+        await assertSucceeds(
+            set(
+                ref(approvedDb, 'scheduled_services/preserved-service'),
+                validScheduledService()
+            )
+        );
+        await assertFails(remove(ref(approvedDb, 'solar_sites/permanent-site')));
+        await assertFails(
+            remove(ref(approvedDb, 'scheduled_services/preserved-service'))
         );
     });
 });
