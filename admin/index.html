@@ -6,8 +6,9 @@
     <title>AgriSolar LLC - Admin Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/admin.css?v=20260726-attachments">
-    
+    <link rel="stylesheet" href="css/admin.css?v=20260727-schedule">
+    <link rel="stylesheet" href="css/schedule.css?v=20260727-schedule">
+
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -40,7 +41,7 @@
             <h1>AgriSolar LLC - Admin Dashboard</h1>
             <div class="auth-status">
                 <span id="userEmail"></span>
-                <button id="signOutBtn" style="display: none;">Sign Out</button>
+                <button type="button" id="signOutBtn" style="display: none;">Sign Out</button>
             </div>
         </header>
 
@@ -55,7 +56,7 @@
                     </div>
                     <div class="form-group">
                         <label for="password">Password</label>
-                        <input type="password" id="password" required>
+                        <input type="password" id="password" autocomplete="current-password" required>
                     </div>
                     <div id="loginError" class="error-message"></div>
                     <button type="submit">Login</button>
@@ -69,10 +70,11 @@
         <!-- Dashboard Content -->
         <div id="dashboardContainer" class="dashboard-container" style="display: none;">
             <nav class="admin-nav">
-                <button class="nav-btn active" data-tab="submissions">Submissions</button>
-                <button class="nav-btn" data-tab="distribution">Email Distribution</button>
+                <button type="button" class="nav-btn active" data-tab="submissions">Submissions</button>
+                <button type="button" class="nav-btn" data-tab="schedule">Annual Schedule</button>
+                <button type="button" class="nav-btn" data-tab="distribution">Email Distribution</button>
             </nav>
-            
+
             <!-- Submissions Tab -->
             <div id="submissionsTab" class="tab-content active">
                 <div class="submissions-header">
@@ -97,7 +99,7 @@
             <div id="distributionTab" class="tab-content">
                 <div class="distribution-header">
                     <h2>Email Distribution List</h2>
-                    <button id="addRecipientBtn" class="action-btn">Add New Recipient</button>
+                    <button type="button" id="addRecipientBtn" class="action-btn">Add New Recipient</button>
                 </div>
 
                 <div id="addRecipientForm" class="add-recipient-form" style="display: none;">
@@ -121,6 +123,86 @@
                 <div id="recipientsList" class="recipients-list">
                     <!-- Recipients will be populated here -->
                 </div>
+            </div>
+
+            <!-- Annual Schedule Tab -->
+            <div id="scheduleTab" class="tab-content">
+                <div class="schedule-heading">
+                    <div>
+                        <p class="schedule-eyebrow">Administrator only</p>
+                        <h2>Annual Mowing Schedule</h2>
+                        <p class="schedule-intro">
+                            Plan and record each mowing cycle separately while keeping the familiar
+                            site-by-cycle whiteboard view.
+                        </p>
+                    </div>
+                    <div class="schedule-heading-actions">
+                        <label for="scheduleYear">Service year</label>
+                        <select id="scheduleYear" class="form-control"></select>
+                        <button type="button" id="addScheduleSiteBtn" class="action-btn">
+                            <i class="fas fa-plus" aria-hidden="true"></i>
+                            Add site and season
+                        </button>
+                    </div>
+                </div>
+
+                <div id="scheduleTotals" class="schedule-totals" aria-live="polite"></div>
+
+                <div class="schedule-toolbar">
+                    <div class="schedule-view-buttons" role="group" aria-label="Schedule views">
+                        <button type="button" class="schedule-view-btn active" data-schedule-view="grid">
+                            Annual grid
+                        </button>
+                        <button type="button" class="schedule-view-btn" data-schedule-view="list">
+                            List
+                        </button>
+                        <button type="button" class="schedule-view-btn" data-schedule-view="scheduling">
+                            Scheduling needed
+                        </button>
+                        <button type="button" class="schedule-view-btn" data-schedule-view="invoicing">
+                            Ready for invoicing
+                        </button>
+                        <button type="button" class="schedule-view-btn" data-schedule-view="delayed">
+                            Overdue and delayed
+                        </button>
+                    </div>
+                    <div class="schedule-filters">
+                        <label class="sr-only" for="scheduleStatusFilter">Filter by status</label>
+                        <select id="scheduleStatusFilter" class="form-control">
+                            <option value="all">All statuses</option>
+                            <option value="Planned">Planned</option>
+                            <option value="Scheduling needed">Scheduling needed</option>
+                            <option value="Scheduled">Scheduled</option>
+                            <option value="In progress">In progress</option>
+                            <option value="Partially completed">Partially completed</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Weather delayed">Weather delayed</option>
+                            <option value="Customer delayed">Customer delayed</option>
+                            <option value="Rescheduled">Rescheduled</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                        <label class="sr-only" for="scheduleSort">Sort services</label>
+                        <select id="scheduleSort" class="form-control">
+                            <option value="site">Sort by site</option>
+                            <option value="date">Sort by date</option>
+                            <option value="status">Sort by status</option>
+                            <option value="cycle">Sort by mowing cycle</option>
+                        </select>
+                        <label class="sr-only" for="scheduleSearch">Search schedule</label>
+                        <input
+                            type="search"
+                            id="scheduleSearch"
+                            class="form-control"
+                            placeholder="Search site, company, location…"
+                        >
+                    </div>
+                </div>
+
+                <div id="scheduleLoading" class="schedule-empty" role="status">
+                    Loading annual schedule…
+                </div>
+                <div id="scheduleGridView" class="schedule-view"></div>
+                <div id="scheduleListView" class="schedule-view" hidden></div>
             </div>
         </div>
     </div>
@@ -176,6 +258,170 @@
         </div>
     </div>
 
-    <script src="js/admin.js?v=20260726-attachments"></script>
+    <!-- Add Site and Season Modal -->
+    <div id="siteSeasonModal" class="modal schedule-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="siteSeasonTitle">
+        <div class="modal-content schedule-modal-content">
+            <div class="modal-header">
+                <h3 id="siteSeasonTitle">Add Site and Annual Season</h3>
+                <button type="button" class="modal-close-btn" data-close-schedule-modal="siteSeasonModal" aria-label="Close">
+                    &times;
+                </button>
+            </div>
+            <p class="form-help">
+                Enter only reviewed information. This creates a permanent site, one annual
+                service season, and a separate record for each planned mowing cycle.
+            </p>
+            <form id="siteSeasonForm">
+                <div class="schedule-form-grid">
+                    <div class="form-group">
+                        <label for="scheduleCompanyName">Company or customer *</label>
+                        <input type="text" id="scheduleCompanyName" maxlength="120" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="scheduleSiteName">Solar site name *</label>
+                        <input type="text" id="scheduleSiteName" maxlength="120" required>
+                    </div>
+                    <div class="form-group schedule-form-wide">
+                        <label for="scheduleSiteLocation">Location *</label>
+                        <input type="text" id="scheduleSiteLocation" maxlength="180" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="scheduleSeasonYear">Service year *</label>
+                        <input type="number" id="scheduleSeasonYear" min="2020" max="2100" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="scheduleSiteAcreage">Contract acreage *</label>
+                        <input type="number" id="scheduleSiteAcreage" min="0.01" max="100000" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="scheduleHeightRequirement">Vegetation height</label>
+                        <input type="text" id="scheduleHeightRequirement" maxlength="60" placeholder="For example: 18 inches">
+                    </div>
+                    <div class="form-group">
+                        <label for="schedulePlannedCycles">Planned mowing cycles *</label>
+                        <input type="number" id="schedulePlannedCycles" min="1" max="20" value="4" required>
+                    </div>
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="action-btn">Create site and season</button>
+                    <button type="button" class="action-btn cancel" data-close-schedule-modal="siteSeasonModal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scheduled Service Editor Modal -->
+    <div id="serviceEditorModal" class="modal schedule-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="serviceEditorTitle">
+        <div class="modal-content schedule-modal-content schedule-service-editor">
+            <div class="modal-header">
+                <div>
+                    <p class="schedule-eyebrow" id="serviceEditorContext"></p>
+                    <h3 id="serviceEditorTitle">Edit Mowing Cycle</h3>
+                </div>
+                <button type="button" class="modal-close-btn" data-close-schedule-modal="serviceEditorModal" aria-label="Close">
+                    &times;
+                </button>
+            </div>
+            <form id="serviceEditorForm">
+                <input type="hidden" id="scheduledServiceId">
+                <div class="schedule-form-grid">
+                    <div class="form-group">
+                        <label for="serviceCycleNumber">Mowing-cycle number *</label>
+                        <input type="number" id="serviceCycleNumber" min="1" max="50" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="serviceType">Service type *</label>
+                        <input type="text" id="serviceType" maxlength="80" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="serviceStatus">Status *</label>
+                        <select id="serviceStatus" class="form-control" required>
+                            <option value="Planned">Planned</option>
+                            <option value="Scheduling needed">Scheduling needed</option>
+                            <option value="Scheduled">Scheduled</option>
+                            <option value="In progress">In progress</option>
+                            <option value="Partially completed">Partially completed</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Weather delayed">Weather delayed</option>
+                            <option value="Customer delayed">Customer delayed</option>
+                            <option value="Rescheduled">Rescheduled</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="servicePlannedMonth">Planned month</label>
+                        <input type="month" id="servicePlannedMonth">
+                    </div>
+                    <div class="form-group">
+                        <label for="serviceTentativeDate">Tentative scheduled date</label>
+                        <input type="date" id="serviceTentativeDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="serviceConfirmedDate">Confirmed scheduled date</label>
+                        <input type="date" id="serviceConfirmedDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="serviceStartedDate">Actual start date</label>
+                        <input type="date" id="serviceStartedDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="serviceCompletedDate">Exact completion date</label>
+                        <input type="date" id="serviceCompletedDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="serviceCompletionMonth">Completion month only</label>
+                        <input type="month" id="serviceCompletionMonth">
+                        <small>Use this only when the exact day is unknown.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="serviceEstimatedAcres">Estimated acres</label>
+                        <input type="number" id="serviceEstimatedAcres" min="0" max="100000" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="serviceActualAcres">Actual acres completed</label>
+                        <input type="number" id="serviceActualAcres" min="0" max="100000" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="serviceTargetHeight">Target vegetation height</label>
+                        <input type="text" id="serviceTargetHeight" maxlength="60">
+                    </div>
+                    <div class="form-group">
+                        <label for="serviceCrew">Assigned crew</label>
+                        <input type="text" id="serviceCrew" maxlength="160">
+                    </div>
+                    <div class="form-group">
+                        <label for="serviceEquipment">Assigned equipment</label>
+                        <input type="text" id="serviceEquipment" maxlength="240">
+                    </div>
+                    <div class="form-group schedule-form-wide">
+                        <label for="serviceReschedulingReason">Rescheduling reason</label>
+                        <input type="text" id="serviceReschedulingReason" maxlength="500">
+                    </div>
+                    <div class="form-group schedule-form-wide">
+                        <label for="serviceCompletionNotes">Completion and operational notes</label>
+                        <textarea id="serviceCompletionNotes" rows="3" maxlength="2000"></textarea>
+                    </div>
+                    <div class="form-group schedule-form-wide">
+                        <label for="serviceHazards">Problems or hazards</label>
+                        <textarea id="serviceHazards" rows="3" maxlength="2000"></textarea>
+                    </div>
+                </div>
+                <div class="schedule-checkboxes">
+                    <label><input type="checkbox" id="serviceWeatherDelay"> Weather delay</label>
+                    <label><input type="checkbox" id="serviceFollowUp"> Follow-up required</label>
+                    <label><input type="checkbox" id="serviceReadyInvoice"> Ready for invoicing</label>
+                </div>
+                <div class="form-buttons schedule-editor-actions">
+                    <button type="button" id="createFollowUpBtn" class="action-btn secondary">Create follow-up visit</button>
+                    <span class="schedule-action-spacer"></span>
+                    <button type="submit" class="action-btn">Save mowing cycle</button>
+                    <button type="button" class="action-btn cancel" data-close-schedule-modal="serviceEditorModal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/admin.js?v=20260727-schedule"></script>
+    <script src="js/schedule.js?v=20260727-schedule"></script>
 </body>
 </html>

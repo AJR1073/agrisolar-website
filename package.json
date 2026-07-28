@@ -5,13 +5,14 @@
   "scripts": {
     "build:hosting": "node scripts/build-hosting.js",
     "test": "npm run test:syntax && npm run test:rules",
-    "test:html": "html-validate index.html 404.html about.html about/index.html contact/index.html faq/index.html privacy/index.html projects/index.html service-area/index.html services/index.html services/*/index.html",
+    "test:html": "html-validate index.html 404.html about.html about/index.html admin/index.html contact/index.html faq/index.html privacy/index.html projects/index.html service-area/index.html services/index.html services/*/index.html",
     "test:structure": "node test/site-structure.test.js",
-    "test:syntax": "node --check js/main.js && node --check js/form-handler.js && node --check admin/js/admin.js && node --check functions/index.js",
+    "test:syntax": "node --check js/main.js && node --check js/form-handler.js && node --check admin/js/admin.js && node --check admin/js/schedule.js && node --check functions/index.js",
     "test:rules": "mocha \"test/*.rules.test.js\"",
     "test:emulator-smoke": "node test/emulator-smoke.test.js",
     "test:form-attachment": "node test/form-attachment.test.js",
     "test:admin-attachment": "node test/admin-attachment.test.js",
+    "test:admin-schedule": "node test/admin-schedule.test.js",
     "emulators": "npm run build:hosting && firebase emulators:start --only hosting,database,storage,functions"
   },
   "dependencies": {
