@@ -1294,6 +1294,7 @@
         );
 
         addScheduleSiteBtn.addEventListener('click', openSiteSeasonModal);
+        document.addEventListener('schedule-data-imported', loadScheduleData);
 
         auth.onAuthStateChanged(user => {
             if (user) {

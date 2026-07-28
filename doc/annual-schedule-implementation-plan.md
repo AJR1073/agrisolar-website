@@ -141,7 +141,7 @@ Implemented in this slice:
 
 ### Phase B1 — Calendar and Site History
 
-Status: implemented locally and verified; not deployed
+Status: implemented, verified, and deployed to the Firebase development Hosting site on July 27, 2026
 
 * Add a calendar view of tentative and confirmed dates.
 * Add permanent site history with completed services across years.
@@ -151,7 +151,7 @@ Status: implemented locally and verified; not deployed
 
 ### Phase B2 — Reviewed Schedule Import
 
-Status: not started; requires a separate review before any live import
+Status: implemented and verified; no business data imported
 
 * Add a reviewed CSV import template and preview screen.
 * Represent exact whiteboard dates as completion dates.
@@ -160,6 +160,31 @@ Status: not started; requires a separate review before any live import
 * Require Aaron to confirm ambiguous handwriting, dates, years, spelling, and site identity.
 * Require an explicit confirmation before writing any previewed import.
 * Do not put the photographed schedule or private site data in public fixtures or Hosting assets.
+
+Implemented safeguards:
+
+* Downloadable blank CSV template with no customer or site records
+* Local CSV parsing with a 1 MB and 500-row limit
+* Required-column, value-length, acreage, year, mowing-cycle, status, and real-date validation
+* Separate `completed_date` and `completion_month` fields so an unknown day is never invented
+* Service-year consistency checks for every date and month
+* Duplicate checks within the CSV and against existing scheduled-service records
+* Ambiguous company, site, location, acreage, and annual-season checks
+* Read-only validation preview before the confirmation controls are enabled
+* Required administrator review checkbox and a second explicit confirmation
+* Revalidation against current database records immediately before the write
+* One atomic multi-path update that creates stable records and never overwrites an existing record
+
+The administrator template columns are:
+
+`company`, `site_name`, `location`, `acres`, `height_requirement`, `service_year`,
+`mow_cycle`, `service_type`, `planned_month`, `tentative_scheduled_date`,
+`confirmed_scheduled_date`, `completed_date`, `completion_month`, and `status`.
+
+Dates use `YYYY-MM-DD`; months use `YYYY-MM`. The `status` and `service_type`
+columns may be left blank to use a safe status derived from the supplied dates and
+the default Commercial mowing service type. No real schedule should be imported
+until the administrator has reviewed every preview row.
 
 ### Phase C — Annual Contracts and Renewals
 
@@ -273,7 +298,7 @@ For each phase:
 5. Confirm unauthenticated and unapproved users cannot access operational data.
 6. Build Firebase Hosting and verify that internal documentation and source-only files are excluded.
 7. Review desktop and mobile behavior.
-8. Publish only to a Firebase preview channel after approval to deploy Hosting.
+8. Publish to the owner-designated Firebase development site only after approval to deploy Hosting.
 
 For Phases D and later, also verify append-only audit behavior and test all backend authorization in the Emulator Suite before requesting deployment approval.
 

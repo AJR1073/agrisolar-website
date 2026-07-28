@@ -124,6 +124,8 @@ async function run() {
                                 }
                             }
                         };
+                        let generatedKey = 0;
+                        window.__scheduleImportUpdates = null;
                         function database() {
                             return {
                                 ref(path = '') {
@@ -132,8 +134,13 @@ async function run() {
                                             const value = data[path] || {};
                                             return { val() { return value; } };
                                         },
-                                        push() { return { key: 'generated-key' }; },
-                                        async update() {},
+                                        push() {
+                                            generatedKey += 1;
+                                            return { key: 'generated-key-' + generatedKey };
+                                        },
+                                        async update(updates) {
+                                            window.__scheduleImportUpdates = updates;
+                                        },
                                         async set() {},
                                         async remove() {}
                                     };
@@ -262,8 +269,81 @@ async function run() {
         assert.match(historyText, /Completion month recorded/);
         assert.equal(historyEntries, 2);
 
+        await page.click('#openScheduleImportBtn');
+        await page.waitForFunction(() => (
+            document.querySelector('#scheduleImportModal')?.style.display === 'block'
+        ));
+
+        const duplicateCsv = [
+            'company,site_name,location,acres,height_requirement,service_year,mow_cycle,service_type,planned_month,tentative_scheduled_date,confirmed_scheduled_date,completed_date,completion_month,status',
+            'Example Solar Company,Example <Site>,"Example County, Illinois",40,,2026,1,Commercial mowing,,,,2026-06-24,,Completed'
+        ].join('\n');
+        await page.evaluate(csv => {
+            const input = document.querySelector('#scheduleImportFile');
+            const transfer = new DataTransfer();
+            transfer.items.add(new File([csv], 'duplicate.csv', { type: 'text/csv' }));
+            input.files = transfer.files;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        }, duplicateCsv);
+        await page.waitForFunction(() => (
+            document.querySelector('#scheduleImportSummary')?.classList.contains('has-errors')
+        ));
+        assert.match(
+            await page.$eval('#scheduleImportSummary', element => element.textContent),
+            /blocking validation issue/
+        );
+        assert.match(
+            await page.$eval('#scheduleImportPreview', element => element.textContent),
+            /already exists in the database/
+        );
+        assert.equal(
+            await page.$eval('#scheduleImportReviewed', input => input.disabled),
+            true
+        );
+
+        const validCsv = [
+            'company,site_name,location,acres,height_requirement,service_year,mow_cycle,service_type,planned_month,tentative_scheduled_date,confirmed_scheduled_date,completed_date,completion_month,status',
+            'Synthetic Operations LLC,Synthetic Meadow Site,"Example County, Illinois",12.5,18 inches,2026,3,Commercial mowing,,,,,2026-06,'
+        ].join('\n');
+        await page.evaluate(csv => {
+            const input = document.querySelector('#scheduleImportFile');
+            const transfer = new DataTransfer();
+            transfer.items.add(new File([csv], 'valid.csv', { type: 'text/csv' }));
+            input.files = transfer.files;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        }, validCsv);
+        await page.waitForFunction(() => (
+            document.querySelector('#scheduleImportSummary')?.classList.contains('is-valid')
+        ));
+        assert.match(
+            await page.$eval('#scheduleImportPreview', element => element.textContent),
+            /2026-06/
+        );
+        assert.match(
+            await page.$eval('#scheduleImportPreview', element => element.textContent),
+            /Completed/
+        );
+        assert.equal(
+            await page.$eval('#confirmScheduleImportBtn', button => button.disabled),
+            true
+        );
+
+        page.once('dialog', dialog => dialog.accept());
+        await page.click('#scheduleImportReviewed');
+        await page.click('#confirmScheduleImportBtn');
+        await page.waitForFunction(() => window.__scheduleImportUpdates !== null);
+        const importUpdate = await page.evaluate(() => window.__scheduleImportUpdates);
+        const importedService = Object.entries(importUpdate).find(([path]) =>
+            path.startsWith('scheduled_services/')
+        )?.[1];
+        assert.ok(importedService);
+        assert.equal(importedService.completionDatePrecision, 'month_only');
+        assert.equal(importedService.completionMonth, '2026-06');
+        assert.equal(Object.hasOwn(importedService, 'completedOn'), false);
+        assert.equal(importedService.status, 'Completed');
+
         console.log(
-            'PASS: Admin schedule renders totals, calendar, all-years history, safe text, and focused views'
+            'PASS: Admin schedule renders views and safely validates and imports reviewed CSV records'
         );
     } finally {
         await browser.close();

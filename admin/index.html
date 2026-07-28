@@ -6,8 +6,8 @@
     <title>AgriSolar LLC - Admin Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/admin.css?v=20260727-phase-b1">
-    <link rel="stylesheet" href="css/schedule.css?v=20260727-phase-b1">
+    <link rel="stylesheet" href="css/admin.css?v=20260727-phase-b2">
+    <link rel="stylesheet" href="css/schedule.css?v=20260727-phase-b2">
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -139,6 +139,10 @@
                     <div class="schedule-heading-actions">
                         <label for="scheduleYear">Service year</label>
                         <select id="scheduleYear" class="form-control"></select>
+                        <button type="button" id="openScheduleImportBtn" class="action-btn secondary">
+                            <i class="fas fa-file-import" aria-hidden="true"></i>
+                            Import reviewed CSV
+                        </button>
                         <button type="button" id="addScheduleSiteBtn" class="action-btn">
                             <i class="fas fa-plus" aria-hidden="true"></i>
                             Add site and season
@@ -263,6 +267,67 @@
                     <button type="button" class="action-btn cancel" id="cancelReply">Cancel</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Reviewed Schedule Import Modal -->
+    <div id="scheduleImportModal" class="modal schedule-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="scheduleImportTitle">
+        <div class="modal-content schedule-modal-content schedule-import-modal-content">
+            <div class="modal-header">
+                <div>
+                    <p class="schedule-eyebrow">Administrator-only data entry</p>
+                    <h3 id="scheduleImportTitle">Import Reviewed Schedule CSV</h3>
+                </div>
+                <button type="button" class="modal-close-btn" data-close-import-modal aria-label="Close">
+                    &times;
+                </button>
+            </div>
+
+            <p class="form-help">
+                Download the blank template, enter only confirmed information, then preview it here.
+                The preview remains in this browser until you explicitly confirm the import.
+            </p>
+
+            <div class="schedule-import-steps">
+                <section>
+                    <h4>1. Prepare the file</h4>
+                    <p>Use ISO dates such as <code>2026-06-24</code> and month-only values such as <code>2026-06</code>. Never invent an unknown day.</p>
+                    <button type="button" id="downloadScheduleTemplateBtn" class="action-btn secondary">
+                        <i class="fas fa-download" aria-hidden="true"></i>
+                        Download blank CSV template
+                    </button>
+                </section>
+
+                <section>
+                    <h4>2. Validate a CSV</h4>
+                    <label class="schedule-file-picker">
+                        <span>Choose reviewed CSV file</span>
+                        <input type="file" id="scheduleImportFile" accept=".csv,text/csv">
+                    </label>
+                    <p id="scheduleImportFileName" class="schedule-import-file-name">No file selected.</p>
+                </section>
+            </div>
+
+            <div id="scheduleImportSummary" class="schedule-import-summary" aria-live="polite">
+                Select a CSV file to run local validation.
+            </div>
+            <div id="scheduleImportPreview" class="schedule-import-preview"></div>
+
+            <div class="schedule-import-confirmation">
+                <label>
+                    <input type="checkbox" id="scheduleImportReviewed" disabled>
+                    I confirm that I reviewed the site identity, spelling, service year, and date meaning for every row.
+                </label>
+                <p>No records are overwritten. If a company, site, season, or mowing cycle is ambiguous, the import is blocked.</p>
+            </div>
+
+            <div class="form-buttons schedule-editor-actions">
+                <span class="schedule-action-spacer"></span>
+                <button type="button" id="confirmScheduleImportBtn" class="action-btn" disabled>
+                    Import validated records
+                </button>
+                <button type="button" class="action-btn cancel" data-close-import-modal>Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -429,7 +494,8 @@
         </div>
     </div>
 
-    <script src="js/admin.js?v=20260727-phase-b1"></script>
-    <script src="js/schedule.js?v=20260727-phase-b1"></script>
+    <script src="js/admin.js?v=20260727-phase-b2"></script>
+    <script src="js/schedule.js?v=20260727-phase-b2"></script>
+    <script src="js/schedule-import.js?v=20260727-phase-b2"></script>
 </body>
 </html>

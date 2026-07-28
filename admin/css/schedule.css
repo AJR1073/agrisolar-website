@@ -541,6 +541,134 @@
     width: min(980px, calc(100% - 2rem));
 }
 
+.schedule-import-modal-content {
+    max-width: 1100px;
+    width: min(1100px, calc(100% - 2rem));
+}
+
+.schedule-import-steps {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.schedule-import-steps section {
+    padding: 1rem;
+    border: 1px solid #dce4df;
+    border-radius: 6px;
+    background: #f6faf7;
+}
+
+.schedule-import-steps h4,
+.schedule-import-steps p {
+    margin-top: 0;
+}
+
+.schedule-import-steps p {
+    color: #59645e;
+    line-height: 1.5;
+}
+
+.schedule-file-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    font-weight: 600;
+}
+
+.schedule-file-picker input {
+    padding: 0.65rem;
+    border: 1px solid #c7d1cb;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.schedule-import-file-name {
+    margin: 0.55rem 0 0;
+    color: #66736c;
+    font-size: 0.85rem;
+}
+
+.schedule-import-summary {
+    margin: 1rem 0;
+    padding: 0.85rem 1rem;
+    border: 1px solid #c7d1cb;
+    border-radius: 6px;
+    background: #f7f9f8;
+    color: #33443a;
+}
+
+.schedule-import-summary.has-errors {
+    border-color: #c64a42;
+    background: #fff2f1;
+    color: #812a25;
+}
+
+.schedule-import-summary.is-valid {
+    border-color: #318257;
+    background: #edf8f1;
+    color: #155c38;
+}
+
+.schedule-import-preview {
+    max-height: 340px;
+    overflow: auto;
+}
+
+.schedule-import-table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+}
+
+.schedule-import-table th,
+.schedule-import-table td {
+    padding: 0.7rem;
+    border-bottom: 1px solid #dce4df;
+    text-align: left;
+    vertical-align: top;
+}
+
+.schedule-import-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #eef4f0;
+}
+
+.schedule-import-table small {
+    display: block;
+    margin-top: 0.25rem;
+    color: #66736c;
+}
+
+.schedule-import-confirmation {
+    margin-top: 1rem;
+    padding: 1rem;
+    border: 1px solid #d4ded8;
+    border-radius: 6px;
+    background: #fffdf5;
+}
+
+.schedule-import-confirmation label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.schedule-import-confirmation input {
+    margin-top: 0.2rem;
+}
+
+.schedule-import-confirmation p {
+    margin: 0.55rem 0 0 1.55rem;
+    color: #66736c;
+    font-size: 0.82rem;
+}
+
 .modal-close-btn {
     padding: 0.15rem 0.45rem;
     border: 0;
@@ -685,6 +813,10 @@
     }
 
     .schedule-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .schedule-import-steps {
         grid-template-columns: 1fr;
     }
 
