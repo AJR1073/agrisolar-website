@@ -84,10 +84,34 @@ async function run() {
                                     mowingCycleNumber: 2,
                                     serviceType: 'Commercial mowing',
                                     status: 'Scheduling needed',
+                                    tentativeScheduledOn: '2026-07-15',
                                     siteAcreage: 40,
                                     estimatedAcresToService: 40,
                                     actualAcresCompleted: 0,
                                     completionDatePrecision: 'unknown',
+                                    targetVegetationHeight: '',
+                                    assignedCrew: '',
+                                    assignedEquipment: '',
+                                    reschedulingReason: '',
+                                    completionNotes: '',
+                                    problemsOrHazards: '',
+                                    weatherDelay: false,
+                                    followUpRequired: false,
+                                    readyForInvoicing: false
+                                },
+                                service3: {
+                                    serviceSeasonId: 'season0',
+                                    serviceYear: 2025,
+                                    companyId: 'company1',
+                                    solarSiteId: 'site1',
+                                    mowingCycleNumber: 4,
+                                    serviceType: 'Commercial mowing',
+                                    status: 'Completed',
+                                    siteAcreage: 40,
+                                    estimatedAcresToService: 40,
+                                    actualAcresCompleted: 38,
+                                    completionMonth: '2025-09',
+                                    completionDatePrecision: 'month_only',
                                     targetVegetationHeight: '',
                                     assignedCrew: '',
                                     assignedEquipment: '',
@@ -213,8 +237,33 @@ async function run() {
         );
         assert.equal(invoicingRows, 1);
 
+        await page.click('[data-schedule-view="calendar"]');
+        await page.waitForSelector('#scheduleCalendarView .schedule-calendar-event');
+        const calendarText = await page.$eval(
+            '#scheduleCalendarView',
+            element => element.textContent
+        );
+        assert.match(calendarText, /July/);
+        assert.match(calendarText, /Example <Site>/);
+        assert.match(calendarText, /Tentative/);
+
+        await page.click('[data-schedule-view="history"]');
+        await page.waitForSelector('#scheduleHistoryView .schedule-history-card');
+        const historyText = await page.$eval(
+            '#scheduleHistoryView',
+            element => element.textContent
+        );
+        const historyEntries = await page.$$eval(
+            '#scheduleHistoryView .schedule-history-list li',
+            rows => rows.length
+        );
+        assert.match(historyText, /Jun 24, 2026/);
+        assert.match(historyText, /Sep 2025/);
+        assert.match(historyText, /Completion month recorded/);
+        assert.equal(historyEntries, 2);
+
         console.log(
-            'PASS: Admin schedule renders calculated totals, normalized cycles, safe text, and focused views'
+            'PASS: Admin schedule renders totals, calendar, all-years history, safe text, and focused views'
         );
     } finally {
         await browser.close();

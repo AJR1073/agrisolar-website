@@ -237,6 +237,8 @@
         const scheduleLoading = document.getElementById('scheduleLoading');
         const scheduleGridView = document.getElementById('scheduleGridView');
         const scheduleListView = document.getElementById('scheduleListView');
+        const scheduleCalendarView = document.getElementById('scheduleCalendarView');
+        const scheduleHistoryView = document.getElementById('scheduleHistoryView');
         const scheduleStatusFilter = document.getElementById('scheduleStatusFilter');
         const scheduleSort = document.getElementById('scheduleSort');
         const scheduleSearch = document.getElementById('scheduleSearch');
@@ -287,6 +289,8 @@
             scheduleLoading.textContent = 'Loading annual schedule…';
             scheduleGridView.innerHTML = '';
             scheduleListView.innerHTML = '';
+            scheduleCalendarView.innerHTML = '';
+            scheduleHistoryView.innerHTML = '';
 
             try {
                 const [companies, sites, seasons, services] = await Promise.all([
@@ -548,6 +552,190 @@
             `;
         }
 
+        function renderCalendar(services) {
+            const datedServices = services
+                .filter(service => {
+                    const dateValue = service.confirmedScheduledOn
+                        || service.tentativeScheduledOn;
+                    return dateValue?.startsWith(`${state.selectedYear}-`);
+                })
+                .sort((left, right) => (
+                    (left.confirmedScheduledOn || left.tentativeScheduledOn)
+                        .localeCompare(right.confirmedScheduledOn || right.tentativeScheduledOn)
+                    || toNumber(left.mowingCycleNumber) - toNumber(right.mowingCycleNumber)
+                ));
+
+            if (!datedServices.length) {
+                renderEmpty(
+                    scheduleCalendarView,
+                    `No scheduled dates in ${state.selectedYear}`,
+                    'The calendar shows tentative and confirmed dates only. Planned months remain in the annual grid until an exact date is entered.'
+                );
+                return;
+            }
+
+            const servicesByMonth = Array.from({ length: 12 }, () => []);
+            datedServices.forEach(service => {
+                const dateValue = service.confirmedScheduledOn
+                    || service.tentativeScheduledOn;
+                const monthIndex = Number(dateValue.slice(5, 7)) - 1;
+                if (monthIndex >= 0 && monthIndex < 12) {
+                    servicesByMonth[monthIndex].push(service);
+                }
+            });
+
+            const months = servicesByMonth.map((monthServices, monthIndex) => {
+                const monthName = new Date(
+                    state.selectedYear,
+                    monthIndex,
+                    1
+                ).toLocaleDateString(undefined, { month: 'long' });
+                const events = monthServices.length
+                    ? monthServices.map(service => {
+                        const site = getSite(service.solarSiteId);
+                        const dateValue = service.confirmedScheduledOn
+                            || service.tentativeScheduledOn;
+                        const dateType = service.confirmedScheduledOn
+                            ? 'Confirmed'
+                            : 'Tentative';
+
+                        return `
+                            <button
+                                type="button"
+                                class="schedule-calendar-event status-${escapeScheduleHtml(slugStatus(service.status))}"
+                                data-schedule-action="edit-service"
+                                data-service-id="${escapeScheduleHtml(service.id)}"
+                            >
+                                <span class="schedule-calendar-day">${escapeScheduleHtml(Number(dateValue.slice(8, 10)))}</span>
+                                <span class="schedule-calendar-details">
+                                    <strong>${escapeScheduleHtml(site.name || 'Unnamed site')}</strong>
+                                    <span>Mow ${escapeScheduleHtml(service.mowingCycleNumber)} · ${escapeScheduleHtml(dateType)}</span>
+                                    <span>${escapeScheduleHtml(service.status)}</span>
+                                </span>
+                            </button>
+                        `;
+                    }).join('')
+                    : '<p class="schedule-calendar-empty">No scheduled dates</p>';
+
+                return `
+                    <section class="schedule-calendar-month">
+                        <h3>${escapeScheduleHtml(monthName)}</h3>
+                        <div class="schedule-calendar-events">${events}</div>
+                    </section>
+                `;
+            }).join('');
+
+            scheduleCalendarView.innerHTML = `
+                <div class="schedule-view-note">
+                    Calendar dates are exact tentative or confirmed dates. Planned months are not converted into invented dates.
+                </div>
+                <div class="schedule-calendar-grid">${months}</div>
+            `;
+        }
+
+        function getHistoryServices() {
+            let services = Object.entries(state.services)
+                .map(([id, service]) => ({ id, ...service }))
+                .filter(service => (
+                    service.status === 'Completed'
+                    && (service.completedOn || service.completionMonth)
+                    && serviceMatchesSearch(service)
+                ));
+
+            if (state.status !== 'all') {
+                services = services.filter(service => service.status === state.status);
+            }
+
+            return services.sort((left, right) => {
+                const leftDate = left.completedOn
+                    || `${left.completionMonth || '0000-00'}-00`;
+                const rightDate = right.completedOn
+                    || `${right.completionMonth || '0000-00'}-00`;
+                return rightDate.localeCompare(leftDate);
+            });
+        }
+
+        function renderHistory(services) {
+            if (!services.length) {
+                renderEmpty(
+                    scheduleHistoryView,
+                    'No completed mowing history',
+                    'Completed visits with an exact date or preserved completion month will appear here across all service years.'
+                );
+                return;
+            }
+
+            const servicesBySite = services.reduce((groups, service) => {
+                if (!groups[service.solarSiteId]) {
+                    groups[service.solarSiteId] = [];
+                }
+                groups[service.solarSiteId].push(service);
+                return groups;
+            }, {});
+            const siteIds = Object.keys(servicesBySite).sort((left, right) =>
+                (getSite(left).name || '').localeCompare(getSite(right).name || '')
+            );
+
+            scheduleHistoryView.innerHTML = `
+                <div class="schedule-view-note">
+                    Site history includes completed mowing records from every service year. A month-only record remains month-only.
+                </div>
+                <div class="schedule-history-grid">
+                    ${siteIds.map(siteId => {
+                        const site = getSite(siteId);
+                        const siteServices = servicesBySite[siteId];
+                        const company = getCompany(
+                            site.companyId || siteServices[0]?.companyId
+                        );
+
+                        return `
+                            <section class="schedule-history-card">
+                                <header>
+                                    <div>
+                                        <h3>${escapeScheduleHtml(site.name || 'Unnamed site')}</h3>
+                                        <p>${escapeScheduleHtml(company.name || 'Company not set')}</p>
+                                    </div>
+                                    <span>${escapeScheduleHtml(site.location || 'Location not set')}</span>
+                                </header>
+                                <ol class="schedule-history-list">
+                                    ${siteServices.map(service => {
+                                        const completion = service.completedOn
+                                            ? formatDate(service.completedOn)
+                                            : formatDate(service.completionMonth, true);
+                                        const precision = service.completedOn
+                                            ? 'Exact completion date'
+                                            : 'Completion month recorded';
+
+                                        return `
+                                            <li>
+                                                <button
+                                                    type="button"
+                                                    data-schedule-action="edit-service"
+                                                    data-service-id="${escapeScheduleHtml(service.id)}"
+                                                >
+                                                    <span class="schedule-history-date">
+                                                        ${escapeScheduleHtml(completion)}
+                                                        <small>${escapeScheduleHtml(precision)}</small>
+                                                    </span>
+                                                    <span class="schedule-history-service">
+                                                        <strong>${escapeScheduleHtml(service.serviceYear)} · Mow ${escapeScheduleHtml(service.mowingCycleNumber)}</strong>
+                                                        <span>${escapeScheduleHtml(service.serviceType || 'Commercial mowing')}</span>
+                                                    </span>
+                                                    <span class="schedule-history-acres">
+                                                        ${escapeScheduleHtml(formatAcres(service.actualAcresCompleted))}
+                                                    </span>
+                                                </button>
+                                            </li>
+                                        `;
+                                    }).join('')}
+                                </ol>
+                            </section>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
         function renderSchedule() {
             if (!state.loaded) {
                 return;
@@ -558,12 +746,22 @@
             const visibleServices = getVisibleServices();
             renderTotals(yearServices);
 
-            const showGrid = state.view === 'grid';
-            scheduleGridView.hidden = !showGrid;
-            scheduleListView.hidden = showGrid;
+            scheduleGridView.hidden = state.view !== 'grid';
+            scheduleListView.hidden = ![
+                'list',
+                'scheduling',
+                'invoicing',
+                'delayed'
+            ].includes(state.view);
+            scheduleCalendarView.hidden = state.view !== 'calendar';
+            scheduleHistoryView.hidden = state.view !== 'history';
 
-            if (showGrid) {
+            if (state.view === 'grid') {
                 renderGrid(visibleServices);
+            } else if (state.view === 'calendar') {
+                renderCalendar(visibleServices);
+            } else if (state.view === 'history') {
+                renderHistory(getHistoryServices());
             } else {
                 renderList(visibleServices);
             }
@@ -1109,6 +1307,8 @@
                 scheduleTotals.innerHTML = '';
                 scheduleGridView.innerHTML = '';
                 scheduleListView.innerHTML = '';
+                scheduleCalendarView.innerHTML = '';
+                scheduleHistoryView.innerHTML = '';
                 scheduleLoading.hidden = false;
                 scheduleLoading.textContent =
                     'Sign in with the approved administrator account to view the schedule.';

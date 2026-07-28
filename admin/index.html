@@ -6,8 +6,8 @@
     <title>AgriSolar LLC - Admin Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/admin.css?v=20260727-schedule">
-    <link rel="stylesheet" href="css/schedule.css?v=20260727-schedule">
+    <link rel="stylesheet" href="css/admin.css?v=20260727-phase-b1">
+    <link rel="stylesheet" href="css/schedule.css?v=20260727-phase-b1">
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -156,6 +156,12 @@
                         <button type="button" class="schedule-view-btn" data-schedule-view="list">
                             List
                         </button>
+                        <button type="button" class="schedule-view-btn" data-schedule-view="calendar">
+                            Calendar
+                        </button>
+                        <button type="button" class="schedule-view-btn" data-schedule-view="history">
+                            Site history
+                        </button>
                         <button type="button" class="schedule-view-btn" data-schedule-view="scheduling">
                             Scheduling needed
                         </button>
@@ -203,6 +209,8 @@
                 </div>
                 <div id="scheduleGridView" class="schedule-view"></div>
                 <div id="scheduleListView" class="schedule-view" hidden></div>
+                <div id="scheduleCalendarView" class="schedule-view" hidden></div>
+                <div id="scheduleHistoryView" class="schedule-view" hidden></div>
             </div>
         </div>
     </div>
@@ -421,7 +429,7 @@
         </div>
     </div>
 
-    <script src="js/admin.js?v=20260727-schedule"></script>
-    <script src="js/schedule.js?v=20260727-schedule"></script>
+    <script src="js/admin.js?v=20260727-phase-b1"></script>
+    <script src="js/schedule.js?v=20260727-phase-b1"></script>
 </body>
 </html>

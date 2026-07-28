@@ -625,3 +625,1016 @@ Customer names, company names, contact information, solar-site details, acreages
 * Operational and renewal dashboard values are calculated from stored records.
 * Ready for invoicing is supported, but invoice generation is not implemented in this branch.
 * All scheduling, customer, contract, acreage, and renewal information remains administrator-only.
+
+PHASE 5 — ADMIN CUSTOMER AND SERVICE-LOG FOUNDATION
+
+Build the first secure version of an internal AgriSolar administration system. This is an MVP foundation for managing prospective customers, companies, communications, notes, solar sites, and service visits.
+
+Do not attempt to build the complete invoicing or photograph-management system in this branch.
+
+SECURITY REQUIREMENTS
+
+1. All `/admin/` pages and admin APIs must require Firebase Authentication.
+2. Authorization must use an approved Firebase UID or an `admin: true` custom claim.
+3. Do not authorize administrators solely by comparing an email address in browser code.
+4. Do not provide public account registration.
+5. Every backend admin function must independently verify the Firebase ID token and admin authorization.
+6. Public visitors must not be able to read, list, update, or delete customer, company, communication, note, site, or service information.
+7. Add Firebase Rules tests proving public access is denied and approved administrator access works.
+8. Do not put SMTP credentials, Firebase Admin credentials, API keys that must remain private, or customer data in the repository.
+9. Add `noindex, nofollow` protection to admin pages, but do not treat obscurity as authentication.
+10. Sanitize and validate all data on both the client and backend.
+11. Store notes as plain text for this version. Do not allow raw HTML.
+12. Maintain an append-only audit history for important actions.
+13. Do not send real test emails to customers.
+14. Use a mocked email transport during automated and emulator testing.
+15. Do not deploy Functions, Database Rules, Storage Rules, or backend changes without explicit human approval. Test backend functionality with Firebase Emulator Suite first.
+
+USE THE EXISTING ARCHITECTURE
+
+1. Inspect the existing dashboard and Firebase data structures before designing new ones.
+2. Continue using the repository’s existing Firebase database unless there is a documented technical reason to change it.
+3. Do not introduce an unnecessary framework or database migration.
+4. Preserve existing quote submissions.
+5. Do not destructively rewrite existing customer or submission records.
+6. Add versioned new collections/nodes and link them to existing quote-submission IDs.
+7. Document the resulting data model.
+
+ADMIN NAVIGATION
+
+Add an authenticated admin navigation structure containing:
+
+* Dashboard
+* Leads
+* Companies
+* Contacts
+* Solar Sites
+* Communications
+* Service Visits
+* Follow-ups
+* Settings
+
+Use the current AgriSolar visual identity, but optimize the admin area for clear business use rather than marketing.
+
+DASHBOARD
+
+Create an admin dashboard showing:
+
+* New quote requests
+* Leads awaiting contact
+* Upcoming follow-ups
+* Recently contacted customers
+* Active companies
+* Active solar sites
+* Recent notes and communications
+* Recent service visits
+
+Do not invent financial totals or operational statistics.
+
+COMPANY RECORDS
+
+Create company records supporting:
+
+* Company display name
+* Legal company name, when known
+* Customer or prospect status
+* Main phone
+* General email
+* Website
+* Mailing address
+* Billing address
+* Primary contact
+* Associated contacts
+* Associated solar sites
+* Internal tags
+* Internal notes
+* Date created
+* Date updated
+* Created by
+* Updated by
+
+Do not require unnecessary personal information.
+
+CONTACT RECORDS
+
+Create contact records supporting:
+
+* First name
+* Last name
+* Job title or role
+* Associated company
+* Email address
+* Phone number
+* Preferred contact method
+* Contact status
+* Internal notes
+* Created and updated timestamps
+
+Allow one company to have multiple contacts.
+
+LEADS AND QUOTE REQUESTS
+
+Convert or link existing website quote requests into manageable lead records without deleting the original submission.
+
+Support these lead stages:
+
+* New
+* Contacted
+* Follow-up needed
+* Qualified
+* Quote being prepared
+* Quote sent
+* Won
+* Lost
+* Inactive
+
+Each lead should support:
+
+* Linked website submission
+* Company
+* Primary contact
+* Solar site
+* Requested services
+* Estimated acreage, when provided
+* Lead source
+* Assigned administrator
+* Current stage
+* Next follow-up date
+* Internal notes
+* Created and updated timestamps
+
+Record every stage change in the audit/activity history.
+
+COMMUNICATION AND EMAIL LOG
+
+Create a communication timeline for every lead, company, contact, and site.
+
+Support these communication types:
+
+* Outgoing email
+* Manually recorded incoming email
+* Phone call
+* Meeting
+* Internal note
+* Follow-up
+* Status change
+
+For outgoing email:
+
+1. Use the existing secured backend email function and Namecheap/cPanel SMTP configuration.
+2. Do not change DNS, MX records, SMTP hosting, or email credentials.
+3. Keep `info@agrisolarllc.com` as the public contact address.
+4. Use only the authenticated, configured AgriSolar SMTP sender.
+5. Require an administrator to press a clear Send button.
+6. Never send messages automatically merely because a record was created or updated.
+7. Show a confirmation step containing recipient, subject, and sender before sending.
+8. Validate recipients and prevent header injection.
+9. Save:
+
+   * recipient
+   * sender
+   * subject
+   * plain-text body
+   * send timestamp
+   * authenticated administrator UID
+   * SMTP message ID when available
+   * delivery attempt status
+   * failure reason when applicable
+10. Do not include customer-uploaded attachments.
+11. Do not expose SMTP errors or credentials to the browser.
+12. Allow administrators to save an email draft without sending it.
+
+The current SMTP system cannot automatically retrieve incoming mail. For this MVP, provide a way for an administrator to manually record an incoming email or paste an important response into the communication timeline.
+
+Document future options for securely synchronizing inbound replies, but do not attempt to read Gmail, Outlook, IMAP, or Namecheap mailboxes in this branch.
+
+INTERNAL NOTES AND FOLLOW-UPS
+
+Administrators must be able to:
+
+* Add a dated internal note
+* Associate it with a lead, company, contact, site, or service visit
+* Set a follow-up date
+* Mark a follow-up complete
+* See overdue follow-ups
+* See who created each note
+* Edit a note while preserving an audit entry
+* Archive records without permanently deleting business history
+
+Notes must never be included in customer emails unless an administrator intentionally copies them into an email draft.
+
+SOLAR-SITE RECORDS
+
+Create basic solar-site records supporting:
+
+* Site name
+* Associated company
+* Primary contact
+* Service address
+* County and state
+* Approximate acreage
+* Site status
+* Access instructions
+* General vegetation notes
+* Requested services
+* Internal operational notes
+* Associated leads
+* Associated service visits
+
+Do not add unverified acreage, equipment, service-area, or customer claims to the public website.
+
+SERVICE-VISIT AND MOWING LOG FOUNDATION
+
+Create an initial Service Visits module to begin replacing manual mowing records.
+
+A service visit can provisionally contain:
+
+* Company
+* Solar site
+* Service date
+* Service type
+* Visit status
+* Crew members
+* Start and completion times
+* Approximate acres serviced
+* Equipment used
+* Weather or site conditions
+* Work performed
+* Areas not completed
+* Problems or hazards observed
+* Vegetation observations
+* Follow-up work needed
+* Next anticipated service
+* Internal notes
+* Created and updated timestamps
+* Administrator or crew member who submitted the record
+
+Clearly mark this schema as provisional until AgriSolar’s existing paper/manual forms have been reviewed.
+
+Do not invent legal, pesticide, safety, environmental, customer-certification, or contract fields. Create an extensible structure so the real form questions can be incorporated later.
+
+Do not add photograph uploads in this branch.
+
+SEARCH AND FILTERING
+
+Provide useful admin search and filters for:
+
+* Company name
+* Contact name
+* Email
+* Phone
+* Site name
+* Site address
+* Lead stage
+* Follow-up date
+* Service date
+* Service type
+* Record status
+
+Search results must remain administrator-only.
+
+AUDIT LOGGING
+
+Record important administrator actions, including:
+
+* Lead created
+* Lead stage changed
+* Company updated
+* Contact updated
+* Note added or edited
+* Follow-up completed
+* Email draft created
+* Email send attempted
+* Email successfully submitted to SMTP
+* Service visit created or updated
+* Record archived
+
+Each audit entry should include:
+
+* event type
+* record type
+* record ID
+* authenticated administrator UID
+* timestamp
+* concise description
+
+Never store passwords, tokens, SMTP credentials, or complete authentication headers in audit records.
+
+FUTURE ROADMAP DOCUMENT
+
+Create `doc/admin-operations-roadmap.md`.
+
+Document these future stages without implementing them:
+
+Stage 2 — Digital field forms
+
+* Review AgriSolar’s existing manual forms.
+* Map every existing field and signature requirement.
+* Create mobile-friendly forms for crews.
+* Allow drafts when cellular service is unavailable.
+* Add completion and supervisor-review workflows.
+* Preserve submitted records and revisions.
+
+Stage 3 — Before-and-after photographs
+
+* Administrator or authorized crew authentication
+* Pictures linked to company, site and service visit
+* Before and after classifications
+* Capture date and uploader
+* Optional location metadata only after owner approval
+* Admin-only Storage Rules
+* File-size and image-type validation
+* Random storage paths
+* No public reads
+* No direct email attachments
+* Thumbnail generation
+* Retention rules
+* Secure customer sharing only when specifically approved
+
+These photographs are different from the disabled public quote-form uploads because authorized AgriSolar personnel—not anonymous visitors—will upload them after a mowing visit.
+
+Stage 4 — Estimates and invoices
+
+* Estimate numbers
+* Customer and billing address
+* Site and job reference
+* Line items
+* Acreage and service pricing
+* Taxes, discounts and adjustments
+* Estimate approval
+* Invoice numbers
+* Draft, sent, partially paid, paid, overdue, void and written-off states
+* PDF generation
+* Email delivery history
+* Payment recording
+* Balance history
+* Export for accounting
+* Audit history
+* No automatic charging or payment processing without separate approval
+
+Stage 5 — Customer portal
+
+* Secure customer access
+* Approved service records
+* Before-and-after photographs
+* Estimates and invoices
+* Downloadable documents
+* Communication history appropriate for customers
+* Strict separation from internal notes
+
+MVP ACCEPTANCE CRITERIA
+
+The phase is complete when:
+
+1. An authenticated administrator can manage companies, contacts, leads, sites, notes, communications, follow-ups, and provisional service visits.
+2. Public and unauthenticated users cannot access any admin data.
+3. Existing quote submissions remain intact.
+4. A quote submission can be linked to a lead.
+5. An administrator can draft an email.
+6. Test mode can log a mocked email without contacting a customer.
+7. An administrator can manually record an incoming communication.
+8. An administrator can add notes and follow-ups.
+9. An administrator can create a provisional mowing/service-visit record.
+10. Important actions produce audit entries.
+11. Firebase Rules emulator tests prove the required access boundaries.
+12. No public file upload has been reintroduced.
+13. No invoice, payment, customer portal, mailbox synchronization, or photo-upload feature has been prematurely implemented.
+14. Namecheap, cPanel, DNS, MX records, existing mailboxes, agrisolarllc.com, and the default Firebase live channel remain unchanged.
+
+PREVIEW LIMITATION
+
+Firebase Hosting preview channels do not safely preview all deployed Functions and Rules changes.
+
+Therefore:
+
+1. Use Firebase Emulator Suite for backend and security-rule verification.
+2. Do not connect automated browser tests to production customer data.
+3. Do not send real SMTP email during testing.
+4. The Firebase Hosting preview may demonstrate the admin interface, but backend functionality must remain disabled or use an explicitly safe emulator/test configuration.
+5. Provide a separate backend deployment plan after review.
+6. Do not deploy backend resources until Aaron explicitly approves the exact branch and commit.
+
+CURRENT SCHEDULING WORKFLOW REQUIREMENTS
+
+AgriSolar currently tracks its annual mowing schedule on a whiteboard. Each column represents a solar site, and each site includes:
+
+* Site or project name
+* Location
+* Acreage
+* Vegetation-height requirement when applicable
+* Mow 1
+* Mow 2
+* Mow 3
+* Mow 4
+* Planned month or date
+* Actual completion date
+
+Replace this manual schedule with an administrator-only Annual Mowing Schedule.
+
+DATA DESIGN
+
+Do not store Mow 1 through Mow 4 as four fixed database columns.
+
+Create a separate scheduled-service record for every mowing cycle so additional visits can be added later.
+
+Each scheduled-service record should support:
+
+* Service year
+* Company
+* Solar site
+* Mowing-cycle number
+* Service type
+* Planned month
+* Tentative scheduled date
+* Confirmed scheduled date
+* Actual start date
+* Actual completion date
+* Site acreage
+* Estimated acres to service
+* Actual acres completed
+* Target vegetation height
+* Status
+* Assigned crew
+* Assigned equipment
+* Weather delay
+* Rescheduling reason
+* Completion notes
+* Problems or hazards
+* Follow-up required
+* Ready-for-invoicing indicator
+* Associated service-visit record
+* Created and updated timestamps
+* Administrator UID
+
+Use these statuses:
+
+* Planned
+* Scheduling needed
+* Scheduled
+* In progress
+* Partially completed
+* Completed
+* Weather delayed
+* Customer delayed
+* Rescheduled
+* Cancelled
+
+ADMIN SCHEDULE VIEWS
+
+Create:
+
+1. Annual schedule grid showing sites vertically and Mow 1–4 horizontally.
+2. Calendar view showing scheduled mowing dates.
+3. List view supporting search, sorting and filtering.
+4. Site history showing every mowing completed at that site.
+5. “Scheduling needed” view.
+6. “Ready for invoicing” view.
+7. Overdue and delayed service view.
+
+The annual grid should visually resemble the existing whiteboard because that is the workflow AgriSolar already understands.
+
+Allow an administrator to open any mowing-cycle cell and:
+
+* Set or change the planned date
+* Mark work started
+* Mark partially completed
+* Mark completed
+* Enter acres completed
+* Enter crew and equipment
+* Record weather delays
+* Add operational notes
+* Create a follow-up visit
+* Mark the completed visit ready for invoicing
+
+Do not implement invoice generation in this branch. The ready-for-invoicing status will later connect completed mowing records to invoices.
+
+DASHBOARD TOTALS
+
+Show administrator-only operational totals:
+
+* Total contracted or scheduled acres
+* Acres scheduled this month
+* Acres completed this season
+* Acres remaining
+* Sites awaiting scheduling
+* Visits delayed
+* Visits ready for invoicing
+
+Calculate totals from actual site and service records. Never hard-code totals.
+
+DATA IMPORT
+
+Do not hard-code the photographed whiteboard schedule into public source code.
+
+Create a safe administrator-only data-entry process or documented import template containing:
+
+* Site name
+* Location
+* Acres
+* Height requirement
+* Mow-cycle number
+* Planned date
+* Completed date
+
+Do not import entries whose handwriting, spelling, year or date meaning has not been confirmed by Aaron.
+
+FUTURE CONNECTIONS
+
+Design stable identifiers so every scheduled mowing can later connect to:
+
+* Digital crew form
+* Completed service record
+* Before photographs
+* After photographs
+* Customer
+* Contract
+* Estimate
+* Invoice
+* Invoice email
+* Payment status
+
+Photographs will eventually be uploaded only by authenticated AgriSolar administrators or crew members. Do not restore anonymous public uploads.
+2026 SCHEDULE AND RENEWAL REQUIREMENTS
+
+The photographed whiteboard represents AgriSolar’s remaining mowing schedule for 2026.
+
+Confirmed site names include:
+
+* Reif 1A — 8 acres
+* Reif 1B — 18 acres
+* Reif 2A — 16 acres
+* Reif 2B — 18 acres
+* Reif 3 — 18 acres
+* Lindauer — 29 acres
+* Corfee — Gillespie — 40 acres
+* Horseshoe — Hillsboro — 36 acres
+* McCray — Greenville — 26.8 acres
+* Brighton — 60 acres
+* St. Joseph 1 and 2 — 30.4 acres combined
+
+The apparent total is 300.2 acres. Treat that total as provisional until administrator entry is reviewed.
+
+Some sites have an indicated 18-inch vegetation-height requirement. Store the height requirement separately for each site and contract rather than assuming it applies to every site.
+
+MULTI-YEAR AND RENEWAL DESIGN
+
+Solar sites must be permanent records. Do not create a duplicate site each year.
+
+Create a separate service-season or contract record for each year. The current season is 2026.
+
+Each site’s annual service record should support:
+
+* Service year
+* Customer or company
+* Solar site
+* Contract start date
+* Contract end date
+* Planned number of mowing cycles
+* Planned herbicide or other services
+* Contract acreage
+* Vegetation-height requirement
+* Contract status
+* Renewal status
+* Renewal follow-up date
+* Renewal notes
+* Linked mowing schedule
+* Linked service visits
+* Linked future invoices
+
+Use these contract statuses:
+
+* Prospect
+* Proposed
+* Active
+* Completed
+* Expired
+* Cancelled
+
+Use these renewal statuses:
+
+* Not reviewed
+* Renewal follow-up needed
+* Customer contacted
+* Renewal proposed
+* Renewed
+* Not renewed
+* Decision pending
+
+When a site is renewed:
+
+1. Preserve the complete 2026 history.
+2. Create a new service-season record for 2027.
+3. Keep the same company, contact and solar-site identifiers.
+4. Allow an administrator to copy the previous year’s service plan.
+5. Require the administrator to review acreage, pricing, mowing frequency, height requirements and services before saving.
+6. Do not automatically assume that terms remain unchanged.
+7. Do not automatically mark a site renewed.
+8. Record who approved the renewal and when.
+
+Add a Renewal Dashboard showing:
+
+* Contracts approaching expiration
+* Sites needing renewal follow-up
+* Renewal proposals sent
+* Customers awaiting a decision
+* Renewed acreage
+* Acreage not yet renewed
+* Sites not renewed
+
+Do not publish these customer names, site details, acreage figures, schedules or renewal information on the public website. They are administrator-only business information.
+INVOICE REQUIREMENTS BASED ON CURRENT AGRISOLAR INVOICE
+
+Use the provided “Invoice June 2026 ESS” as the approved structural example for future invoice management.
+
+Do not implement or send invoices in the current remediation branch unless separately authorized. Document and design the data model so this workflow can be implemented without restructuring customer, site, contract or service-visit records.
+
+BILLING NAMES AND SITE IDENTIFIERS
+
+Each solar site must support:
+
+* Internal short name
+* Official billing description
+* Customer site code
+* Customer project code
+* Purchase-order number
+* Contract acreage
+* Billing rate
+* Billing unit
+* Associated customer
+* Associated annual service contract
+
+For example, an internal name such as “Reif 2A” may have the official billing name “SV CSG Reifschneider II A.”
+
+Do not assume the public, internal and billing names are always identical.
+
+CUSTOMER BILLING PROFILE
+
+Each company must support a separate billing profile containing:
+
+* Billing company name
+* Billing contact
+* Billing email addresses
+* Billing address
+* Customer-assigned vendor number
+* Default payment terms
+* Default currency
+* Invoice-email instructions
+* Customer-specific invoice requirements
+
+The vendor number belongs to the relationship between AgriSolar and the customer. Do not assume the same vendor number applies to every customer.
+
+INVOICE RECORD
+
+Each invoice must contain:
+
+* Unique invoice ID
+* Human-readable invoice number
+* Customer
+* Billing-address snapshot
+* Vendor-number snapshot
+* Invoice date
+* Payment terms
+* Calculated due date
+* Customer project reference
+* Service period
+* Status
+* Line items
+* Subtotal
+* Tax, when applicable
+* Adjustments
+* Total
+* Amount paid
+* Remaining balance
+* Internal notes
+* Customer-visible notes
+* PDF version
+* Created by
+* Approved by
+* Sent by
+* Created, approved and sent timestamps
+
+Use integer cents for monetary calculations. Do not use floating-point values for currency.
+
+Use these invoice statuses:
+
+* Draft
+* Awaiting review
+* Approved
+* Sent
+* Partially paid
+* Paid
+* Overdue
+* Voided
+* Written off
+
+Sent invoices must not be deleted or silently changed. Corrections should create a revision, credit, replacement invoice or void record while preserving history.
+
+INVOICE LINE ITEMS
+
+Every invoice line should link to a completed service visit and support:
+
+* Solar site
+* Official billing description
+* Service year
+* Service type
+* Mowing-cycle number
+* Service month
+* Actual completion date
+* Purchase-order number
+* Quantity
+* Billing unit
+* Unit price
+* Line amount
+* Associated contract
+* Associated completed service visit
+
+An invoice can contain several sites and several completed mowing visits for the same customer.
+
+The description format should support wording such as:
+
+“SV CSG Reifschneider II A - 2026 Vegetation Season Cut #2 (June 2026)”
+
+Do not generate a line item from a merely scheduled mowing. The associated service visit must be marked completed and ready for invoicing.
+
+PRICING
+
+Support pricing methods including:
+
+* Per acre
+* Flat amount per mowing
+* Flat seasonal amount
+* Hourly
+* Per application
+* Custom line item
+
+Do not infer or change contractual rates automatically.
+
+An administrator must review:
+
+* Acreage
+* Rate
+* Quantity
+* PO number
+* Description
+* Line amount
+
+before approving an invoice.
+
+Store the approved rate with the contract and copy a snapshot onto the invoice line. Later contract changes must not alter an already approved or sent invoice.
+
+INVOICE CREATION WORKFLOW
+
+1. Crew or administrator completes the service record.
+2. Administrator reviews the work and marks it ready for invoicing.
+3. The completed visit appears in the Ready for Invoicing queue.
+4. Administrator selects one or more completed visits for the same customer.
+5. The system creates a draft invoice.
+6. The administrator verifies descriptions, PO numbers, rates and amounts.
+7. The system calculates subtotal and total.
+8. The administrator previews the invoice PDF.
+9. A second confirmation is required before marking it approved.
+10. Sending requires a separate explicit action.
+11. The system records the email and PDF version that were sent.
+12. The related service visits are marked invoiced.
+
+Never automatically email an invoice merely because mowing was marked completed.
+
+PDF REQUIREMENTS
+
+Generate a professional letter-size PDF that preserves the current AgriSolar invoice’s general structure:
+
+* AgriSolar logo and company information
+* Invoice heading
+* Invoice number and date
+* Vendor number
+* Bill-to section
+* Payment terms
+* Project reference
+* Quantity
+* Description
+* PO number
+* Amount
+* Total
+
+Support multiple pages when necessary and repeat the line-item headings on later pages.
+
+Before an invoice is sent:
+
+* Render the generated PDF
+* Verify no clipped or overlapping text
+* Verify all calculations
+* Verify the correct customer and billing address
+* Verify every PO number
+* Verify the invoice number
+* Verify the total
+
+After sending, preserve an immutable copy of the exact PDF.
+
+INVOICE EMAIL
+
+Generated AgriSolar invoice PDFs may be attached to authenticated outgoing invoice emails because they are internally generated documents. This does not restore anonymous customer file uploads.
+
+Record:
+
+* Sender
+* Recipients
+* CC recipients
+* Subject
+* Plain-text email body
+* Invoice ID
+* PDF version
+* SMTP message ID
+* Send timestamp
+* Administrator UID
+* SMTP acceptance or failure status
+
+SMTP acceptance does not prove that the customer received or opened the email. Do not label an invoice delivered unless reliable delivery information is available.
+
+Do not send real invoice emails during development or automated testing.
+
+PAYMENT TRACKING
+
+Future payment tracking should support:
+
+* Payment date
+* Payment amount
+* Payment method
+* Reference or check number
+* Administrator note
+* Remaining balance
+* Partial payments
+* Paid-in-full date
+
+Do not connect to bank accounts or automatically charge customers without a separately reviewed payment-integration phase.
+
+CURRENT EXAMPLE
+
+The June 2026 ESS example contains five line items totaling $8,544 with Net 30 terms. Use it for structural testing, but do not place actual customer billing data in public test fixtures or the Firebase Hosting output.
+Hello [Customer Contact Name],
+
+Attached is AgriSolar LLC Invoice #[Invoice Number] for vegetation-management services completed during [Service Month and Year].
+
+Invoice total: [Invoice Total]
+Payment terms: [Payment Terms]
+Due date: [Due Date]
+
+This invoice includes completed services for:
+
+[Site and service summary]
+
+The applicable pre-mow and post-mow photographs have been uploaded to your SharePoint site:
+
+[SharePoint folder link]
+
+Please let us know if you need additional documentation or have any questions about the invoice or completed work.
+
+Thank you,
+
+[Sender Name]
+AgriSolar LLC
+618-539-2098
+[info@agrisolarllc.com](mailto:info@agrisolarllc.com)
+[www.agrisolarllc.com](http://www.agrisolarllc.com)
+
+
+CUSTOMER-SPECIFIC INVOICE AND SHAREPOINT WORKFLOW
+
+AgriSolar sends invoices to multiple solar companies. Each company may have different:
+
+* Billing contacts
+* Billing addresses
+* Vendor numbers
+* Payment terms
+* PO-number requirements
+* Invoice-email instructions
+* Invoice-description formats
+* SharePoint sites
+* SharePoint folder structures
+* Photograph-submission requirements
+
+Store these settings separately for each customer. Do not assume the Energy Support Services example applies to every company.
+
+CONFIGURABLE INVOICE EMAILS
+
+Create a default invoice-email template using placeholders for:
+
+* Customer contact
+* Invoice number
+* Service month
+* Invoice total
+* Payment terms
+* Due date
+* Site and service summary
+* SharePoint folder link
+* Sender name
+
+Allow administrators to:
+
+* Maintain a default AgriSolar template
+* Create customer-specific templates
+* Preview the completed email
+* Edit the message before sending
+* Save a draft
+* Confirm recipients and attachments
+* Send only after explicit confirmation
+
+Never automatically send an invoice when a mowing record is completed.
+
+PRE-MOW AND POST-MOW PHOTOGRAPHS
+
+AgriSolar currently uploads pre-mow and post-mow photographs to each solar company’s SharePoint site.
+
+For the first version, do not automate SharePoint uploads.
+
+Add an administrator-only photo-delivery checklist to every service visit containing:
+
+* Pre-mow photographs required
+* Pre-mow photographs taken
+* Pre-mow photographs uploaded to SharePoint
+* Post-mow photographs required
+* Post-mow photographs taken
+* Post-mow photographs uploaded to SharePoint
+* Customer SharePoint site
+* SharePoint destination folder
+* SharePoint folder URL
+* Date uploaded
+* Uploaded by
+* Number of photographs
+* Customer confirmation, when available
+* Internal notes
+* Photo-delivery status
+
+Use these statuses:
+
+* Not started
+* Pre-mow photos needed
+* Pre-mow photos uploaded
+* Post-mow photos needed
+* Post-mow photos uploaded
+* Complete
+* Customer follow-up needed
+
+Allow the administrator to paste the customer’s SharePoint folder URL into the service record. Keep the URL and associated details administrator-only.
+
+Do not expose customer SharePoint links on the public website.
+
+PHOTO NAMING CONVENTION
+
+Document and support a consistent filename format such as:
+
+`YYYY-MM-DD_SiteName_CutNumber_PRE_001.jpg`
+
+`YYYY-MM-DD_SiteName_CutNumber_POST_001.jpg`
+
+Make the naming convention configurable because some customers may require their own format.
+
+SHAREPOINT AS CUSTOMER DELIVERY SYSTEM
+
+For the initial system:
+
+1. AgriSolar completes a mowing visit.
+2. The service visit records the official completion date.
+3. Pre-mow and post-mow photograph requirements are checked.
+4. An authorized employee manually uploads photographs to the customer’s SharePoint.
+5. The employee records the SharePoint folder link and upload completion.
+6. The service visit is marked documentation complete.
+7. The visit becomes eligible for invoicing.
+8. The SharePoint link can be inserted into the editable invoice email.
+9. The administrator reviews and sends the invoice.
+
+A service visit should not be marked ready for invoicing when required customer documentation is incomplete, unless an administrator provides an override reason.
+
+FUTURE SHAREPOINT AUTOMATION
+
+Document, but do not implement, a future Microsoft SharePoint integration that could:
+
+* Authenticate through Microsoft authorization
+* Store no Microsoft passwords in the application
+* Use customer-approved access
+* Upload pre-mow and post-mow photographs
+* Create folders using customer-required naming
+* Record SharePoint file and folder identifiers
+* Detect upload failures
+* Prevent duplicate uploads
+* Confirm the final uploaded file count
+* Retain an audit log
+* Support different SharePoint tenants for different customers
+
+Do not assume that one authorization grants access to every customer’s SharePoint. Each solar company may control a separate Microsoft tenant and require separate permission.
+
+PHOTO STORAGE
+
+Customer SharePoint should remain the customer-facing document-delivery location.
+
+If AgriSolar later temporarily stores crew photographs in Firebase:
+
+* Require authenticated administrator or crew access
+* Prohibit public reads and uploads
+* Link every image to a service visit
+* Separate pre-mow and post-mow images
+* Record uploader and capture date
+* Use randomized storage paths
+* Apply retention and deletion rules
+* Never attach an uncontrolled public upload to email
+
+This authenticated crew-photo workflow is separate from the disabled anonymous quote-form upload feature.
