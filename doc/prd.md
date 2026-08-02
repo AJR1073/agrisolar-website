@@ -1638,3 +1638,222 @@ If AgriSolar later temporarily stores crew photographs in Firebase:
 * Never attach an uncontrolled public upload to email
 
 This authenticated crew-photo workflow is separate from the disabled anonymous quote-form upload feature.
+
+## Authoritative Addendum: AgriSolar Prospecting and Promotion Assistant
+
+### Objective
+
+Add an administrator-only business-development workspace that helps AgriSolar find,
+review, qualify, and contact potential commercial solar vegetation-management
+customers. It should also help prepare promotional content for AgriSolar's website,
+email campaigns, case studies, and social channels.
+
+This is an AgriSolar feature inspired by useful Catalyst concepts. Do not connect the
+entire Catalyst application or copy its database authority model into Firebase.
+
+### Core Safety Boundary
+
+Artificial intelligence may research public business information, summarize evidence,
+suggest lead priority, and create drafts. It must not make the final business decision
+or contact anyone without an authenticated administrator's review and explicit action.
+
+The first version must not:
+
+* Automatically send outreach email
+* Automatically enroll a contact in a campaign or follow-up sequence
+* Automatically approve, reject, or delete a prospect
+* Invent a person, email address, project, acreage, contract, or service need
+* Present an AI inference as a verified fact
+* Scrape content behind authentication, paywalls, access controls, or technical blocks
+* Use private customer notes, schedules, pricing, or service history as model input
+  unless an administrator deliberately selects the minimum necessary information
+* Expose the OpenAI API key or prospect records in browser code or public Hosting files
+
+### Prospect Discovery
+
+Allow an administrator to define a discovery request using criteria such as:
+
+* Target state, region, or travel radius
+* Solar asset owner, operator, developer, EPC, O&M provider, asset manager, or facility
+  management company
+* Utility-scale or commercial solar relevance
+* Vegetation-management, mowing, herbicide, erosion-control, or site-maintenance need
+* Minimum confidence and required evidence
+* Excluded companies, domains, and contacts
+
+Discovery results must be saved as review candidates, not automatically as approved
+leads. Every candidate must preserve:
+
+* Company name
+* Website and normalized domain
+* Public source URL
+* Source title
+* Date and time accessed
+* Exact supporting excerpt or concise evidence summary
+* Public business contact details, when available
+* Why the result may fit AgriSolar
+* AI confidence and qualification explanation
+* Verification status
+* Administrator review status
+
+Respect website terms, access restrictions, and reasonable request pacing. Prefer
+official company, project, procurement, and public agency sources. Do not treat a search
+snippet alone as verified evidence when the source page cannot be reviewed.
+
+### Duplicate and Identity Protection
+
+Before a candidate can become a lead, compare it with existing companies, contacts,
+quote requests, leads, prior outreach, and suppression records. Flag:
+
+* Exact and near-matching company names
+* Matching normalized domains
+* Matching email addresses and telephone numbers
+* Subsidiary or parent-company uncertainty
+* Conflicting company or contact information
+* A prior opt-out, do-not-contact decision, bounced address, or complaint
+
+Ambiguous records require administrator resolution. Never merge or overwrite business
+records automatically.
+
+### AI-Assisted Qualification
+
+The assistant may propose:
+
+* Fit score and supporting reasons
+* Likely service interest
+* Recommended contact role
+* Suggested next action
+* Missing facts that require verification
+* Risks or reasons not to contact
+
+Store AI conclusions separately from verified facts. Record the model, prompt version,
+generation time, source identifiers, and administrator decision. Changing source facts
+must make the prior qualification visibly stale rather than silently treating it as
+current.
+
+### Outreach Drafting
+
+For an administrator-approved prospect, generate an editable draft containing:
+
+* Recipient and company
+* Subject
+* Plain-text and optional HTML body
+* AgriSolar value proposition relevant to the verified prospect facts
+* Suggested call to action
+* Internal explanation of how the message was personalized
+* Source references used for personalization
+* Claims requiring administrator verification
+
+The draft must be factual, concise, professional, and clearly identify AgriSolar. It
+must not claim an existing relationship, completed work, customer endorsement,
+certification, guaranteed outcome, or known site condition without verified support.
+
+Before sending, require a separate screen that displays the sender, recipient, subject,
+complete message, prior contact history, suppression status, and attachments. Sending
+requires a deliberate administrator confirmation. Draft generation and email sending
+must remain separate operations.
+
+### Promotion Assistant
+
+Allow administrators to create and revise drafts for:
+
+* Website service-page improvements
+* Search-friendly page titles and descriptions
+* Educational articles about solar vegetation management
+* Project summaries and case-study outlines using approved facts
+* Seasonal reminders
+* Social-media posts
+* Sales one-sheets and capability statements
+* Follow-up email drafts
+
+All promotional content remains a draft until approved. Customer names, photographs,
+results, quotes, acreage, or project details require documented permission before public
+use. AI-generated search claims and factual statements must be reviewed before
+publication.
+
+### Compliance and Reputation Controls
+
+Before enabling any outbound prospecting email, AgriSolar must approve an outreach and
+privacy policy appropriate to the jurisdictions and recipients involved. The system
+must support at least:
+
+* Do-not-contact and unsubscribe suppression
+* Bounce and complaint suppression
+* Sender identity and business-address configuration
+* Source and lawful-use review for contact data
+* Frequency limits and quiet-period controls
+* A complete record of drafts, approvals, sends, failures, and opt-outs
+* Immediate cancellation of pending outreach when a contact is suppressed
+
+Do not treat this product specification as legal advice. Obtain appropriate compliance
+review before activating email campaigns or automated follow-ups.
+
+### OpenAI Integration Requirements
+
+Use the OpenAI API from trusted server-side Firebase Functions or another approved
+backend. A ChatGPT subscription is not the application integration; AgriSolar will need
+a separately controlled OpenAI API project, billing configuration, API credential, and
+usage limits.
+
+Implementation requirements:
+
+* Use the OpenAI Responses API for new generation workflows.
+* Store the API credential in managed secrets and never return it to the browser.
+* Use Structured Outputs with strict schemas for prospect analysis and email drafts.
+* Validate every model result again in application code before saving it.
+* Use `store: false` for prospect and business-data requests unless a later privacy
+  review explicitly approves OpenAI-managed response state.
+* Minimize personal and confidential information sent to the model.
+* Record model usage, latency, errors, and estimated request cost without logging secret
+  values or unnecessary message content.
+* Configure per-user and daily usage limits and a manual administrative off switch.
+* Keep model selection configurable and evaluate output quality before changing models.
+* Treat refusal, incomplete output, missing evidence, and invalid structured output as
+  normal review states rather than silently retrying or fabricating a result.
+
+### Stable Records
+
+Design administrator-only records for:
+
+* Discovery requests and runs
+* Prospect candidates
+* Prospect sources and evidence
+* Verification decisions
+* Qualification proposals
+* Outreach drafts
+* Campaigns and campaign membership
+* Communications and follow-ups
+* Suppression entries
+* AI generation and approval audit events
+
+Use stable generated identifiers. Link an approved prospect to the existing lead,
+company, contact, communication, and follow-up records rather than creating parallel
+customer identities.
+
+### Delivery Phases
+
+1. **Outreach foundation:** manual prospect entry, source evidence, duplicate checks,
+   suppression records, and administrator review.
+2. **AI qualification:** server-side structured analysis of administrator-selected
+   evidence, with no email generation or sending.
+3. **Draft assistant:** personalized outreach drafts with source references and explicit
+   review, while sending remains disabled or mocked.
+4. **Promotion assistant:** administrator-reviewed website, article, case-study, and
+   social-content drafts.
+5. **Controlled sending:** enable the existing authenticated email transport only after
+   compliance, suppression, rate-limit, audit, and sender-reputation review.
+6. **Measured follow-up:** add administrator-approved sequences only after manual sending
+   is proven safe; never create open-ended autonomous campaigns.
+
+### Acceptance Criteria
+
+* Anonymous and ordinary authenticated users cannot read or write prospecting data.
+* The OpenAI API credential is absent from browser assets, logs, and database records.
+* Every discovered fact has retrievable source evidence and a verification state.
+* AI-generated conclusions are visibly different from verified facts.
+* Duplicate and suppressed contacts cannot proceed to sending.
+* No AI request can directly send email or publish promotional content.
+* Every send and publication requires a separate authenticated administrator action.
+* Tests use synthetic companies, contacts, evidence, and mocked email transport.
+* Usage limits, failure states, and an administrative off switch are tested.
+* Private prospect data and prompt fixtures are excluded from Firebase Hosting output.

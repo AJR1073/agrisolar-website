@@ -129,6 +129,54 @@ function validScheduledService(overrides = {}) {
     };
 }
 
+function validProspectCandidate(overrides = {}) {
+    return {
+        companyName: 'Synthetic Solar Operations',
+        normalizedCompany: 'synthetic solar operations',
+        website: 'https://example.com/',
+        normalizedDomain: 'example.com',
+        location: 'Example County, Illinois',
+        contactName: 'Test Contact',
+        contactEmail: 'contact@example.com',
+        contactPhone: '618-555-0100',
+        fitReason: 'Public information indicates utility-scale solar operations.',
+        sourceId: 'source-1',
+        verificationStatus: 'Needs review',
+        outreachStatus: 'Not contacted',
+        suppressed: false,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        administratorUid: 'approved-admin',
+        ...overrides
+    };
+}
+
+function validProspectSource(overrides = {}) {
+    return {
+        prospectId: 'prospect-1',
+        url: 'https://example.com/solar-project',
+        title: 'Synthetic solar project information',
+        evidenceSummary: 'The public page describes a synthetic utility-scale solar project.',
+        accessedAt: Date.now(),
+        createdAt: Date.now(),
+        administratorUid: 'approved-admin',
+        ...overrides
+    };
+}
+
+function validSuppressionEntry(overrides = {}) {
+    return {
+        prospectId: 'prospect-1',
+        type: 'email',
+        value: 'contact@example.com',
+        reason: 'Administrator do-not-contact decision',
+        active: true,
+        createdAt: Date.now(),
+        administratorUid: 'approved-admin',
+        ...overrides
+    };
+}
+
 describe('Realtime Database contact submission rules', () => {
     before(async () => {
         testEnv = await initializeTestEnvironment({
@@ -396,5 +444,100 @@ describe('Realtime Database contact submission rules', () => {
         await assertFails(
             remove(ref(approvedDb, 'scheduled_services/preserved-service'))
         );
+    });
+
+    it('allows the approved administrator to create reviewed prospect evidence atomically', async () => {
+        const approvedDb = testEnv
+            .authenticatedContext('approved-admin', { email: adminEmail })
+            .database();
+
+        await assertSucceeds(
+            update(ref(approvedDb), {
+                'prospect_candidates/prospect-1': validProspectCandidate(),
+                'prospect_sources/source-1': validProspectSource()
+            })
+        );
+        await assertSucceeds(get(ref(approvedDb, 'prospect_candidates/prospect-1')));
+        await assertSucceeds(get(ref(approvedDb, 'prospect_sources/source-1')));
+    });
+
+    it('keeps prospecting data private from public and unapproved users', async () => {
+        await testEnv.withSecurityRulesDisabled(async context => {
+            await set(
+                ref(context.database(), 'prospect_candidates/private-prospect'),
+                validProspectCandidate()
+            );
+        });
+
+        const publicDb = testEnv.unauthenticatedContext().database();
+        const otherDb = testEnv
+            .authenticatedContext('other-user', { email: 'other@example.com' })
+            .database();
+
+        await assertFails(get(ref(publicDb, 'prospect_candidates/private-prospect')));
+        await assertFails(
+            set(
+                ref(publicDb, 'prospect_candidates/public-prospect'),
+                validProspectCandidate({ administratorUid: 'public-user' })
+            )
+        );
+        await assertFails(get(ref(otherDb, 'prospect_candidates/private-prospect')));
+        await assertFails(
+            set(
+                ref(otherDb, 'prospect_sources/unapproved-source'),
+                validProspectSource({ administratorUid: 'other-user' })
+            )
+        );
+    });
+
+    it('rejects invalid prospect evidence and inconsistent suppression state', async () => {
+        const approvedDb = testEnv
+            .authenticatedContext('approved-admin', { email: adminEmail })
+            .database();
+
+        await assertFails(
+            set(
+                ref(approvedDb, 'prospect_sources/unsafe-source'),
+                validProspectSource({ url: 'javascript:alert(1)' })
+            )
+        );
+        await assertFails(
+            set(
+                ref(approvedDb, 'prospect_sources/empty-evidence'),
+                validProspectSource({ evidenceSummary: '' })
+            )
+        );
+        await assertFails(
+            set(
+                ref(approvedDb, 'prospect_candidates/inconsistent-suppression'),
+                validProspectCandidate({ suppressed: true })
+            )
+        );
+        await assertFails(
+            set(
+                ref(approvedDb, 'suppression_entries/invalid-type'),
+                validSuppressionEntry({ type: 'telephone-list' })
+            )
+        );
+    });
+
+    it('preserves prospect evidence and do-not-contact history', async () => {
+        const approvedDb = testEnv
+            .authenticatedContext('approved-admin', { email: adminEmail })
+            .database();
+
+        await assertSucceeds(
+            update(ref(approvedDb), {
+                'prospect_candidates/prospect-1': validProspectCandidate({
+                    suppressed: true,
+                    outreachStatus: 'Do not contact'
+                }),
+                'prospect_sources/source-1': validProspectSource(),
+                'suppression_entries/suppression-1': validSuppressionEntry()
+            })
+        );
+        await assertFails(remove(ref(approvedDb, 'prospect_candidates/prospect-1')));
+        await assertFails(remove(ref(approvedDb, 'prospect_sources/source-1')));
+        await assertFails(remove(ref(approvedDb, 'suppression_entries/suppression-1')));
     });
 });

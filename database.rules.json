@@ -311,6 +311,141 @@
         }
       }
     },
+    "prospect_candidates": {
+      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".indexOn": [
+        "normalizedCompany",
+        "normalizedDomain",
+        "contactEmail",
+        "verificationStatus",
+        "suppressed"
+      ],
+      "$prospect": {
+        ".write": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com' && newData.exists()",
+        ".validate": "newData.hasChildren(['companyName', 'normalizedCompany', 'website', 'normalizedDomain', 'location', 'contactName', 'contactEmail', 'contactPhone', 'fitReason', 'sourceId', 'verificationStatus', 'outreachStatus', 'suppressed', 'createdAt', 'updatedAt', 'administratorUid']) && (!data.exists() || newData.child('createdAt').val() == data.child('createdAt').val()) && newData.child('administratorUid').val() == auth.uid && (newData.child('suppressed').val() == false || newData.child('outreachStatus').val() == 'Do not contact')",
+        "companyName": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120"
+        },
+        "normalizedCompany": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120"
+        },
+        "website": {
+          ".validate": "newData.isString() && newData.val().length <= 300 && (newData.val() == '' || newData.val().matches(/^https?:\\/\\//))"
+        },
+        "normalizedDomain": {
+          ".validate": "newData.isString() && newData.val().length <= 253"
+        },
+        "location": {
+          ".validate": "newData.isString() && newData.val().length <= 180"
+        },
+        "contactName": {
+          ".validate": "newData.isString() && newData.val().length <= 120"
+        },
+        "contactEmail": {
+          ".validate": "newData.isString() && newData.val().length <= 254 && (newData.val() == '' || newData.val().matches(/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$/))"
+        },
+        "contactPhone": {
+          ".validate": "newData.isString() && newData.val().length <= 30"
+        },
+        "fitReason": {
+          ".validate": "newData.isString() && newData.val().length <= 1000"
+        },
+        "sourceId": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+        },
+        "verificationStatus": {
+          ".validate": "newData.isString() && (newData.val() == 'Needs review' || newData.val() == 'Verified' || newData.val() == 'Rejected')"
+        },
+        "outreachStatus": {
+          ".validate": "newData.isString() && (newData.val() == 'Not contacted' || newData.val() == 'Do not contact')"
+        },
+        "suppressed": {
+          ".validate": "newData.isBoolean()"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 60000"
+        },
+        "updatedAt": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 60000"
+        },
+        "administratorUid": {
+          ".validate": "newData.isString() && newData.val() == auth.uid"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "prospect_sources": {
+      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".indexOn": [
+        "prospectId"
+      ],
+      "$source": {
+        ".write": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com' && newData.exists()",
+        ".validate": "newData.hasChildren(['prospectId', 'url', 'title', 'evidenceSummary', 'accessedAt', 'createdAt', 'administratorUid']) && (!data.exists() || newData.child('createdAt').val() == data.child('createdAt').val()) && newData.child('administratorUid').val() == auth.uid",
+        "prospectId": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+        },
+        "url": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 500 && newData.val().matches(/^https?:\\/\\//)"
+        },
+        "title": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200"
+        },
+        "evidenceSummary": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 2000"
+        },
+        "accessedAt": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 60000"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 60000"
+        },
+        "administratorUid": {
+          ".validate": "newData.isString() && newData.val() == auth.uid"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "suppression_entries": {
+      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".indexOn": [
+        "value",
+        "active",
+        "prospectId"
+      ],
+      "$suppression": {
+        ".write": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com' && newData.exists()",
+        ".validate": "newData.hasChildren(['prospectId', 'type', 'value', 'reason', 'active', 'createdAt', 'administratorUid']) && (!data.exists() || newData.child('createdAt').val() == data.child('createdAt').val()) && newData.child('administratorUid').val() == auth.uid",
+        "prospectId": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+        },
+        "type": {
+          ".validate": "newData.isString() && (newData.val() == 'company' || newData.val() == 'domain' || newData.val() == 'email')"
+        },
+        "value": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 254"
+        },
+        "reason": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 500"
+        },
+        "active": {
+          ".validate": "newData.isBoolean()"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 60000"
+        },
+        "administratorUid": {
+          ".validate": "newData.isString() && newData.val() == auth.uid"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
     "email_recipients": {
       ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
       "$recipient": {

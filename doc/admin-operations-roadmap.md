@@ -80,6 +80,34 @@ Original quote submissions remain intact. New records link to the submission ID 
 * No automatic customer email
 * No Gmail, Outlook, IMAP, or Namecheap mailbox synchronization in the MVP
 
+## Stage 4B — Prospecting and Promotion Assistant
+
+This stage depends on the Stage 2 authorization/audit foundation, Stage 3 lead records,
+and Stage 4 draft/communication history. Deliver it in separately reviewable slices:
+
+Development preview status: the manual prospect-candidate, public-source evidence,
+duplicate review, review-status, and do-not-contact suppression foundation is
+implemented for testing on the owner-designated Firebase development project. It uses
+the current approved-email authorization boundary. Promotion to a production system and
+all AI/email capabilities remain blocked on the Stage 2 authorization/audit migration
+and the later gates below.
+
+1. Manual prospect candidates, public source evidence, duplicate detection, and
+   do-not-contact suppression
+2. Server-side OpenAI Responses API integration using managed secrets, Structured
+   Outputs, `store: false`, usage limits, and synthetic tests
+3. AI-assisted qualification that preserves the difference between verified facts and
+   model proposals
+4. Editable outreach drafts with source references and explicit administrator review
+5. Administrator-reviewed promotional drafts for website, educational, case-study, and
+   social content
+6. Controlled sending only after compliance, suppression, audit, rate-limit, sender,
+   and reputation controls are approved
+
+AI generation must never directly send email, publish content, approve a lead, merge a
+record, or bypass a suppression entry. A ChatGPT subscription is separate from the
+OpenAI API project and billing configuration required by this application.
+
 ## Stage 5 — Digital Field Forms
 
 Before implementation:
