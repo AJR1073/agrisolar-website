@@ -197,6 +197,13 @@ async function run() {
             && Array.from(document.querySelector('#scheduleYear').options)
                 .some(option => option.value === '2026')
         ));
+        assert.match(
+            await page.evaluate(() => getAuthenticationMessage({
+                code: 'auth/internal-error',
+                message: 'INVALID_LOGIN_CREDENTIALS'
+            })),
+            /email or password is incorrect/i
+        );
         await page.click('[data-tab="schedule"]');
         await page.select('#scheduleYear', '2026');
         await page.waitForSelector('.mowing-cycle-button');
