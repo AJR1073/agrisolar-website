@@ -1,10 +1,14 @@
 (function() {
     'use strict';
 
+    const FUNCTIONS_BASE = 'https://us-central1-agrisolar-website.cloudfunctions.net';
     const state = {
         prospects: {},
         sources: {},
         suppressions: {},
+        drafts: {},
+        discoveryResults: [],
+        aiEnabled: true,
         status: 'all',
         search: ''
     };
@@ -52,18 +56,48 @@
         }
     }
 
+    async function callAdminFunction(auth, name, payload) {
+        const user = auth.currentUser;
+        if (!user) throw new Error('Sign in before using administrator AI tools.');
+        const token = await user.getIdToken();
+        const response = await fetch(`${FUNCTIONS_BASE}/${name}`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            const error = new Error(result.error || 'The AI request could not be completed.');
+            error.code = result.code || '';
+            throw error;
+        }
+        return result;
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         const tabButton = document.querySelector('[data-tab="outreach"]');
         const addButton = document.getElementById('addProspectBtn');
+        const discoverButton = document.getElementById('discoverProspectsBtn');
         const modal = document.getElementById('prospectModal');
         const form = document.getElementById('prospectForm');
+        const discoveryModal = document.getElementById('aiDiscoveryModal');
+        const discoveryForm = document.getElementById('aiDiscoveryForm');
+        const discoveryResults = document.getElementById('aiDiscoveryResults');
+        const draftModal = document.getElementById('aiDraftModal');
+        const draftForm = document.getElementById('aiDraftForm');
+        const draftResult = document.getElementById('aiDraftResult');
+        const aiToggle = document.getElementById('aiOutreachToggle');
         const totals = document.getElementById('outreachTotals');
         const loading = document.getElementById('outreachLoading');
         const list = document.getElementById('outreachList');
         const statusFilter = document.getElementById('outreachStatusFilter');
         const searchInput = document.getElementById('outreachSearch');
 
-        if (!tabButton || !addButton || !modal || !form) return;
+        if (!tabButton || !addButton || !discoverButton || !modal || !form
+            || !discoveryModal || !discoveryForm || !draftModal || !draftForm) return;
 
         const auth = firebase.auth();
         const database = firebase.database();
@@ -80,6 +114,17 @@
             document.body.style.overflow = '';
         }
 
+        function openDialog(dialog, focusId) {
+            dialog.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            if (focusId) window.setTimeout(() => document.getElementById(focusId)?.focus(), 0);
+        }
+
+        function closeDialog(dialog) {
+            dialog.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+
         async function loadOutreachData() {
             if (!auth.currentUser) return;
             loading.hidden = false;
@@ -87,14 +132,20 @@
             list.innerHTML = '';
 
             try {
-                const [prospects, sources, suppressions] = await Promise.all([
+                const [prospects, sources, suppressions, drafts, aiSettings] = await Promise.all([
                     database.ref('prospect_candidates').once('value'),
                     database.ref('prospect_sources').once('value'),
-                    database.ref('suppression_entries').once('value')
+                    database.ref('suppression_entries').once('value'),
+                    database.ref('outreach_drafts').once('value'),
+                    database.ref('ai_settings').once('value')
                 ]);
                 state.prospects = prospects.val() || {};
                 state.sources = sources.val() || {};
                 state.suppressions = suppressions.val() || {};
+                state.drafts = drafts.val() || {};
+                state.aiEnabled = aiSettings.val()?.outreachEnabled !== false;
+                aiToggle.checked = state.aiEnabled;
+                discoverButton.disabled = !state.aiEnabled;
                 render();
             } catch (error) {
                 console.error('Unable to load outreach records:', error);
@@ -146,6 +197,13 @@
             return prospect.verificationStatus === 'Rejected' ? 'is-rejected' : '';
         }
 
+        function latestDraftFor(prospectId) {
+            return Object.entries(state.drafts)
+                .filter(([, draft]) => draft.prospectId === prospectId)
+                .map(([id, draft]) => ({ id, ...draft }))
+                .sort((left, right) => Number(right.createdAt) - Number(left.createdAt))[0];
+        }
+
         function render() {
             renderTotals();
             const prospects = visibleProspects();
@@ -164,6 +222,7 @@
 
             list.innerHTML = prospects.map(prospect => {
                 const source = state.sources[prospect.sourceId] || {};
+                const latestDraft = latestDraftFor(prospect.id);
                 const sourceUrl = safeHttpUrl(source.url);
                 const badgeClass = prospect.suppressed
                     ? 'suppressed'
@@ -187,6 +246,8 @@
                             <div class="outreach-detail"><strong>Potential fit</strong>${escapeHtml(prospect.fitReason || 'Not yet assessed')}</div>
                         </div>
                         <div class="outreach-card-actions">
+                            ${latestDraft ? `<button type="button" class="action-btn secondary" data-outreach-action="view-draft" data-prospect-id="${escapeHtml(prospect.id)}" data-draft-id="${escapeHtml(latestDraft.id)}">View latest draft</button>` : ''}
+                            ${state.aiEnabled && !prospect.suppressed && prospect.verificationStatus === 'Verified' ? `<button type="button" class="action-btn" data-outreach-action="draft" data-prospect-id="${escapeHtml(prospect.id)}"><i class="fas fa-pen" aria-hidden="true"></i> Draft email with AI</button>` : ''}
                             ${!prospect.suppressed && prospect.verificationStatus !== 'Verified' ? `<button type="button" class="action-btn" data-outreach-action="verify" data-prospect-id="${escapeHtml(prospect.id)}">Mark verified</button>` : ''}
                             ${!prospect.suppressed && prospect.verificationStatus !== 'Rejected' ? `<button type="button" class="action-btn secondary" data-outreach-action="reject" data-prospect-id="${escapeHtml(prospect.id)}">Reject candidate</button>` : ''}
                             ${!prospect.suppressed ? `<button type="button" class="action-btn danger" data-outreach-action="suppress" data-prospect-id="${escapeHtml(prospect.id)}">Mark do not contact</button>` : ''}
@@ -218,6 +279,36 @@
             return suppressed
                 ? 'This company, domain, or email is on the do-not-contact list.'
                 : '';
+        }
+
+        async function saveCandidateForReview(candidate, source, user) {
+            const duplicate = duplicateMessage(candidate);
+            if (duplicate) throw new Error(duplicate);
+
+            const prospectId = database.ref('prospect_candidates').push().key;
+            const sourceId = database.ref('prospect_sources').push().key;
+            const timestamp = firebase.database.ServerValue.TIMESTAMP;
+            await database.ref().update({
+                [`prospect_candidates/${prospectId}`]: {
+                    ...candidate,
+                    sourceId,
+                    verificationStatus: 'Needs review',
+                    outreachStatus: 'Not contacted',
+                    suppressed: false,
+                    createdAt: timestamp,
+                    updatedAt: timestamp,
+                    administratorUid: user.uid
+                },
+                [`prospect_sources/${sourceId}`]: {
+                    prospectId,
+                    url: source.url,
+                    title: source.title,
+                    evidenceSummary: source.evidenceSummary,
+                    accessedAt: timestamp,
+                    createdAt: timestamp,
+                    administratorUid: user.uid
+                }
+            });
         }
 
         form.addEventListener('submit', async event => {
@@ -265,31 +356,11 @@
             submit.disabled = true;
             submit.textContent = 'Saving…';
             try {
-                const prospectId = database.ref('prospect_candidates').push().key;
-                const sourceId = database.ref('prospect_sources').push().key;
-                const timestamp = firebase.database.ServerValue.TIMESTAMP;
-                const updates = {
-                    [`prospect_candidates/${prospectId}`]: {
-                        ...candidate,
-                        sourceId,
-                        verificationStatus: 'Needs review',
-                        outreachStatus: 'Not contacted',
-                        suppressed: false,
-                        createdAt: timestamp,
-                        updatedAt: timestamp,
-                        administratorUid: user.uid
-                    },
-                    [`prospect_sources/${sourceId}`]: {
-                        prospectId,
-                        url: sourceUrl,
-                        title: sourceTitle,
-                        evidenceSummary,
-                        accessedAt: timestamp,
-                        createdAt: timestamp,
-                        administratorUid: user.uid
-                    }
-                };
-                await database.ref().update(updates);
+                await saveCandidateForReview(candidate, {
+                    url: sourceUrl,
+                    title: sourceTitle,
+                    evidenceSummary
+                }, user);
                 closeModal();
                 notify('Prospect candidate saved for review. No email was sent.', 'success');
                 await loadOutreachData();
@@ -302,13 +373,178 @@
             }
         });
 
+        function renderDiscoveryResults() {
+            if (!state.discoveryResults.length) {
+                discoveryResults.innerHTML = `
+                    <div class="outreach-empty">
+                        <strong>No source-supported candidates returned</strong>
+                        <p>Try a broader region or organization description.</p>
+                    </div>
+                `;
+                return;
+            }
+            discoveryResults.innerHTML = state.discoveryResults.map((candidate, index) => {
+                const sourceUrl = safeHttpUrl(candidate.sourceUrl);
+                const missing = Array.isArray(candidate.missingFacts)
+                    ? candidate.missingFacts.filter(Boolean).join('; ')
+                    : '';
+                return `
+                    <article class="ai-result-card" data-ai-result-index="${index}">
+                        <h4>${escapeHtml(candidate.companyName)}</h4>
+                        <div class="ai-result-meta">${escapeHtml(candidate.location || 'Location not confirmed')} · ${escapeHtml(candidate.confidence || 'low')} confidence</div>
+                        <p><strong>Source-supported evidence:</strong> ${escapeHtml(candidate.evidenceSummary || 'Review the cited source.')}</p>
+                        <p><strong>AI fit assessment:</strong> ${escapeHtml(candidate.fitReason || 'Not assessed')}</p>
+                        ${missing ? `<p><strong>Still needs verification:</strong> ${escapeHtml(missing)}</p>` : ''}
+                        <p><strong>Public citation:</strong> ${sourceUrl ? `<a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(candidate.sourceTitle || sourceUrl)}</a>` : 'Unavailable'}</p>
+                        <div class="ai-result-actions">
+                            <button type="button" class="action-btn secondary" data-outreach-action="save-discovery" data-result-index="${index}">Save for review</button>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        discoveryForm.addEventListener('submit', async event => {
+            event.preventDefault();
+            if (!state.aiEnabled) {
+                notify('AI outreach is paused.', 'error');
+                return;
+            }
+            const submit = discoveryForm.querySelector('button[type="submit"]');
+            submit.disabled = true;
+            submit.textContent = 'Searching public sources…';
+            discoveryResults.innerHTML = '<div class="outreach-empty">Researching public sources. This can take up to a minute…</div>';
+            try {
+                const result = await callAdminFunction(auth, 'discoverProspects', {
+                    region: clean(document.getElementById('discoveryRegion').value),
+                    organizationTypes: clean(document.getElementById('discoveryOrganizationTypes').value),
+                    serviceNeed: clean(document.getElementById('discoveryServiceNeed').value),
+                    notes: clean(document.getElementById('discoveryNotes').value),
+                    maxResults: Number(document.getElementById('discoveryMaxResults').value)
+                });
+                state.discoveryResults = Array.isArray(result.candidates) ? result.candidates : [];
+                renderDiscoveryResults();
+            } catch (error) {
+                console.error('Unable to discover prospects:', error);
+                discoveryResults.innerHTML = '';
+                notify(error.message, 'error');
+            } finally {
+                submit.disabled = false;
+                submit.textContent = 'Search public sources';
+            }
+        });
+
+        function openDraftModal(prospectId) {
+            const prospect = state.prospects[prospectId];
+            if (!prospect) return;
+            document.getElementById('aiDraftProspectId').value = prospectId;
+            document.getElementById('aiDraftProspectSummary').textContent =
+                `Create a review-only draft for ${prospect.companyName}. The verified public source will be supplied to the AI.`;
+            draftResult.hidden = true;
+            document.getElementById('aiDraftSubject').value = '';
+            document.getElementById('aiDraftBody').value = '';
+            openDialog(draftModal, 'aiDraftGoal');
+        }
+
+        function showStoredDraft(prospectId, draftId) {
+            const prospect = state.prospects[prospectId];
+            const draft = state.drafts[draftId];
+            if (!prospect || !draft) return;
+            document.getElementById('aiDraftProspectId').value = prospectId;
+            document.getElementById('aiDraftProspectSummary').textContent =
+                `Saved review draft for ${prospect.companyName}. This record has not been sent.`;
+            document.getElementById('aiDraftSubject').value = draft.subject || '';
+            document.getElementById('aiDraftBody').value = draft.body || '';
+            const basis = Array.isArray(draft.personalizationBasis)
+                ? draft.personalizationBasis : Object.values(draft.personalizationBasis || {});
+            const checks = Array.isArray(draft.claimsToVerify)
+                ? draft.claimsToVerify : Object.values(draft.claimsToVerify || {});
+            document.getElementById('aiDraftChecks').innerHTML = `
+                <section><h4>Personalization basis</h4>${basis.length ? `<ul>${basis.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : '<p>None listed.</p>'}</section>
+                <section><h4>Verify before use</h4>${checks.length ? `<ul>${checks.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : '<p>No additional claims listed.</p>'}</section>
+            `;
+            draftResult.hidden = false;
+            openDialog(draftModal, 'aiDraftSubject');
+        }
+
+        draftForm.addEventListener('submit', async event => {
+            event.preventDefault();
+            const submit = draftForm.querySelector('button[type="submit"]');
+            submit.disabled = true;
+            submit.textContent = 'Drafting…';
+            try {
+                const result = await callAdminFunction(auth, 'draftOutreachEmail', {
+                    prospectId: clean(document.getElementById('aiDraftProspectId').value),
+                    goal: clean(document.getElementById('aiDraftGoal').value)
+                });
+                document.getElementById('aiDraftSubject').value = result.subject || '';
+                document.getElementById('aiDraftBody').value = result.body || '';
+                const basis = Array.isArray(result.personalizationBasis)
+                    ? result.personalizationBasis : [];
+                const checks = Array.isArray(result.claimsToVerify) ? result.claimsToVerify : [];
+                document.getElementById('aiDraftChecks').innerHTML = `
+                    <section><h4>Personalization basis</h4>${basis.length ? `<ul>${basis.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : '<p>None listed.</p>'}</section>
+                    <section><h4>Verify before use</h4>${checks.length ? `<ul>${checks.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : '<p>No additional claims listed.</p>'}</section>
+                `;
+                draftResult.hidden = false;
+                notify('Review draft saved. No email was sent.', 'success');
+            } catch (error) {
+                console.error('Unable to draft outreach:', error);
+                notify(error.message, 'error');
+            } finally {
+                submit.disabled = false;
+                submit.textContent = 'Generate review draft';
+            }
+        });
+
         document.addEventListener('click', async event => {
             const button = event.target.closest('[data-outreach-action]');
             if (!button) return;
             const user = auth.currentUser;
+            if (button.dataset.outreachAction === 'save-discovery') {
+                const index = Number(button.dataset.resultIndex);
+                const result = state.discoveryResults[index];
+                if (!user || !result) return;
+                const website = safeHttpUrl(result.website);
+                const candidate = {
+                    companyName: clean(result.companyName),
+                    normalizedCompany: normalizeText(result.companyName),
+                    website,
+                    normalizedDomain: normalizedDomain(website),
+                    location: clean(result.location),
+                    contactName: clean(result.contactName),
+                    contactEmail: normalizeText(result.contactEmail),
+                    contactPhone: clean(result.contactPhone),
+                    fitReason: clean(result.fitReason)
+                };
+                button.disabled = true;
+                try {
+                    await saveCandidateForReview(candidate, {
+                        url: safeHttpUrl(result.sourceUrl),
+                        title: clean(result.sourceTitle),
+                        evidenceSummary: clean(result.evidenceSummary)
+                    }, user);
+                    button.textContent = 'Saved for review';
+                    notify('AI candidate saved for human review. No email was sent.', 'success');
+                    await loadOutreachData();
+                } catch (error) {
+                    notify(error.message, 'error');
+                    button.disabled = false;
+                }
+                return;
+            }
             const prospectId = button.dataset.prospectId;
             const prospect = state.prospects[prospectId];
             if (!user || !prospect) return;
+
+            if (button.dataset.outreachAction === 'draft') {
+                openDraftModal(prospectId);
+                return;
+            }
+            if (button.dataset.outreachAction === 'view-draft') {
+                showStoredDraft(prospectId, button.dataset.draftId);
+                return;
+            }
 
             const timestamp = firebase.database.ServerValue.TIMESTAMP;
             const updates = {};
@@ -365,14 +601,67 @@
             render();
         });
         addButton.addEventListener('click', openModal);
+        discoverButton.addEventListener('click', () => {
+            state.discoveryResults = [];
+            discoveryResults.innerHTML = '';
+            openDialog(discoveryModal, 'discoveryRegion');
+        });
+        aiToggle.addEventListener('change', async () => {
+            const user = auth.currentUser;
+            if (!user) return;
+            aiToggle.disabled = true;
+            try {
+                await database.ref('ai_settings').set({
+                    outreachEnabled: aiToggle.checked,
+                    updatedAt: firebase.database.ServerValue.TIMESTAMP,
+                    administratorUid: user.uid
+                });
+                state.aiEnabled = aiToggle.checked;
+                discoverButton.disabled = !state.aiEnabled;
+                render();
+                notify(
+                    state.aiEnabled ? 'Administrator AI tools enabled.' : 'Administrator AI tools paused.',
+                    'success'
+                );
+            } catch (error) {
+                aiToggle.checked = state.aiEnabled;
+                notify('Unable to update the AI setting.', 'error');
+            } finally {
+                aiToggle.disabled = false;
+            }
+        });
+        document.getElementById('copyAiDraftBtn').addEventListener('click', async () => {
+            const subject = document.getElementById('aiDraftSubject').value;
+            const body = document.getElementById('aiDraftBody').value;
+            try {
+                await navigator.clipboard.writeText(`Subject: ${subject}\n\n${body}`);
+                notify('Draft copied to the clipboard.', 'success');
+            } catch {
+                notify('Clipboard access was unavailable. Select and copy the draft manually.', 'error');
+            }
+        });
         modal.querySelectorAll('[data-close-prospect-modal]').forEach(button => {
             button.addEventListener('click', closeModal);
         });
         modal.addEventListener('click', event => {
             if (event.target === modal) closeModal();
         });
+        discoveryModal.querySelectorAll('[data-close-ai-discovery]').forEach(button => {
+            button.addEventListener('click', () => closeDialog(discoveryModal));
+        });
+        draftModal.querySelectorAll('[data-close-ai-draft]').forEach(button => {
+            button.addEventListener('click', () => closeDialog(draftModal));
+        });
+        discoveryModal.addEventListener('click', event => {
+            if (event.target === discoveryModal) closeDialog(discoveryModal);
+        });
+        draftModal.addEventListener('click', event => {
+            if (event.target === draftModal) closeDialog(draftModal);
+        });
         document.addEventListener('keydown', event => {
             if (event.key === 'Escape' && modal.style.display === 'block') closeModal();
+            if (event.key === 'Escape' && discoveryModal.style.display === 'block') closeDialog(discoveryModal);
+            if (event.key === 'Escape' && draftModal.style.display === 'block') closeDialog(draftModal);
         });
 
         auth.onAuthStateChanged(user => {
@@ -382,6 +671,8 @@
                 state.prospects = {};
                 state.sources = {};
                 state.suppressions = {};
+                state.drafts = {};
+                state.discoveryResults = [];
                 totals.innerHTML = '';
                 list.innerHTML = '';
                 loading.hidden = false;

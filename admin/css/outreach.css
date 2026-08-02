@@ -11,6 +11,13 @@
 .outreach-heading h2 { margin-bottom: 0.45rem; color: #1a4731; }
 .outreach-heading p { max-width: 760px; color: #59645e; line-height: 1.55; }
 
+.outreach-heading-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.6rem;
+}
+
 .outreach-eyebrow {
     margin: 0 0 0.35rem;
     color: #087f3f;
@@ -33,6 +40,18 @@
 
 .outreach-ai-notice i { margin-top: 0.15rem; color: #087f3f; }
 .outreach-ai-notice span { display: block; margin-top: 0.25rem; color: #52645a; line-height: 1.45; }
+
+.outreach-ai-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.7rem;
+    color: #234b35;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.outreach-ai-toggle input { width: auto; }
 
 .outreach-totals {
     display: grid;
@@ -145,6 +164,63 @@
 .outreach-card-actions .action-btn { padding: 0.55rem 0.8rem; }
 .outreach-card-actions .danger { background: #8b302c; }
 
+.ai-discovery-results {
+    display: grid;
+    gap: 0.85rem;
+    margin-top: 1.25rem;
+}
+
+.ai-result-card {
+    padding: 1rem;
+    border: 1px solid #cfdcd4;
+    border-radius: 7px;
+    background: #f9fcfa;
+}
+
+.ai-result-card h4 { margin: 0 0 0.35rem; color: #1a4731; }
+.ai-result-card p { margin: 0.45rem 0; color: #405149; line-height: 1.45; }
+.ai-result-card a { color: #087f3f; overflow-wrap: anywhere; }
+.ai-result-meta { color: #66736c; font-size: 0.78rem; }
+.ai-result-actions { margin-top: 0.75rem; }
+
+.ai-draft-result {
+    margin-top: 1.2rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid #dce4df;
+}
+
+.ai-draft-result input,
+.ai-draft-result textarea,
+#aiDraftGoal {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.75rem;
+    border: 1px solid #c7d1cb;
+    border-radius: 4px;
+    font: inherit;
+}
+
+.ai-draft-result input[readonly],
+.ai-draft-result textarea[readonly] { background: #f8faf9; color: #243b2e; }
+
+.ai-draft-checks {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.8rem;
+    margin-top: 0.8rem;
+}
+
+.ai-draft-checks section {
+    padding: 0.8rem;
+    border: 1px solid #dce4df;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.ai-draft-checks h4 { margin: 0 0 0.45rem; color: #1a4731; }
+.ai-draft-checks ul { margin: 0; padding-left: 1.15rem; color: #52645a; }
+.outreach-no-send { align-self: center; color: #52645a; font-size: 0.8rem; }
+
 .outreach-empty {
     padding: 2rem;
     border: 1px dashed #b9c7bf;
@@ -186,9 +262,12 @@
     .outreach-heading .action-btn,
     .outreach-toolbar .form-control { width: 100%; max-width: none; }
 
+    .outreach-heading-actions { width: 100%; }
+
     .outreach-totals,
     .outreach-card-grid,
-    .outreach-form-grid { grid-template-columns: 1fr; }
+    .outreach-form-grid,
+    .ai-draft-checks { grid-template-columns: 1fr; }
 
     .outreach-form-wide { grid-column: auto; }
     .outreach-badges { justify-content: flex-start; }

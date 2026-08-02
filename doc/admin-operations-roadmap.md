@@ -89,8 +89,31 @@ Development preview status: the manual prospect-candidate, public-source evidenc
 duplicate review, review-status, and do-not-contact suppression foundation is
 implemented for testing on the owner-designated Firebase development project. It uses
 the current approved-email authorization boundary. Promotion to a production system and
-all AI/email capabilities remain blocked on the Stage 2 authorization/audit migration
+controlled email sending remain blocked on the Stage 2 authorization/audit migration
 and the later gates below.
+
+Local AI implementation status as of August 2, 2026:
+
+* Administrator-authenticated internet discovery uses the OpenAI Responses API and
+  hosted web search from Cloud Functions only.
+* Discovery uses Structured Outputs and `store: false`; only public business data is
+  requested.
+* A result is discarded unless its primary source URL is present in the actual web
+  search sources returned by OpenAI.
+* Source citations are visible and clickable in the administrator interface.
+* AI results remain temporary until the administrator explicitly saves a candidate for
+  human review.
+* Drafting is limited to verified, non-suppressed prospects and their stored public
+  evidence.
+* Generated drafts are server-written with `sendingAllowed: false`. There is no
+  outreach-send endpoint.
+* The administrator can pause AI research and drafting. Server-side daily limits are 20
+  discovery requests and 50 drafting requests per approved administrator.
+* Synthetic unit, browser, Functions-surface, and Database Rules tests cover the first
+  implementation slice.
+* Live AI Function deployment still requires the `OPENAI_API_KEY` Firebase secret. The
+  key must never be added to source, Hosting, Realtime Database, or a browser `.env`
+  file.
 
 1. Manual prospect candidates, public source evidence, duplicate detection, and
    do-not-contact suppression

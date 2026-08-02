@@ -49,6 +49,17 @@ async function run() {
     const sendReply = await fetch(`${functionsBase}/sendReply`);
     assert.equal(sendReply.status, 405, 'sendReply should reject GET');
 
+    for (const name of ['discoverProspects', 'draftOutreachEmail']) {
+        const getResponse = await fetch(`${functionsBase}/${name}`);
+        assert.equal(getResponse.status, 405, `${name} should reject GET`);
+        const unauthenticated = await fetch(`${functionsBase}/${name}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: '{}'
+        });
+        assert.equal(unauthenticated.status, 401, `${name} should require authentication`);
+    }
+
     const removedTestEndpoint = await fetch(`${functionsBase}/testEmailSending`);
     assert.equal(
         removedTestEndpoint.status,

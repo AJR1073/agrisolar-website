@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/admin.css?v=20260727-phase-b2">
     <link rel="stylesheet" href="css/schedule.css?v=20260727-phase-b2">
-    <link rel="stylesheet" href="css/outreach.css?v=20260802-outreach-foundation">
+    <link rel="stylesheet" href="css/outreach.css?v=20260802-ai-outreach-v1">
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -230,17 +230,27 @@
                             every candidate before any outreach is drafted or sent.
                         </p>
                     </div>
-                    <button type="button" id="addProspectBtn" class="action-btn">
-                        <i class="fas fa-plus" aria-hidden="true"></i>
-                        Add prospect candidate
-                    </button>
+                    <div class="outreach-heading-actions">
+                        <button type="button" id="discoverProspectsBtn" class="action-btn">
+                            <i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i>
+                            Discover with AI
+                        </button>
+                        <button type="button" id="addProspectBtn" class="action-btn secondary">
+                            <i class="fas fa-plus" aria-hidden="true"></i>
+                            Add manually
+                        </button>
+                    </div>
                 </div>
 
                 <div class="outreach-ai-notice" role="note">
                     <i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i>
                     <div>
-                        <strong>AI discovery and drafting are not connected yet.</strong>
-                        <span>This foundation stores reviewed evidence and suppression decisions first. It cannot search the internet or send email.</span>
+                        <strong>AI can research public sources and prepare review-only drafts.</strong>
+                        <span>Discovered companies are not saved until you choose “Save for review.” Drafts require a verified prospect. Nothing in this section can send email.</span>
+                        <label class="outreach-ai-toggle">
+                            <input type="checkbox" id="aiOutreachToggle" checked>
+                            Allow administrator AI research and drafting
+                        </label>
                     </div>
                 </div>
 
@@ -263,6 +273,95 @@
                     Loading prospect candidates…
                 </div>
                 <div id="outreachList" class="outreach-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Prospect Discovery Modal -->
+    <div id="aiDiscoveryModal" class="modal outreach-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="aiDiscoveryModalTitle">
+        <div class="modal-content outreach-modal-content">
+            <div class="modal-header">
+                <div>
+                    <p class="outreach-eyebrow">Public internet research</p>
+                    <h3 id="aiDiscoveryModalTitle">Discover Prospect Candidates</h3>
+                </div>
+                <button type="button" class="modal-close-btn" data-close-ai-discovery aria-label="Close">&times;</button>
+            </div>
+            <p class="form-help">
+                AI searches public web sources and returns cited candidates for your review.
+                Results are not added to your records automatically.
+            </p>
+            <form id="aiDiscoveryForm">
+                <div class="outreach-form-grid">
+                    <div class="form-group">
+                        <label for="discoveryRegion">Region *</label>
+                        <input type="text" id="discoveryRegion" maxlength="120" value="Illinois and nearby Midwest states" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="discoveryMaxResults">Maximum candidates</label>
+                        <select id="discoveryMaxResults" class="form-control">
+                            <option value="3">3</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>
+                    <div class="form-group outreach-form-wide">
+                        <label for="discoveryOrganizationTypes">Organization types *</label>
+                        <input type="text" id="discoveryOrganizationTypes" maxlength="240" value="Solar farm owners, operators, asset managers, utilities, and EPC firms" required>
+                    </div>
+                    <div class="form-group outreach-form-wide">
+                        <label for="discoveryServiceNeed">Likely service need *</label>
+                        <input type="text" id="discoveryServiceNeed" maxlength="240" value="Utility-scale solar vegetation management, mowing, and herbicide services" required>
+                    </div>
+                    <div class="form-group outreach-form-wide">
+                        <label for="discoveryNotes">Additional research notes</label>
+                        <textarea id="discoveryNotes" rows="3" maxlength="500" placeholder="Optional exclusions or priorities"></textarea>
+                    </div>
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="action-btn">Search public sources</button>
+                    <button type="button" class="action-btn cancel" data-close-ai-discovery>Cancel</button>
+                </div>
+            </form>
+            <div id="aiDiscoveryResults" class="ai-discovery-results" aria-live="polite"></div>
+        </div>
+    </div>
+
+    <!-- AI Outreach Draft Modal -->
+    <div id="aiDraftModal" class="modal outreach-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="aiDraftModalTitle">
+        <div class="modal-content outreach-modal-content">
+            <div class="modal-header">
+                <div>
+                    <p class="outreach-eyebrow">Human review required</p>
+                    <h3 id="aiDraftModalTitle">Draft Outreach Email</h3>
+                </div>
+                <button type="button" class="modal-close-btn" data-close-ai-draft aria-label="Close">&times;</button>
+            </div>
+            <p class="form-help" id="aiDraftProspectSummary"></p>
+            <form id="aiDraftForm">
+                <input type="hidden" id="aiDraftProspectId">
+                <div class="form-group">
+                    <label for="aiDraftGoal">Goal or emphasis</label>
+                    <textarea id="aiDraftGoal" rows="3" maxlength="500">Introduce AgriSolar vegetation-management services and invite a conversation.</textarea>
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="action-btn">Generate review draft</button>
+                    <button type="button" class="action-btn cancel" data-close-ai-draft>Cancel</button>
+                </div>
+            </form>
+            <div id="aiDraftResult" class="ai-draft-result" hidden aria-live="polite">
+                <div class="form-group">
+                    <label for="aiDraftSubject">Subject</label>
+                    <input type="text" id="aiDraftSubject" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="aiDraftBody">Draft body</label>
+                    <textarea id="aiDraftBody" rows="14" readonly></textarea>
+                </div>
+                <div id="aiDraftChecks" class="ai-draft-checks"></div>
+                <div class="form-buttons">
+                    <button type="button" id="copyAiDraftBtn" class="action-btn secondary">Copy draft</button>
+                    <span class="outreach-no-send"><i class="fas fa-lock" aria-hidden="true"></i> Saved as a draft. No email was sent.</span>
+                </div>
             </div>
         </div>
     </div>
@@ -611,6 +710,6 @@
     <script src="js/admin.js?v=20260802-auth-errors"></script>
     <script src="js/schedule.js?v=20260727-phase-b2"></script>
     <script src="js/schedule-import.js?v=20260727-phase-b2"></script>
-    <script src="js/outreach.js?v=20260802-outreach-foundation"></script>
+    <script src="js/outreach.js?v=20260802-ai-outreach-v1"></script>
 </body>
 </html>

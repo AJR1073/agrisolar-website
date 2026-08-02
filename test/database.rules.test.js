@@ -177,6 +177,15 @@ function validSuppressionEntry(overrides = {}) {
     };
 }
 
+function validAiSettings(overrides = {}) {
+    return {
+        outreachEnabled: true,
+        updatedAt: Date.now(),
+        administratorUid: 'approved-admin',
+        ...overrides
+    };
+}
+
 describe('Realtime Database contact submission rules', () => {
     before(async () => {
         testEnv = await initializeTestEnvironment({
@@ -539,5 +548,51 @@ describe('Realtime Database contact submission rules', () => {
         await assertFails(remove(ref(approvedDb, 'prospect_candidates/prospect-1')));
         await assertFails(remove(ref(approvedDb, 'prospect_sources/source-1')));
         await assertFails(remove(ref(approvedDb, 'suppression_entries/suppression-1')));
+    });
+
+    it('allows only the approved administrator to pause AI outreach', async () => {
+        const approvedDb = testEnv
+            .authenticatedContext('approved-admin', { email: adminEmail })
+            .database();
+        const otherDb = testEnv
+            .authenticatedContext('other-user', { email: 'other@example.com' })
+            .database();
+
+        await assertSucceeds(set(ref(approvedDb, 'ai_settings'), validAiSettings()));
+        await assertSucceeds(get(ref(approvedDb, 'ai_settings')));
+        await assertFails(set(
+            ref(otherDb, 'ai_settings'),
+            validAiSettings({ administratorUid: 'other-user' })
+        ));
+        await assertFails(get(ref(otherDb, 'ai_settings')));
+    });
+
+    it('keeps generated drafts and AI usage private and server-written', async () => {
+        await testEnv.withSecurityRulesDisabled(async context => {
+            await set(ref(context.database(), 'outreach_drafts/draft-1'), {
+                prospectId: 'prospect-1',
+                subject: 'Synthetic draft',
+                body: 'Draft body',
+                status: 'Draft'
+            });
+            await set(ref(context.database(), 'ai_usage/approved-admin/2026-08-02/discovery'), {
+                count: 1
+            });
+        });
+
+        const approvedDb = testEnv
+            .authenticatedContext('approved-admin', { email: adminEmail })
+            .database();
+        const publicDb = testEnv.unauthenticatedContext().database();
+
+        await assertSucceeds(get(ref(approvedDb, 'outreach_drafts/draft-1')));
+        await assertSucceeds(get(ref(approvedDb, 'ai_usage')));
+        await assertFails(get(ref(publicDb, 'outreach_drafts/draft-1')));
+        await assertFails(set(ref(approvedDb, 'outreach_drafts/client-draft'), {
+            subject: 'Client write should fail'
+        }));
+        await assertFails(set(ref(approvedDb, 'ai_usage/approved-admin/test'), {
+            count: 999
+        }));
     });
 });
