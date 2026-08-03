@@ -53,6 +53,46 @@
 
 .outreach-ai-toggle input { width: auto; }
 
+.outreach-cost-summary {
+    margin: 0 0 1.25rem;
+    padding: 1rem;
+    border: 1px solid #d7e1db;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.outreach-cost-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.8rem;
+}
+
+.outreach-cost-heading h3 { margin: 0; color: #1a4731; }
+.outreach-cost-heading a { color: #087f3f; font-size: 0.8rem; }
+
+.outreach-cost-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.outreach-cost-card {
+    padding: 0.85rem;
+    border: 1px solid #e1e8e4;
+    border-radius: 6px;
+    background: #f8fbf9;
+}
+
+.outreach-cost-card span,
+.outreach-cost-card strong,
+.outreach-cost-card small { display: block; }
+.outreach-cost-card span { color: #66736c; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
+.outreach-cost-card strong { margin: 0.2rem 0; color: #1a4731; font-size: 1.35rem; }
+.outreach-cost-card small { color: #66736c; line-height: 1.35; }
+.outreach-cost-note { margin: 0.8rem 0 0; color: #66736c; font-size: 0.75rem; line-height: 1.45; }
+
 .outreach-totals {
     display: grid;
     grid-template-columns: repeat(4, minmax(140px, 1fr));
@@ -257,7 +297,8 @@
 @media (max-width: 768px) {
     .outreach-heading,
     .outreach-card-header,
-    .outreach-toolbar { flex-direction: column; }
+    .outreach-toolbar,
+    .outreach-cost-heading { flex-direction: column; }
 
     .outreach-heading .action-btn,
     .outreach-toolbar .form-control { width: 100%; max-width: none; }
@@ -267,7 +308,8 @@
     .outreach-totals,
     .outreach-card-grid,
     .outreach-form-grid,
-    .ai-draft-checks { grid-template-columns: 1fr; }
+    .ai-draft-checks,
+    .outreach-cost-grid { grid-template-columns: 1fr; }
 
     .outreach-form-wide { grid-column: auto; }
     .outreach-badges { justify-content: flex-start; }

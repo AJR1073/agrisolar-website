@@ -109,6 +109,8 @@ Local AI implementation status as of August 2, 2026:
   outreach-send endpoint.
 * The administrator can pause AI research and drafting. Server-side daily limits are 20
   discovery requests and 50 drafting requests per approved administrator.
+* Administrator-only cost tracking records actual usage counts and versioned estimated
+  charges for each new request; OpenAI's dashboard remains authoritative.
 * Synthetic unit, browser, Functions-surface, and Database Rules tests cover the first
   implementation slice.
 * Live AI Function deployment still requires the `OPENAI_API_KEY` Firebase secret. The

@@ -49,7 +49,15 @@ async function run() {
                             missingFacts: ['Current vegetation-management vendor']
                         }],
                         model: 'test-model',
-                        promptVersion: 'discovery-v1'
+                        promptVersion: 'discovery-v1',
+                        costEvent: {
+                            id: 'cost-discovery',
+                            kind: 'discovery',
+                            costType: 'estimate',
+                            estimatedMicroUsd: 20000,
+                            model: 'gpt-5.6-sol-test',
+                            createdAt: 1700000000002
+                        }
                     })
                 });
             } else if (request.url().endsWith('/draftOutreachEmail')) {
@@ -74,6 +82,14 @@ async function run() {
                         body: 'Hello,\n\nAgriSolar can help with solar-site vegetation management.\n\nIf you prefer not to receive outreach, please let me know.\n\nAaron\nAgriSolar LLC',
                         personalizationBasis: ['Official public project source'],
                         claimsToVerify: ['Current service need'],
+                        costEvent: {
+                            id: 'cost-draft',
+                            kind: 'drafting',
+                            costType: 'estimate',
+                            estimatedMicroUsd: 10000,
+                            model: 'gpt-5.6-sol-test',
+                            createdAt: 1700000000003
+                        },
                         sendingAllowed: false
                     })
                 });
@@ -153,6 +169,15 @@ async function run() {
                                     }
                                 },
                                 suppression_entries: {},
+                                ai_cost_events: {
+                                    historicalCost: {
+                                        kind: 'discovery',
+                                        costType: 'actual',
+                                        actualMicroUsd: 470000,
+                                        model: 'gpt-5.6',
+                                        createdAt: 1700000000001
+                                    }
+                                },
                                 ai_settings: { outreachEnabled: true }
                             };
                             let generatedKey = 0;
@@ -213,6 +238,9 @@ async function run() {
         await page.waitForSelector('.outreach-card');
 
         assert.equal((await page.$$('.outreach-total')).length, 4);
+        assert.equal(await page.$eval('#aiLastCallCost', element => element.textContent), '$0.47');
+        assert.equal(await page.$eval('#aiTrackedTotalCost', element => element.textContent), '$0.47');
+        assert.equal(await page.$eval('#aiTrackedRequestCount', element => element.textContent), '1');
         assert.match(
             await page.$eval('#outreachTab', element => element.textContent),
             /AI can research public sources and prepare review-only drafts/
@@ -229,6 +257,9 @@ async function run() {
         await page.click('#discoverProspectsBtn');
         await page.$eval('#aiDiscoveryForm', form => form.requestSubmit());
         await page.waitForSelector('.ai-result-card');
+        assert.equal(await page.$eval('#aiLastCallCost', element => element.textContent), '$0.02');
+        assert.equal(await page.$eval('#aiTrackedTotalCost', element => element.textContent), '$0.49');
+        assert.equal(await page.$eval('#aiTrackedRequestCount', element => element.textContent), '2');
         assert.equal(
             await page.$eval('.ai-result-card a', anchor => anchor.href),
             'https://discovered.example/project'
@@ -279,6 +310,9 @@ async function run() {
         await page.click('[data-outreach-action="draft"][data-prospect-id="prospect2"]');
         await page.$eval('#aiDraftForm', form => form.requestSubmit());
         await page.waitForFunction(() => document.querySelector('#aiDraftResult').hidden === false);
+        assert.equal(await page.$eval('#aiLastCallCost', element => element.textContent), '$0.01');
+        assert.equal(await page.$eval('#aiTrackedTotalCost', element => element.textContent), '$0.50');
+        assert.equal(await page.$eval('#aiTrackedRequestCount', element => element.textContent), '3');
         assert.equal(
             await page.$eval('#aiDraftSubject', input => input.value),
             'Vegetation management for Verified Solar'

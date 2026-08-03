@@ -6,14 +6,24 @@ const {
     normalizeDiscoveryCriteria,
     sanitizeDiscoveryResponse
 } = require('../functions/ai-outreach');
+const { pricingModelFor } = require('../functions/ai-cost');
 
-function responseWithJson(value, sources = []) {
+function responseWithJson(value, sources = [], includeSearch = true) {
     return {
+        model: 'gpt-5.6-sol-2026-08-01',
+        usage: {
+            input_tokens: 1000,
+            input_tokens_details: {
+                cached_tokens: 100,
+                cache_write_tokens: 100
+            },
+            output_tokens: 100
+        },
         output: [
-            {
+            ...(includeSearch ? [{
                 type: 'web_search_call',
                 action: { type: 'search', sources }
-            },
+            }] : []),
             {
                 type: 'message',
                 content: [{
@@ -34,9 +44,11 @@ async function run() {
         maxResults: 99
     });
     assert.equal(criteria.maxResults, 5);
+    assert.equal(pricingModelFor('gpt-5.6-2026-08-01'), 'gpt-5.6-sol');
 
     const request = buildDiscoveryRequest(criteria, 'test-model');
     assert.equal(request.store, false);
+    assert.equal(request.service_tier, 'default');
     assert.equal(request.model, 'test-model');
     assert.deepEqual(request.tools.map(tool => tool.type), ['web_search']);
     assert.deepEqual(request.include, ['web_search_call.action.sources']);
@@ -97,6 +109,9 @@ async function run() {
     assert.equal(capturedDiscoveryRequest.store, false);
     assert.equal(discoveryResult.candidates.length, 1);
     assert.equal(discoveryResult.promptVersion, 'discovery-v1');
+    assert.equal(discoveryResult.model, 'gpt-5.6-sol-2026-08-01');
+    assert.equal(discoveryResult.cost.estimatedMicroUsd, 17675);
+    assert.equal(discoveryResult.cost.webSearchCalls, 1);
 
     let capturedDraftRequest;
     const draftResult = await draftOutreachWithOpenAI(
@@ -126,7 +141,7 @@ async function run() {
                             body: 'Hello Operations Team,\n\nAgriSolar can help with vegetation management.\n\nIf you prefer not to receive outreach, please let me know.\n\nAaron\nAgriSolar LLC',
                             personalizationBasis: ['Public project source'],
                             claimsToVerify: ['Current service need']
-                        });
+                        }, [], false);
                     }
                 };
             }
@@ -136,6 +151,8 @@ async function run() {
     assert.equal(capturedDraftRequest.tools, undefined);
     assert.equal(draftResult.subject, 'Vegetation management for Supported Solar');
     assert.equal(draftResult.promptVersion, 'draft-v1');
+    assert.equal(draftResult.cost.estimatedMicroUsd, 7675);
+    assert.equal(draftResult.cost.webSearchCalls, 0);
 
     console.log('PASS: AI discovery stays source-grounded and drafting remains structured and non-sending');
 }

@@ -1,5 +1,7 @@
 'use strict';
 
+const { estimateResponseCost } = require('./ai-cost');
+
 const OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses';
 const DEFAULT_MODEL = 'gpt-5.6';
 
@@ -133,6 +135,7 @@ function buildDiscoveryRequest(criteria, model = DEFAULT_MODEL) {
     return {
         model,
         store: false,
+        service_tier: 'default',
         reasoning: { effort: 'low' },
         max_output_tokens: 3000,
         max_tool_calls: 6,
@@ -182,6 +185,7 @@ function buildDraftRequest(prospect, source, goal, model = DEFAULT_MODEL) {
     return {
         model,
         store: false,
+        service_tier: 'default',
         reasoning: { effort: 'low' },
         max_output_tokens: 1800,
         text: {
@@ -378,7 +382,8 @@ async function discoverProspectsWithOpenAI(apiKey, rawCriteria, options = {}) {
     );
     return {
         ...sanitizeDiscoveryResponse(response, criteria.maxResults),
-        model,
+        model: response.model || model,
+        cost: estimateResponseCost(response),
         promptVersion: 'discovery-v1'
     };
 }
@@ -394,7 +399,8 @@ async function draftOutreachWithOpenAI(apiKey, prospect, source, goal, options =
     );
     return {
         ...sanitizeDraftResponse(response),
-        model,
+        model: response.model || model,
+        cost: estimateResponseCost(response),
         promptVersion: 'draft-v1'
     };
 }

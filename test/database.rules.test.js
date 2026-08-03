@@ -578,6 +578,12 @@ describe('Realtime Database contact submission rules', () => {
             await set(ref(context.database(), 'ai_usage/approved-admin/2026-08-02/discovery'), {
                 count: 1
             });
+            await set(ref(context.database(), 'ai_cost_events/cost-1'), {
+                kind: 'discovery',
+                costType: 'actual',
+                actualMicroUsd: 470000,
+                createdAt: Date.now()
+            });
         });
 
         const approvedDb = testEnv
@@ -587,12 +593,17 @@ describe('Realtime Database contact submission rules', () => {
 
         await assertSucceeds(get(ref(approvedDb, 'outreach_drafts/draft-1')));
         await assertSucceeds(get(ref(approvedDb, 'ai_usage')));
+        await assertSucceeds(get(ref(approvedDb, 'ai_cost_events/cost-1')));
         await assertFails(get(ref(publicDb, 'outreach_drafts/draft-1')));
+        await assertFails(get(ref(publicDb, 'ai_cost_events/cost-1')));
         await assertFails(set(ref(approvedDb, 'outreach_drafts/client-draft'), {
             subject: 'Client write should fail'
         }));
         await assertFails(set(ref(approvedDb, 'ai_usage/approved-admin/test'), {
             count: 999
+        }));
+        await assertFails(set(ref(approvedDb, 'ai_cost_events/client-cost'), {
+            actualMicroUsd: 999999999
         }));
     });
 });

@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/admin.css?v=20260727-phase-b2">
     <link rel="stylesheet" href="css/schedule.css?v=20260727-phase-b2">
-    <link rel="stylesheet" href="css/outreach.css?v=20260802-ai-outreach-v1">
+    <link rel="stylesheet" href="css/outreach.css?v=20260802-ai-cost-v1">
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -253,6 +253,36 @@
                         </label>
                     </div>
                 </div>
+
+                <section id="aiCostSummary" class="outreach-cost-summary" aria-labelledby="aiCostSummaryTitle">
+                    <div class="outreach-cost-heading">
+                        <div>
+                            <p class="outreach-eyebrow">OpenAI API usage</p>
+                            <h3 id="aiCostSummaryTitle">AI Cost Tracking</h3>
+                        </div>
+                        <a href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer">Open authoritative usage dashboard</a>
+                    </div>
+                    <div class="outreach-cost-grid" aria-live="polite">
+                        <div class="outreach-cost-card">
+                            <span>Last API call</span>
+                            <strong id="aiLastCallCost">Loading…</strong>
+                            <small id="aiLastCallDetail">Waiting for private usage records.</small>
+                        </div>
+                        <div class="outreach-cost-card">
+                            <span>Tracked API total</span>
+                            <strong id="aiTrackedTotalCost">Loading…</strong>
+                            <small id="aiTrackedTotalDetail">Includes recorded actual amounts and new estimates.</small>
+                        </div>
+                        <div class="outreach-cost-card">
+                            <span>Tracked requests</span>
+                            <strong id="aiTrackedRequestCount">—</strong>
+                            <small>Discovery and drafting calls recorded by this site.</small>
+                        </div>
+                    </div>
+                    <p class="outreach-cost-note">
+                        New call costs are estimates calculated from response tokens and web-search calls using a versioned pricing snapshot. OpenAI’s dashboard remains authoritative.
+                    </p>
+                </section>
 
                 <div id="outreachTotals" class="outreach-totals" aria-live="polite"></div>
 
@@ -710,6 +740,6 @@
     <script src="js/admin.js?v=20260802-auth-errors"></script>
     <script src="js/schedule.js?v=20260727-phase-b2"></script>
     <script src="js/schedule-import.js?v=20260727-phase-b2"></script>
-    <script src="js/outreach.js?v=20260802-ai-outreach-v1"></script>
+    <script src="js/outreach.js?v=20260802-ai-cost-v1"></script>
 </body>
 </html>

@@ -459,6 +459,15 @@
       ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
       ".write": false
     },
+    "ai_cost_events": {
+      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".write": false,
+      ".indexOn": [
+        "createdAt",
+        "kind",
+        "costType"
+      ]
+    },
     "ai_settings": {
       ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
       ".write": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com' && newData.exists()",

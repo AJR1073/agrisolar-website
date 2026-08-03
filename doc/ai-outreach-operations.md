@@ -44,11 +44,35 @@ and interface before live testing.
 * Discovery uses hosted web search with actual returned source URLs.
 * Structured JSON output with server-side length, URL, email, and source validation.
 * 20 discovery requests and 50 draft requests per administrator per UTC day.
+* Private per-request cost events store token counts, web-search-call counts, the model,
+  and the versioned pricing snapshot used for the estimate.
 * Administrator pause switch stored in `ai_settings/outreachEnabled`.
 * Do-not-contact records block drafting on the server, even if browser controls are
   bypassed.
 * Drafts require `verificationStatus: Verified` and stored public-source evidence.
 * No automatic saving, approving, sending, or publishing.
+
+## Cost tracking
+
+The Responses API returns usage counts, not an authoritative dollar charge. AgriSolar
+therefore calculates a clearly labeled estimate after each successful AI request and
+stores it under the administrator-only `ai_cost_events` path.
+
+The initial pricing snapshot is `openai-standard-short-2026-08-02`:
+
+* GPT-5.6 Sol short-context input: $5.00 per million tokens
+* Cached input: $0.50 per million tokens
+* Cache writes: $6.25 per million tokens
+* Output: $30.00 per million tokens
+* Web search: $0.01 per call, plus search-content tokens at model rates
+
+Costs are stored as integer micro-dollars. The OpenAI Usage dashboard remains the
+authoritative billing source. The site does not call OpenAI's organization Cost API
+because that API requires a separate organization Admin API key with broader authority
+than the project API key used for generation.
+
+When OpenAI pricing changes, add a new pricing version. Do not silently recalculate old
+events using new prices.
 
 ## Review checklist
 

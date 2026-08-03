@@ -7,6 +7,7 @@
         sources: {},
         suppressions: {},
         drafts: {},
+        costEvents: {},
         discoveryResults: [],
         aiEnabled: true,
         status: 'all',
@@ -90,6 +91,11 @@
         const draftForm = document.getElementById('aiDraftForm');
         const draftResult = document.getElementById('aiDraftResult');
         const aiToggle = document.getElementById('aiOutreachToggle');
+        const lastCallCost = document.getElementById('aiLastCallCost');
+        const lastCallDetail = document.getElementById('aiLastCallDetail');
+        const trackedTotalCost = document.getElementById('aiTrackedTotalCost');
+        const trackedTotalDetail = document.getElementById('aiTrackedTotalDetail');
+        const trackedRequestCount = document.getElementById('aiTrackedRequestCount');
         const totals = document.getElementById('outreachTotals');
         const loading = document.getElementById('outreachLoading');
         const list = document.getElementById('outreachList');
@@ -97,7 +103,9 @@
         const searchInput = document.getElementById('outreachSearch');
 
         if (!tabButton || !addButton || !discoverButton || !modal || !form
-            || !discoveryModal || !discoveryForm || !draftModal || !draftForm) return;
+            || !discoveryModal || !discoveryForm || !draftModal || !draftForm
+            || !lastCallCost || !lastCallDetail || !trackedTotalCost
+            || !trackedTotalDetail || !trackedRequestCount) return;
 
         const auth = firebase.auth();
         const database = firebase.database();
@@ -132,21 +140,24 @@
             list.innerHTML = '';
 
             try {
-                const [prospects, sources, suppressions, drafts, aiSettings] = await Promise.all([
+                const [prospects, sources, suppressions, drafts, costEvents, aiSettings] = await Promise.all([
                     database.ref('prospect_candidates').once('value'),
                     database.ref('prospect_sources').once('value'),
                     database.ref('suppression_entries').once('value'),
                     database.ref('outreach_drafts').once('value'),
+                    database.ref('ai_cost_events').once('value'),
                     database.ref('ai_settings').once('value')
                 ]);
                 state.prospects = prospects.val() || {};
                 state.sources = sources.val() || {};
                 state.suppressions = suppressions.val() || {};
                 state.drafts = drafts.val() || {};
+                state.costEvents = costEvents.val() || {};
                 state.aiEnabled = aiSettings.val()?.outreachEnabled !== false;
                 aiToggle.checked = state.aiEnabled;
                 discoverButton.disabled = !state.aiEnabled;
                 render();
+                renderCostSummary();
             } catch (error) {
                 console.error('Unable to load outreach records:', error);
                 loading.hidden = false;
@@ -189,6 +200,51 @@
             totals.innerHTML = values.map(([value, label]) => `
                 <div class="outreach-total"><strong>${value}</strong><span>${escapeHtml(label)}</span></div>
             `).join('');
+        }
+
+        function costEventMicroUsd(event) {
+            if (event?.costType === 'actual') return Number(event.actualMicroUsd) || 0;
+            return Number(event?.estimatedMicroUsd) || 0;
+        }
+
+        function formatMicroUsd(value) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 4
+            }).format((Number(value) || 0) / 1000000);
+        }
+
+        function renderCostSummary() {
+            const events = Object.entries(state.costEvents)
+                .map(([id, event]) => ({ id, ...event }))
+                .filter(event => ['discovery', 'drafting'].includes(event.kind))
+                .sort((left, right) => Number(right.createdAt) - Number(left.createdAt));
+            const totalMicroUsd = events.reduce(
+                (total, event) => total + costEventMicroUsd(event),
+                0
+            );
+            const latest = events[0];
+
+            lastCallCost.textContent = latest
+                ? formatMicroUsd(costEventMicroUsd(latest))
+                : 'Not tracked yet';
+            lastCallDetail.textContent = latest
+                ? `${latest.costType === 'actual' ? 'Confirmed dashboard cost' : 'Estimated cost'} · ${latest.kind === 'discovery' ? 'Internet discovery' : 'Email drafting'}${latest.model ? ` · ${latest.model}` : ''}`
+                : 'Run discovery or drafting to begin tracking.';
+            trackedTotalCost.textContent = formatMicroUsd(totalMicroUsd);
+            trackedTotalDetail.textContent = events.some(event => event.costType === 'actual')
+                ? 'Includes your confirmed dashboard amount plus later estimates.'
+                : 'Estimated from calls recorded by this site.';
+            trackedRequestCount.textContent = String(events.length);
+        }
+
+        function addReturnedCostEvent(result) {
+            const event = result?.costEvent;
+            if (!event?.id) return;
+            state.costEvents[event.id] = event;
+            renderCostSummary();
         }
 
         function statusClass(prospect) {
@@ -422,6 +478,7 @@
                     notes: clean(document.getElementById('discoveryNotes').value),
                     maxResults: Number(document.getElementById('discoveryMaxResults').value)
                 });
+                addReturnedCostEvent(result);
                 state.discoveryResults = Array.isArray(result.candidates) ? result.candidates : [];
                 renderDiscoveryResults();
             } catch (error) {
@@ -477,6 +534,7 @@
                     prospectId: clean(document.getElementById('aiDraftProspectId').value),
                     goal: clean(document.getElementById('aiDraftGoal').value)
                 });
+                addReturnedCostEvent(result);
                 document.getElementById('aiDraftSubject').value = result.subject || '';
                 document.getElementById('aiDraftBody').value = result.body || '';
                 const basis = Array.isArray(result.personalizationBasis)
@@ -672,11 +730,17 @@
                 state.sources = {};
                 state.suppressions = {};
                 state.drafts = {};
+                state.costEvents = {};
                 state.discoveryResults = [];
                 totals.innerHTML = '';
                 list.innerHTML = '';
                 loading.hidden = false;
                 loading.textContent = 'Sign in with the approved administrator account to view outreach records.';
+                lastCallCost.textContent = 'Sign in to view';
+                lastCallDetail.textContent = 'Cost records are administrator-only.';
+                trackedTotalCost.textContent = '—';
+                trackedTotalDetail.textContent = 'Sign in to view private cost records.';
+                trackedRequestCount.textContent = '—';
             }
         });
     });

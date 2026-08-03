@@ -248,6 +248,30 @@ function aiSafetyIdentifier(uid) {
     return crypto.createHash('sha256').update(`agrisolar:${uid}`).digest('hex');
 }
 
+async function recordAiCostEvent(kind, cost, administratorUid, relatedRecordId = '') {
+    const eventRef = admin.database().ref('/ai_cost_events').push();
+    const createdAt = Date.now();
+    const event = {
+        kind,
+        costType: 'estimate',
+        estimatedMicroUsd: Number(cost?.estimatedMicroUsd) || 0,
+        estimateAvailable: cost?.available === true,
+        model: cleanString(cost?.actualModel, 100),
+        pricingModel: cleanString(cost?.pricingModel, 100),
+        pricingVersion: cleanString(cost?.pricingVersion, 100),
+        inputTokens: Number(cost?.inputTokens) || 0,
+        cachedInputTokens: Number(cost?.cachedInputTokens) || 0,
+        cacheWriteTokens: Number(cost?.cacheWriteTokens) || 0,
+        outputTokens: Number(cost?.outputTokens) || 0,
+        webSearchCalls: Number(cost?.webSearchCalls) || 0,
+        relatedRecordId: cleanString(relatedRecordId, 100),
+        createdAt,
+        administratorUid
+    };
+    await eventRef.set(event);
+    return { id: eventRef.key, ...event };
+}
+
 exports.sendEmailOnNewContactSubmission = onValueCreated(
     {
         ref: '/contact_submissions/{submissionId}',
@@ -406,7 +430,17 @@ exports.discoverProspects = onRequest(
                 req.body,
                 { safetyIdentifier: aiSafetyIdentifier(administrator.uid) }
             );
-            res.json(result);
+            let costEvent = null;
+            try {
+                costEvent = await recordAiCostEvent(
+                    'discovery',
+                    result.cost,
+                    administrator.uid
+                );
+            } catch (error) {
+                console.error('AI discovery cost event could not be saved.', error?.message || error);
+            }
+            res.json({ ...result, costEvent });
         } catch (error) {
             sendAiError(res, error);
         }
@@ -486,6 +520,17 @@ exports.draftOutreachEmail = onRequest(
                 goal,
                 { safetyIdentifier: aiSafetyIdentifier(administrator.uid) }
             );
+            let costEvent = null;
+            try {
+                costEvent = await recordAiCostEvent(
+                    'drafting',
+                    draft.cost,
+                    administrator.uid,
+                    prospectId
+                );
+            } catch (error) {
+                console.error('AI drafting cost event could not be saved.', error?.message || error);
+            }
             const draftRef = admin.database().ref('/outreach_drafts').push();
             await draftRef.set({
                 prospectId,
@@ -497,12 +542,19 @@ exports.draftOutreachEmail = onRequest(
                 status: 'Draft',
                 model: draft.model,
                 promptVersion: draft.promptVersion,
+                costEventId: costEvent?.id || '',
+                estimatedMicroUsd: Number(draft.cost?.estimatedMicroUsd) || 0,
                 sendingAllowed: false,
                 createdAt: admin.database.ServerValue.TIMESTAMP,
                 updatedAt: admin.database.ServerValue.TIMESTAMP,
                 administratorUid: administrator.uid
             });
-            res.json({ draftId: draftRef.key, ...draft, sendingAllowed: false });
+            res.json({
+                draftId: draftRef.key,
+                ...draft,
+                costEvent,
+                sendingAllowed: false
+            });
         } catch (error) {
             sendAiError(res, error);
         }
