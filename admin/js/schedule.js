@@ -134,6 +134,73 @@
         return 'Date not set';
     }
 
+    function formatWhiteboardDate(value, monthOnly = false) {
+        if (!value) {
+            return '';
+        }
+
+        const date = monthOnly
+            ? new Date(`${value}-01T12:00:00`)
+            : new Date(`${value}T12:00:00`);
+
+        if (Number.isNaN(date.getTime())) {
+            return value;
+        }
+
+        return date.toLocaleDateString(undefined, monthOnly
+            ? { month: 'short' }
+            : { month: 'numeric', day: 'numeric' });
+    }
+
+    function getWhiteboardCellDisplay(service) {
+        if (service.completedOn) {
+            return {
+                value: formatWhiteboardDate(service.completedOn),
+                timing: 'Completed'
+            };
+        }
+
+        if (service.completionMonth) {
+            return {
+                value: formatWhiteboardDate(service.completionMonth, true),
+                timing: 'Completion month'
+            };
+        }
+
+        if (service.startedOn) {
+            return {
+                value: formatWhiteboardDate(service.startedOn),
+                timing: 'Started'
+            };
+        }
+
+        if (service.confirmedScheduledOn) {
+            return {
+                value: formatWhiteboardDate(service.confirmedScheduledOn),
+                timing: 'Confirmed'
+            };
+        }
+
+        if (service.tentativeScheduledOn) {
+            return {
+                value: formatWhiteboardDate(service.tentativeScheduledOn),
+                timing: 'Tentative'
+            };
+        }
+
+        if (service.plannedMonth) {
+            return {
+                value: formatWhiteboardDate(service.plannedMonth, true),
+                timing: 'Planned'
+            };
+        }
+
+        return {
+            value: '—',
+            timing: 'Date not set'
+        };
+    }
+
     function getScheduleDate(service) {
         return service.confirmedScheduledOn
             || service.tentativeScheduledOn
@@ -412,30 +479,84 @@
                 (getSite(left).name || '').localeCompare(getSite(right).name || '')
             );
 
-            const headers = Array.from({ length: maxCycle }, (_, index) =>
-                `<th scope="col">Mow ${index + 1}</th>`
-            ).join('');
-
-            const rows = siteIds.map(siteId => {
+            const siteColumns = siteIds.map(siteId => {
                 const site = getSite(siteId);
                 const siteServices = servicesBySite[siteId];
                 const company = getCompany(site.companyId || siteServices[0]?.companyId);
                 const season = getSeason(siteServices[0]?.serviceSeasonId);
-                const byCycle = new Map(
-                    siteServices.map(service => [Number(service.mowingCycleNumber), service])
-                );
 
-                const cycleCells = Array.from({ length: maxCycle }, (_, index) => {
-                    const cycle = index + 1;
-                    const service = byCycle.get(cycle);
+                return {
+                    site,
+                    company,
+                    season,
+                    servicesByCycle: new Map(
+                        siteServices.map(service => [Number(service.mowingCycleNumber), service])
+                    )
+                };
+            });
+
+            const siteHeaders = siteColumns.map(({ site, company }) => `
+                <th scope="col" class="whiteboard-site-heading">
+                    <span class="schedule-site-name">${escapeScheduleHtml(site.name || 'Unnamed site')}</span>
+                    <span class="schedule-site-company">${escapeScheduleHtml(company.name || 'Company not set')}</span>
+                </th>
+            `).join('');
+
+            const metadataRows = [
+                {
+                    label: 'Location',
+                    className: 'whiteboard-location-row',
+                    value: ({ site }) => site.location || '—'
+                },
+                {
+                    label: 'Acres',
+                    className: 'whiteboard-acres-row',
+                    value: ({ site, season }) => formatAcres(
+                        season.contractAcreage ?? site.acreage
+                    )
+                },
+                {
+                    label: 'Height',
+                    className: 'whiteboard-height-row',
+                    value: ({ site, season, servicesByCycle }) => (
+                        season.targetVegetationHeight
+                        || site.targetVegetationHeight
+                        || [...servicesByCycle.values()].find(
+                            service => cleanText(service.targetVegetationHeight)
+                        )?.targetVegetationHeight
+                        || '—'
+                    )
+                }
+            ].map(row => `
+                <tr class="whiteboard-metadata-row ${row.className}">
+                    <th scope="row" class="schedule-row-heading">${row.label}</th>
+                    ${siteColumns.map(column => `
+                        <td>${escapeScheduleHtml(row.value(column))}</td>
+                    `).join('')}
+                </tr>
+            `).join('');
+
+            const mowingRows = Array.from({ length: maxCycle }, (_, index) => {
+                const cycle = index + 1;
+                const cells = siteColumns.map(({ site, servicesByCycle }) => {
+                    const service = servicesByCycle.get(cycle);
 
                     if (!service) {
                         return `
-                            <td class="mowing-cycle-cell">
-                                <span class="empty-cycle">No matching record</span>
+                            <td class="mowing-cycle-cell whiteboard-empty-cell">
+                                <span class="empty-cycle" aria-label="No matching Mow ${cycle} record for ${escapeScheduleHtml(site.name || 'this site')}">—</span>
                             </td>
                         `;
                     }
+
+                    const display = getWhiteboardCellDisplay(service);
+                    const accessibleLabel = [
+                        site.name || 'Unnamed site',
+                        `Mow ${cycle}`,
+                        service.status,
+                        getServiceDisplayDate(service),
+                        `${formatAcres(service.actualAcresCompleted)} completed`
+                    ].join(', ');
 
                     return `
                         <td class="mowing-cycle-cell">
@@ -444,43 +565,48 @@
                                 class="mowing-cycle-button status-${escapeScheduleHtml(slugStatus(service.status))}"
                                 data-schedule-action="edit-service"
                                 data-service-id="${escapeScheduleHtml(service.id)}"
+                                aria-label="${escapeScheduleHtml(accessibleLabel)}"
                             >
+                                <span class="whiteboard-cell-value">${escapeScheduleHtml(display.value)}</span>
+                                <span class="whiteboard-cell-timing">${escapeScheduleHtml(display.timing)}</span>
                                 <span class="cycle-status">${escapeScheduleHtml(service.status)}</span>
-                                <span class="cycle-date">${escapeScheduleHtml(getServiceDisplayDate(service))}</span>
-                                <span class="cycle-acres">
-                                    ${escapeScheduleHtml(formatAcres(service.actualAcresCompleted))}
-                                    completed
-                                </span>
+                                ${toNumber(service.actualAcresCompleted) > 0 ? `
+                                    <span class="cycle-acres">${escapeScheduleHtml(formatAcres(service.actualAcresCompleted))} done</span>
+                                ` : ''}
                             </button>
                         </td>
                     `;
                 }).join('');
 
                 return `
-                    <tr>
-                        <td class="site-column">
-                            <span class="schedule-site-name">${escapeScheduleHtml(site.name || 'Unnamed site')}</span>
-                            <span class="schedule-site-meta">${escapeScheduleHtml(company.name || 'Company not set')}</span>
-                            <span class="schedule-site-meta">${escapeScheduleHtml(site.location || 'Location not set')}</span>
-                            <span class="schedule-site-meta">
-                                ${escapeScheduleHtml(formatAcres(season.contractAcreage ?? site.acreage))}
-                            </span>
-                        </td>
-                        ${cycleCells}
+                    <tr class="whiteboard-mowing-row">
+                        <th scope="row" class="schedule-row-heading">Mow ${cycle}</th>
+                        ${cells}
                     </tr>
                 `;
             }).join('');
 
             scheduleGridView.innerHTML = `
-                <div class="schedule-table-wrap">
+                <div class="whiteboard-grid-intro">
+                    <div>
+                        <strong>${escapeScheduleHtml(state.selectedYear)} mowing board</strong>
+                        <span>Sites run across the top, just like the shop whiteboard.</span>
+                    </div>
+                    <span class="whiteboard-scroll-hint">Scroll sideways to see every site</span>
+                </div>
+                <div class="schedule-table-wrap annual-schedule-wrap" tabindex="0" aria-label="Scrollable annual mowing schedule">
                     <table class="annual-schedule-table">
+                        <caption class="sr-only">${escapeScheduleHtml(state.selectedYear)} annual mowing schedule with sites in columns and mowing cycles in rows</caption>
                         <thead>
                             <tr>
-                                <th scope="col" class="site-column">Solar site</th>
-                                ${headers}
+                                <th scope="col" class="schedule-row-heading whiteboard-corner">Site</th>
+                                ${siteHeaders}
                             </tr>
                         </thead>
-                        <tbody>${rows}</tbody>
+                        <tbody>
+                            ${metadataRows}
+                            ${mowingRows}
+                        </tbody>
                     </table>
                 </div>
             `;

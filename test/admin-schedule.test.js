@@ -214,6 +214,21 @@ async function run() {
             '#scheduleGridView',
             element => element.textContent
         );
+        const gridStructure = await page.$eval(
+            '#scheduleGridView .annual-schedule-table',
+            table => ({
+                columnHeadings: Array.from(table.querySelectorAll('thead th'))
+                    .map(element => element.textContent.replace(/\s+/g, ' ').trim()),
+                rowHeadings: Array.from(table.querySelectorAll('tbody th[scope="row"]'))
+                    .map(element => element.textContent.trim()),
+                completedValue: table.querySelector(
+                    '[data-service-id="service1"] .whiteboard-cell-value'
+                )?.textContent.trim(),
+                tentativeValue: table.querySelector(
+                    '[data-service-id="service2"] .whiteboard-cell-value'
+                )?.textContent.trim()
+            })
+        );
         const injectedTags = await page.$$eval(
             '#scheduleGridView site, #scheduleGridView script',
             elements => elements.length
@@ -222,7 +237,22 @@ async function run() {
         assert.equal(totalCards.length, 7);
         assert.equal(cycleButtons.length, 2);
         assert.match(gridText, /Example <Site>/);
-        assert.match(gridText, /Completed Jun 24, 2026/);
+        assert.deepEqual(gridStructure.columnHeadings, [
+            'Site',
+            'Example <Site> Example Solar Company'
+        ]);
+        assert.deepEqual(gridStructure.rowHeadings, [
+            'Location',
+            'Acres',
+            'Height',
+            'Mow 1',
+            'Mow 2',
+            'Mow 3',
+            'Mow 4'
+        ]);
+        assert.equal(gridStructure.completedValue, '6/24');
+        assert.equal(gridStructure.tentativeValue, '7/15');
+        assert.match(gridText, /Completed/);
         assert.equal(injectedTags, 0);
 
         await page.click(
