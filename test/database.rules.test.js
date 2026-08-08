@@ -14,7 +14,7 @@ const {
 } = require('firebase/database');
 
 const projectId = 'agrisolar-website';
-const adminEmail = 'aaronreifschneider@outlook.com';
+const adminUid = 'fWscNuWSoGdWmDIhyjneNqFU0r92';
 let testEnv;
 
 function validSubmission(overrides = {}) {
@@ -61,7 +61,7 @@ function validCompany(overrides = {}) {
         name: 'Example Solar Company',
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        administratorUid: 'approved-admin',
+        administratorUid: 'fWscNuWSoGdWmDIhyjneNqFU0r92',
         ...overrides
     };
 }
@@ -76,7 +76,7 @@ function validSolarSite(overrides = {}) {
         active: true,
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        administratorUid: 'approved-admin',
+        administratorUid: 'fWscNuWSoGdWmDIhyjneNqFU0r92',
         ...overrides
     };
 }
@@ -95,7 +95,7 @@ function validServiceSeason(overrides = {}) {
         renewalNotes: '',
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        administratorUid: 'approved-admin',
+        administratorUid: 'fWscNuWSoGdWmDIhyjneNqFU0r92',
         ...overrides
     };
 }
@@ -124,7 +124,7 @@ function validScheduledService(overrides = {}) {
         readyForInvoicing: false,
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        administratorUid: 'approved-admin',
+        administratorUid: 'fWscNuWSoGdWmDIhyjneNqFU0r92',
         ...overrides
     };
 }
@@ -146,7 +146,7 @@ function validProspectCandidate(overrides = {}) {
         suppressed: false,
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        administratorUid: 'approved-admin',
+        administratorUid: 'fWscNuWSoGdWmDIhyjneNqFU0r92',
         ...overrides
     };
 }
@@ -159,7 +159,7 @@ function validProspectSource(overrides = {}) {
         evidenceSummary: 'The public page describes a synthetic utility-scale solar project.',
         accessedAt: Date.now(),
         createdAt: Date.now(),
-        administratorUid: 'approved-admin',
+        administratorUid: 'fWscNuWSoGdWmDIhyjneNqFU0r92',
         ...overrides
     };
 }
@@ -172,7 +172,7 @@ function validSuppressionEntry(overrides = {}) {
         reason: 'Administrator do-not-contact decision',
         active: true,
         createdAt: Date.now(),
-        administratorUid: 'approved-admin',
+        administratorUid: 'fWscNuWSoGdWmDIhyjneNqFU0r92',
         ...overrides
     };
 }
@@ -181,7 +181,7 @@ function validAiSettings(overrides = {}) {
     return {
         outreachEnabled: true,
         updatedAt: Date.now(),
-        administratorUid: 'approved-admin',
+        administratorUid: 'fWscNuWSoGdWmDIhyjneNqFU0r92',
         ...overrides
     };
 }
@@ -295,10 +295,15 @@ describe('Realtime Database contact submission rules', () => {
         });
 
         const approvedDb = testEnv
-            .authenticatedContext('approved-admin', { email: adminEmail })
+            .authenticatedContext(adminUid, { email: 'aaronreifschneider@outlook.com' })
             .database();
         const otherDb = testEnv
             .authenticatedContext('other-user', { email: 'other@example.com' })
+            .database();
+        const sameEmailWrongUidDb = testEnv
+            .authenticatedContext('email-impostor', {
+                email: 'aaronreifschneider@outlook.com'
+            })
             .database();
 
         await assertSucceeds(
@@ -311,6 +316,7 @@ describe('Realtime Database contact submission rules', () => {
             })
         );
         await assertFails(get(ref(otherDb, 'contact_submissions/existing')));
+        await assertFails(get(ref(sameEmailWrongUidDb, 'contact_submissions/existing')));
         await assertFails(
             update(ref(otherDb, 'contact_submissions/existing'), {
                 status: 'viewed',
@@ -321,7 +327,7 @@ describe('Realtime Database contact submission rules', () => {
 
     it('allows the approved administrator to create normalized schedule records', async () => {
         const approvedDb = testEnv
-            .authenticatedContext('approved-admin', { email: adminEmail })
+            .authenticatedContext(adminUid, { email: 'aaronreifschneider@outlook.com' })
             .database();
 
         await assertSucceeds(
@@ -370,7 +376,7 @@ describe('Realtime Database contact submission rules', () => {
 
     it('preserves exact and month-only completion values separately', async () => {
         const approvedDb = testEnv
-            .authenticatedContext('approved-admin', { email: adminEmail })
+            .authenticatedContext(adminUid, { email: 'aaronreifschneider@outlook.com' })
             .database();
 
         await assertSucceeds(
@@ -412,7 +418,7 @@ describe('Realtime Database contact submission rules', () => {
 
     it('rejects invalid schedule statuses, fixed mow columns, and premature invoicing', async () => {
         const approvedDb = testEnv
-            .authenticatedContext('approved-admin', { email: adminEmail })
+            .authenticatedContext(adminUid, { email: 'aaronreifschneider@outlook.com' })
             .database();
 
         await assertFails(
@@ -437,7 +443,7 @@ describe('Realtime Database contact submission rules', () => {
 
     it('prevents deletion of permanent sites and schedule history', async () => {
         const approvedDb = testEnv
-            .authenticatedContext('approved-admin', { email: adminEmail })
+            .authenticatedContext(adminUid, { email: 'aaronreifschneider@outlook.com' })
             .database();
 
         await assertSucceeds(
@@ -457,7 +463,7 @@ describe('Realtime Database contact submission rules', () => {
 
     it('allows the approved administrator to create reviewed prospect evidence atomically', async () => {
         const approvedDb = testEnv
-            .authenticatedContext('approved-admin', { email: adminEmail })
+            .authenticatedContext(adminUid, { email: 'aaronreifschneider@outlook.com' })
             .database();
 
         await assertSucceeds(
@@ -501,7 +507,7 @@ describe('Realtime Database contact submission rules', () => {
 
     it('rejects invalid prospect evidence and inconsistent suppression state', async () => {
         const approvedDb = testEnv
-            .authenticatedContext('approved-admin', { email: adminEmail })
+            .authenticatedContext(adminUid, { email: 'aaronreifschneider@outlook.com' })
             .database();
 
         await assertFails(
@@ -532,7 +538,7 @@ describe('Realtime Database contact submission rules', () => {
 
     it('preserves prospect evidence and do-not-contact history', async () => {
         const approvedDb = testEnv
-            .authenticatedContext('approved-admin', { email: adminEmail })
+            .authenticatedContext(adminUid, { email: 'aaronreifschneider@outlook.com' })
             .database();
 
         await assertSucceeds(
@@ -552,7 +558,7 @@ describe('Realtime Database contact submission rules', () => {
 
     it('allows only the approved administrator to pause AI outreach', async () => {
         const approvedDb = testEnv
-            .authenticatedContext('approved-admin', { email: adminEmail })
+            .authenticatedContext(adminUid, { email: 'aaronreifschneider@outlook.com' })
             .database();
         const otherDb = testEnv
             .authenticatedContext('other-user', { email: 'other@example.com' })
@@ -575,7 +581,7 @@ describe('Realtime Database contact submission rules', () => {
                 body: 'Draft body',
                 status: 'Draft'
             });
-            await set(ref(context.database(), 'ai_usage/approved-admin/2026-08-02/discovery'), {
+            await set(ref(context.database(), 'ai_usage/fWscNuWSoGdWmDIhyjneNqFU0r92/2026-08-02/discovery'), {
                 count: 1
             });
             await set(ref(context.database(), 'ai_cost_events/cost-1'), {
@@ -587,7 +593,7 @@ describe('Realtime Database contact submission rules', () => {
         });
 
         const approvedDb = testEnv
-            .authenticatedContext('approved-admin', { email: adminEmail })
+            .authenticatedContext(adminUid, { email: 'aaronreifschneider@outlook.com' })
             .database();
         const publicDb = testEnv.unauthenticatedContext().database();
 
@@ -599,7 +605,7 @@ describe('Realtime Database contact submission rules', () => {
         await assertFails(set(ref(approvedDb, 'outreach_drafts/client-draft'), {
             subject: 'Client write should fail'
         }));
-        await assertFails(set(ref(approvedDb, 'ai_usage/approved-admin/test'), {
+        await assertFails(set(ref(approvedDb, 'ai_usage/fWscNuWSoGdWmDIhyjneNqFU0r92/test'), {
             count: 999
         }));
         await assertFails(set(ref(approvedDb, 'ai_cost_events/client-cost'), {
@@ -635,7 +641,7 @@ describe('Realtime Database contact submission rules', () => {
         });
 
         const approvedDb = testEnv
-            .authenticatedContext('approved-admin', { email: adminEmail })
+            .authenticatedContext(adminUid, { email: 'aaronreifschneider@outlook.com' })
             .database();
         const otherDb = testEnv
             .authenticatedContext('other-user', { email: 'other@example.com' })

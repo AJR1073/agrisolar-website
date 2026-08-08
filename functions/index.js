@@ -8,12 +8,13 @@ const {
     discoverProspectsWithOpenAI,
     draftOutreachWithOpenAI
 } = require('./ai-outreach');
-const { createBusinessApiHandler } = require('./business-api');
+const { createBusinessApi } = require('./business-api');
+const { createMcpHandler } = require('./mcp-server');
 
 admin.initializeApp();
 
 const SMTP_SENDER = 'aaron@agrisolarllc.com';
-const ADMIN_EMAIL = 'aaronreifschneider@outlook.com';
+const ADMIN_UID = 'fWscNuWSoGdWmDIhyjneNqFU0r92';
 const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || SMTP_SENDER;
 const MAX_ATTACHMENT_COUNT = 10;
 const MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024;
@@ -33,6 +34,11 @@ const allowedOrigins = [
     /^http:\/\/localhost:\d+$/,
     /^http:\/\/127\.0\.0\.1:\d+$/
 ];
+
+function emulatorExternalCallsAllowed(flagName) {
+    return process.env.FUNCTIONS_EMULATOR !== 'true'
+        || process.env[flagName] === 'true';
+}
 
 function createTransporter() {
     if (!process.env.NAMECHEAP_PASSWORD) {
@@ -195,7 +201,7 @@ async function requireAdministrator(req) {
     } catch {
         throw new AiOutreachError('Authentication required.', 401, 'authentication_required');
     }
-    if (decodedToken.email !== ADMIN_EMAIL) {
+    if (decodedToken.uid !== ADMIN_UID) {
         throw new AiOutreachError('Administrator access required.', 403, 'administrator_required');
     }
     return decodedToken;
@@ -281,6 +287,10 @@ exports.sendEmailOnNewContactSubmission = onValueCreated(
         secrets: ['NAMECHEAP_PASSWORD']
     },
     async (event) => {
+        if (!emulatorExternalCallsAllowed('ALLOW_EMULATOR_EMAIL')) {
+            console.info('Contact notification skipped in the Firebase emulator.');
+            return;
+        }
         const submission = normalizeSubmission(
             event.data.val(),
             event.params.submissionId
@@ -366,8 +376,14 @@ exports.sendReply = onRequest(
 
         try {
             const decodedToken = await admin.auth().verifyIdToken(authHeader.slice(7));
-            if (decodedToken.email !== ADMIN_EMAIL) {
+            if (decodedToken.uid !== ADMIN_UID) {
                 res.status(403).json({ error: 'Not authorized to send replies.' });
+                return;
+            }
+            if (!emulatorExternalCallsAllowed('ALLOW_EMULATOR_EMAIL')) {
+                res.status(503).json({
+                    error: 'Email sending is disabled in the Firebase emulator.'
+                });
                 return;
             }
 
@@ -424,6 +440,13 @@ exports.discoverProspects = onRequest(
         if (!prepareAuthenticatedPost(req, res)) return;
         try {
             const administrator = await requireAdministrator(req);
+            if (!emulatorExternalCallsAllowed('ALLOW_EMULATOR_OPENAI')) {
+                throw new AiOutreachError(
+                    'OpenAI calls are disabled in the Firebase emulator.',
+                    503,
+                    'emulator_external_calls_disabled'
+                );
+            }
             await requireAiOutreachEnabled();
             await reserveAiUsage(administrator.uid, 'discovery', 20);
             const result = await discoverProspectsWithOpenAI(
@@ -459,6 +482,13 @@ exports.draftOutreachEmail = onRequest(
         if (!prepareAuthenticatedPost(req, res)) return;
         try {
             const administrator = await requireAdministrator(req);
+            if (!emulatorExternalCallsAllowed('ALLOW_EMULATOR_OPENAI')) {
+                throw new AiOutreachError(
+                    'OpenAI calls are disabled in the Firebase emulator.',
+                    503,
+                    'emulator_external_calls_disabled'
+                );
+            }
             await requireAiOutreachEnabled();
             const prospectId = cleanString(req.body?.prospectId, 80);
             const goal = cleanString(req.body?.goal, 500);
@@ -562,6 +592,13 @@ exports.draftOutreachEmail = onRequest(
     }
 );
 
+const businessApi = createBusinessApi({
+    admin,
+    administratorUid: ADMIN_UID,
+    organizationId: 'agrisolar',
+    environment: 'DEV'
+});
+
 exports.apiV1 = onRequest(
     {
         region: 'us-central1',
@@ -569,10 +606,15 @@ exports.apiV1 = onRequest(
         timeoutSeconds: 60,
         cors: false
     },
-    createBusinessApiHandler({
-        admin,
-        administratorEmail: ADMIN_EMAIL,
-        organizationId: 'agrisolar',
-        environment: 'DEV'
-    })
+    businessApi.handler
+);
+
+exports.mcp = onRequest(
+    {
+        region: 'us-central1',
+        memory: '256MiB',
+        timeoutSeconds: 60,
+        cors: false
+    },
+    createMcpHandler({ businessApi })
 );

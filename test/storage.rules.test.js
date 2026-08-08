@@ -7,7 +7,7 @@ const {
 } = require('@firebase/rules-unit-testing');
 
 const projectId = 'agrisolar-website';
-const adminEmail = 'aaronreifschneider@outlook.com';
+const adminUid = 'fWscNuWSoGdWmDIhyjneNqFU0r92';
 const validPath =
     'quote-attachments/submission1234567890/attachment1234567890';
 let testEnv;
@@ -89,15 +89,22 @@ describe('Cloud Storage quote attachment rules', () => {
         });
 
         const approvedRef = testEnv
-            .authenticatedContext('approved-admin', { email: adminEmail })
+            .authenticatedContext(adminUid, { email: 'aaronreifschneider@outlook.com' })
             .storage()
             .ref(validPath);
         const otherRef = testEnv
             .authenticatedContext('other-user', { email: 'other@example.com' })
             .storage()
             .ref(validPath);
+        const sameEmailWrongUidRef = testEnv
+            .authenticatedContext('email-impostor', {
+                email: 'aaronreifschneider@outlook.com'
+            })
+            .storage()
+            .ref(validPath);
 
         await assertSucceeds(approvedRef.getMetadata());
         await assertFails(otherRef.getMetadata());
+        await assertFails(sameEmailWrongUidRef.getMetadata());
     });
 });

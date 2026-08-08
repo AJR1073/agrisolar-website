@@ -51,6 +51,9 @@ and interface before live testing.
   bypassed.
 * Drafts require `verificationStatus: Verified` and stored public-source evidence.
 * No automatic saving, approving, sending, or publishing.
+* Firebase emulators refuse real OpenAI and SMTP calls by default. A developer must set
+  `ALLOW_EMULATOR_OPENAI=true` or `ALLOW_EMULATOR_EMAIL=true` explicitly for a narrowly
+  supervised external-call test; normal automated tests never set these flags.
 
 ## Cost tracking
 

@@ -1,8 +1,8 @@
 # AgriSolar Technical Requirements and Design
 
-**Status:** DEV API vertical slice implemented; MCP/OAuth not yet connected  
-**Updated:** August 7, 2026  
-**Environment in scope:** Firebase development project `agrisolar-website`  
+**Status:** DEV API and MCP protocol implemented; OAuth provider/ChatGPT connection pending
+**Updated:** August 7, 2026
+**Environment in scope:** Firebase development project `agrisolar-website`
 **Product requirements:** [`prd.md`](prd.md)
 
 ## 1. Purpose and Decision Gate
@@ -23,7 +23,8 @@ The required sequence is:
 
 ### 1.1 Implementation Snapshot
 
-Milestones 1 and 2 now have a tested DEV implementation:
+Milestones 1, 2, and the first Milestone 4 administrator-review slice now have a tested
+DEV implementation:
 
 * One Firebase HTTPS function serves the five `/api/v1` operations.
 * Firebase ID tokens are verified server-side and mapped to the owner or a revocable
@@ -36,10 +37,17 @@ Milestones 1 and 2 now have a tested DEV implementation:
 * Tests cover authentication, cross-organization denial, capabilities, validation,
   duplicates, idempotency, audit events, rules, Hosting rewrites, and existing admin
   regressions.
+* The owner-only AI Review Center lists pending opportunities/tasks, separates sourced
+  facts from AI provenance, shows sanitized agent/approval/audit state, and performs
+  idempotent approve/reject decisions through the backend.
+* Functions, Realtime Database, and Storage recognize the administrator by immutable
+  Firebase UID rather than a mutable email address.
 
 No external agent identity or business fixture has been inserted into Firebase. No MCP
-server, ChatGPT Work connection, OAuth authorization server, or email-sending AI tool is
-enabled. See [`business-api.md`](business-api.md) for the implemented contract.
+OAuth provider, ChatGPT Work connection, or email-sending AI tool is enabled. The MCP
+endpoint and five tools are implemented but fail closed until OAuth is configured. See
+[`business-api.md`](business-api.md) and [`mcp-integration.md`](mcp-integration.md) for
+the implemented contracts and activation gate.
 
 ## 2. Current Architecture Assessment
 
@@ -760,6 +768,7 @@ The initial registered tools are:
 * `search_opportunities`
 * `get_opportunity`
 * `create_opportunity`
+* `submit_opportunity_candidate`
 * `create_task`
 * `get_sales_pipeline`
 
@@ -778,6 +787,20 @@ must not contain independent duplicate, approval, or status-transition logic.
 
 The initial MCP adapter excludes email sending. Future external-action tools must pass
 through the reusable approval service.
+
+### 14.1 Shared candidate submission service
+
+`submit_opportunity_candidate` and `POST /api/v1/opportunity-candidates` call the same
+business operation used by controlled opportunity creation. The operation forces
+`reviewStatus: pending_review`, applies duplicate and idempotency checks, writes an audit
+event, and records `candidateSubmission.source` as `chatgpt_work`, `outreach_api`,
+`manual`, or `import`.
+
+The Outreach browser no longer directly creates new records under
+`prospect_candidates`; that path remains temporarily available only for legacy records
+and the existing reviewed email-draft workflow. New submissions appear in the AI Review
+Center. A later migration slice may retire the legacy paths after approved opportunities
+can participate fully in the outreach-draft workflow.
 
 ## 15. Observability
 
@@ -894,16 +917,21 @@ only synthetic DEV identities/data through a controlled fixture process.
 Implement the five `/api/v1` endpoints through opportunity, task, duplicate, and pipeline
 services. Confirm organization isolation, rate limits, provenance, and audit behavior.
 
-### Milestone 3 — Thin MCP Adapter — Next
+### Milestone 3 — Thin MCP Adapter — Protocol Implemented; Provider Connection Pending
 
-Register the five tools, map schemas to the same services, add MCP authentication and
-tool contract tests, and connect only an approved DEV client.
+The five Streamable HTTP tools, shared-service mapping, OAuth resource-server boundary,
+OIDC verification, safety annotations, and protocol contract tests are implemented. The
+endpoint remains disabled until an established DEV OAuth provider and reviewed agent
+identity are configured. Only then may an approved DEV client be connected.
 
-### Milestone 4 — Admin Review Experience
+### Milestone 4 — Admin Review Experience — Initial Slice Implemented in DEV
 
-Add UI views for AI-created opportunities, review state, audit history, agent status,
-and pending approvals as needed. Move relevant browser mutations behind services
-incrementally.
+The administrator-only review center now shows AI-created opportunities/tasks, review
+state, source and model provenance, linked audit history, sanitized agent status, and
+pending approvals. Approve/reject operations are owner-only backend mutations with
+organization checks, idempotency, retained rejection history, and atomic approval/audit
+records. Future slices may add richer record editing and proposal/document review, but
+no external sending or execution is enabled.
 
 ### Milestone 5 — Future Controlled Actions
 
@@ -960,8 +988,8 @@ limits. The following decisions remain before Milestone 3 or any production acti
 * Retention period and export policy for audit events
 * Whether `task.read` is also required by the first agent; it is described in the PRD's
   example grant but not required by the minimum four-capability vertical slice
-* Exact boundary between existing `prospect_candidates` and new `opportunities`,
-  including the reviewed conversion workflow
+* Migration and eventual retirement plan for legacy `prospect_candidates`; new
+  candidate creation now uses reviewed `opportunities`
 * The controlled process for creating, rotating, expiring, and revoking the first DEV
   external-agent identity
 

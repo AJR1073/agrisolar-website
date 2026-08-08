@@ -9,6 +9,7 @@
         drafts: {},
         costEvents: {},
         discoveryResults: [],
+        discoveryModel: '',
         aiEnabled: true,
         status: 'all',
         search: ''
@@ -74,6 +75,31 @@
             const error = new Error(result.error || 'The AI request could not be completed.');
             error.code = result.code || '';
             throw error;
+        }
+        return result;
+    }
+
+    async function callBusinessApi(auth, path, payload) {
+        const user = auth.currentUser;
+        if (!user) throw new Error('Sign in before submitting a candidate.');
+        const token = await user.getIdToken(true);
+        const random = globalThis.crypto?.randomUUID?.()
+            || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        const response = await fetch(path, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Idempotency-Key': `outreach-candidate:${random}`
+            },
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(
+                result.error?.message
+                || `The candidate review service returned ${response.status}.`
+            );
         }
         return result;
     }
@@ -337,33 +363,50 @@
                 : '';
         }
 
-        async function saveCandidateForReview(candidate, source, user) {
+        function confidenceNumber(value) {
+            if (typeof value === 'number') return Math.max(0, Math.min(1, value));
+            return { low: 0.35, medium: 0.65, high: 0.85 }[
+                clean(value).toLocaleLowerCase()
+            ] || 0;
+        }
+
+        async function saveCandidateForReview(
+            candidate,
+            source,
+            candidateSource = 'manual'
+        ) {
             const duplicate = duplicateMessage(candidate);
             if (duplicate) throw new Error(duplicate);
-
-            const prospectId = database.ref('prospect_candidates').push().key;
-            const sourceId = database.ref('prospect_sources').push().key;
-            const timestamp = firebase.database.ServerValue.TIMESTAMP;
-            await database.ref().update({
-                [`prospect_candidates/${prospectId}`]: {
-                    ...candidate,
-                    sourceId,
-                    verificationStatus: 'Needs review',
-                    outreachStatus: 'Not contacted',
-                    suppressed: false,
-                    createdAt: timestamp,
-                    updatedAt: timestamp,
-                    administratorUid: user.uid
+            return callBusinessApi(auth, '/api/v1/opportunity-candidates', {
+                candidateSource,
+                company: {
+                    name: candidate.companyName,
+                    domain: candidate.normalizedDomain
                 },
-                [`prospect_sources/${sourceId}`]: {
-                    prospectId,
-                    url: source.url,
+                site: {
+                    name: `${candidate.companyName} prospect`,
+                    address: candidate.location
+                },
+                projectDetails: source.evidenceSummary,
+                opportunityType: 'vegetation_management',
+                contact: {
+                    name: candidate.contactName,
+                    email: candidate.contactEmail
+                },
+                source: {
+                    type: 'public_web',
                     title: source.title,
-                    evidenceSummary: source.evidenceSummary,
-                    accessedAt: timestamp,
-                    createdAt: timestamp,
-                    administratorUid: user.uid
-                }
+                    url: source.url,
+                    retrievedAt: Date.now()
+                },
+                notes: candidate.fitReason,
+                aiResearch: candidateSource === 'outreach_api' ? {
+                    summary: candidate.fitReason,
+                    confidence: confidenceNumber(candidate.confidence),
+                    model: state.discoveryModel
+                } : undefined,
+                priority: 'normal',
+                nextAction: 'Verify the public evidence and decision-maker contact.'
             });
         }
 
@@ -416,13 +459,12 @@
                     url: sourceUrl,
                     title: sourceTitle,
                     evidenceSummary
-                }, user);
+                });
                 closeModal();
-                notify('Prospect candidate saved for review. No email was sent.', 'success');
-                await loadOutreachData();
+                notify('Candidate submitted to the AI Review Center. No email was sent.', 'success');
             } catch (error) {
                 console.error('Unable to save prospect candidate:', error);
-                notify('Unable to save the prospect candidate.', 'error');
+                notify(error.message || 'Unable to save the prospect candidate.', 'error');
             } finally {
                 submit.disabled = false;
                 submit.textContent = 'Save candidate for review';
@@ -479,6 +521,7 @@
                     maxResults: Number(document.getElementById('discoveryMaxResults').value)
                 });
                 addReturnedCostEvent(result);
+                state.discoveryModel = clean(result.model);
                 state.discoveryResults = Array.isArray(result.candidates) ? result.candidates : [];
                 renderDiscoveryResults();
             } catch (error) {
@@ -573,7 +616,8 @@
                     contactName: clean(result.contactName),
                     contactEmail: normalizeText(result.contactEmail),
                     contactPhone: clean(result.contactPhone),
-                    fitReason: clean(result.fitReason)
+                    fitReason: clean(result.fitReason),
+                    confidence: result.confidence
                 };
                 button.disabled = true;
                 try {
@@ -581,10 +625,9 @@
                         url: safeHttpUrl(result.sourceUrl),
                         title: clean(result.sourceTitle),
                         evidenceSummary: clean(result.evidenceSummary)
-                    }, user);
-                    button.textContent = 'Saved for review';
-                    notify('AI candidate saved for human review. No email was sent.', 'success');
-                    await loadOutreachData();
+                    }, 'outreach_api');
+                    button.textContent = 'Submitted for review';
+                    notify('AI candidate submitted to the AI Review Center. No email was sent.', 'success');
                 } catch (error) {
                     notify(error.message, 'error');
                     button.disabled = false;
