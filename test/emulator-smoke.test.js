@@ -39,6 +39,7 @@ async function run() {
         '/package.json',
         '/doc/prd.txt',
         '/doc/prd.md',
+        '/doc/trd.md',
         '/doc/annual-schedule-implementation-plan.md',
         '/.github/workflows/firebase-hosting-merge.yml'
     ]) {
@@ -48,6 +49,18 @@ async function run() {
 
     const sendReply = await fetch(`${functionsBase}/sendReply`);
     assert.equal(sendReply.status, 405, 'sendReply should reject GET');
+
+    const unauthenticatedBusinessApi = await request('/api/v1/opportunities');
+    assert.equal(
+        unauthenticatedBusinessApi.status,
+        401,
+        'Hosting should rewrite /api/v1 to the authenticated business API'
+    );
+    assert.equal(
+        (await unauthenticatedBusinessApi.json()).error.code,
+        'UNAUTHORIZED',
+        'Business API should return its structured authentication error'
+    );
 
     for (const name of ['discoverProspects', 'draftOutreachEmail']) {
         const getResponse = await fetch(`${functionsBase}/${name}`);

@@ -8,6 +8,7 @@ const {
     discoverProspectsWithOpenAI,
     draftOutreachWithOpenAI
 } = require('./ai-outreach');
+const { createBusinessApiHandler } = require('./business-api');
 
 admin.initializeApp();
 
@@ -559,4 +560,19 @@ exports.draftOutreachEmail = onRequest(
             sendAiError(res, error);
         }
     }
+);
+
+exports.apiV1 = onRequest(
+    {
+        region: 'us-central1',
+        memory: '256MiB',
+        timeoutSeconds: 60,
+        cors: false
+    },
+    createBusinessApiHandler({
+        admin,
+        administratorEmail: ADMIN_EMAIL,
+        organizationId: 'agrisolar',
+        environment: 'DEV'
+    })
 );

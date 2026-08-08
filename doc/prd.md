@@ -1857,3 +1857,361 @@ customer identities.
 * Tests use synthetic companies, contacts, evidence, and mocked email transport.
 * Usage limits, failure states, and an administrative off switch are tested.
 * Private prospect data and prompt fixtures are excluded from Firebase Hosting output.
+
+## Authoritative Addendum: Controlled API and MCP Architecture
+
+### Objective and Scope
+
+Prepare the existing AgriSolar application to work safely with ChatGPT workspaces and
+custom apps, Model Context Protocol (MCP) clients, approved external AI agents, future
+mobile applications, scheduled jobs, and other approved integrations.
+
+This is the next architecture requirement for the same application. Do not restart the
+project or replace the existing Firebase architecture unless an inspection identifies a
+strong technical reason and the change is separately approved.
+
+AgriSolar must remain the system of record. An AI client must never receive direct
+access to Firebase Realtime Database, Firestore, Cloud Storage, Firebase Authentication,
+or other internal persistence systems. Approved clients must use this controlled path:
+
+```text
+ChatGPT or approved client
+  -> authenticated API or MCP interface
+  -> AgriSolar business services
+  -> AgriSolar persistence
+```
+
+Continue work only in the existing development, GitHub, and Firebase development
+environment. Do not modify the live Namecheap website, production domain, DNS, or email
+configuration without explicit production approval. Development agent credentials must
+not be able to write production data.
+
+### Required Architecture Boundaries
+
+Keep these responsibilities distinct:
+
+1. User interface
+2. Authentication
+3. Authorization
+4. Versioned API and MCP interfaces
+5. Reusable business services
+6. AI services
+7. Persistence and repositories
+8. Approval and audit logging
+
+Important business rules must not exist only in browser components. Reusable backend
+services must be callable by the web application, `/api/v1` routes, the MCP adapter,
+future mobile applications, scheduled jobs, and approved AI agents. MCP tools must call
+the same business services as the API and must not duplicate business rules.
+
+### Inspection and Approval Gate
+
+Before implementing the API or MCP server, inspect and report:
+
+* Frontend framework and deployment structure
+* Backend architecture and Firebase services
+* Authentication and authorization behavior
+* Existing database paths, storage paths, and security rules
+* Server functions and existing HTTP routes
+* Current roles, permissions, and administrative access assumptions
+* Whether each important business rule currently runs in the browser or backend
+* Existing components that can support a controlled API or MCP adapter
+* Security risks and technical debt that would make agent access unsafe
+
+The first deliverable must include the architecture assessment and recommendations
+listed in the TRD. Do not begin a major refactor or connect an MCP client before that
+assessment is reviewed and approved.
+
+### Versioned API Foundation
+
+Design a secure, versioned interface under `/api/v1`. Match the implementation to the
+existing Firebase application and prefer the smallest secure architecture. Firebase
+Functions, Cloud Run, or another backend may be used when justified, but do not add
+infrastructure solely for theoretical scale.
+
+Prepare the service and repository boundaries for these future domains without
+implementing every endpoint immediately:
+
+* Organizations and users
+* Companies, contacts, and solar sites
+* Opportunities and tasks
+* Proposals, projects, and contracts
+* Documents and communications
+* Field reports and equipment
+* Analytics
+
+### Initial Business Tools
+
+The first API/MCP milestone must provide these business actions. They must not be
+implemented as unrestricted database CRUD wrappers.
+
+#### `search_opportunities`
+
+Search existing opportunities using structured filters such as status, state, city,
+acreage range, estimated-value range, company, site, bid-deadline range, contacted,
+qualified, priority, keyword, result limit, and cursor. Return only the fields necessary
+for useful search results, including opportunity ID, site, company, location, acreage,
+status, estimated value, score, bid deadline, and next action.
+
+Use this tool before an agent assumes whether AgriSolar already knows about a company,
+site, or opportunity.
+
+#### `get_opportunity`
+
+Return one authorized opportunity with its associated company, contacts, site, notes,
+qualification analysis, communications summary, tasks, proposal summary, important
+deadlines, and recommended next action. Omit fields the caller is not permitted to see.
+
+#### `create_opportunity`
+
+Create an opportunity from legitimate researched information. Accept reviewed site,
+company, location, acreage, project, source and source URL, contact, opportunity type,
+estimated contract value, deadline, notes, and AI research summary information.
+
+The business service must validate the request, check for likely duplicates, preserve
+source provenance, record the user or agent identity, append an audit event, and mark
+AI-created records as unreviewed until a human reviews them. A likely duplicate must be
+returned to the caller rather than silently creating another record.
+
+#### `create_task`
+
+Create an internal follow-up or operational task associated with an opportunity,
+customer, contact, site, proposal, project, or contract. Accept title, description,
+priority, due date, optional owner, related entity type and ID, source, and optional AI
+reasoning. Creating an authorized internal task is a lower-risk operation than external
+communication.
+
+#### `get_sales_pipeline`
+
+Return authorized pipeline totals and a short high-priority list. Metrics should include
+total and new opportunities, pipeline value, qualified and contacted opportunities,
+responses, active bids, drafted and submitted proposals, negotiating, won, lost,
+deadlines within 7 and 30 days, and overdue follow-ups.
+
+### Business-Action Tool Design
+
+MCP tools and API operations must represent explicit business actions such as
+`create_task`, `update_opportunity_status`, `draft_proposal`, or
+`record_customer_contact`. Do not provide generic operations such as
+`databaseUpdate(collection, document, value)`.
+
+Every tool requires a clear name and usage description, typed and bounded input, typed
+output, required capabilities, validation, audit behavior, and safe error handling.
+
+### Roles, Capabilities, and Organization Isolation
+
+Initial roles may include `OWNER`, `ADMIN`, `MANAGER`, `FIELD_USER`, `READ_ONLY`, and
+`AI_AGENT`, but roles alone are insufficient. Enforce explicit capabilities server-side,
+including where applicable:
+
+* `opportunity.read`, `opportunity.create`, and `opportunity.update`
+* `task.read` and `task.create`
+* `proposal.read`, `proposal.draft`, and `proposal.approve`
+* `communication.draft` and `communication.send`
+* `contract.read`
+* `fieldReport.create`
+* `analytics.read`
+
+Every business record introduced or migrated for this architecture must be associated
+with an `organizationId`. Server authorization must enforce organization isolation; a
+frontend filter is not a security boundary.
+
+An initial business-development agent should receive only
+`opportunity.read`, `opportunity.create`, `task.read`, `task.create`, and
+`analytics.read` as required. It must not automatically receive email sending, proposal
+approval, contract modification, user administration, or payment access.
+
+### AI Authority Levels
+
+Use the same authority model throughout the API, MCP tools, UI, approvals, and audit
+events:
+
+1. **READ:** query, search, summarize, and analyze without modifying data.
+2. **DRAFT:** create drafts and recommendations that require human review.
+3. **INTERNAL ACTION:** perform specifically authorized internal operations such as
+   creating an opportunity or task, adding research, or updating an allowed status.
+4. **EXTERNAL ACTION:** send communications, submit proposals, purchase, schedule a
+   customer appointment, or change a contract. Initially require explicit human
+   approval.
+
+Do not provide a generic full-access AI setting.
+
+### Agent Identity and Authentication
+
+External agents must authenticate as distinct, independently revocable identities. Do
+not share an owner account. Each identity must record its agent ID, organization,
+capabilities, authority ceiling, environment, issue and expiration times, and revocation
+state. Credentials must support rotation and must be specific to DEV, TEST/STAGING, or
+PROD.
+
+Examples include `chatgpt-work-sales-agent`, `agrisolar-research-agent`, and
+`reporting-agent`. Authentication proves identity; backend authorization must still
+evaluate organization, capability, resource, requested action, and approval state.
+
+### Approval Workflow
+
+Create a reusable approval model with these states:
+
+* `not_required`
+* `pending`
+* `approved`
+* `rejected`
+* `expired`
+* `executed`
+* `failed`
+
+An approval record must preserve the action type, requester, request time, bounded
+payload or safe payload reference, risk level, approver, approval time, execution state,
+and result. A future external communication approval screen must show the recipient,
+subject, full body, related opportunity, and reason, with explicit approve, edit, and
+reject actions.
+
+The first MCP/API version must not send email automatically. It may draft an email,
+select a proposed recipient, suggest a subject, and recommend a follow-up date, but
+external sending remains a separate human-approved action.
+
+### Audit and AI Provenance
+
+Important operations must append centralized immutable-style audit events containing:
+
+* Event, organization, request, and optional approval IDs
+* Timestamp, actor type, and actor ID
+* Actor types such as `USER`, `AI_AGENT`, `SYSTEM`, and `API`
+* Action, entity type, and entity ID
+* Appropriate old and new state or bounded change summary
+* Source, AI model or agent when applicable, result, and safe error information
+* Appropriate client/IP metadata without unnecessary sensitive data
+
+Do not store secrets or unnecessary personal or confidential content in audit logs.
+
+AI-researched or generated facts must preserve source, source URL, retrieval time,
+confidence where useful, AI-generated status, review state, reviewer, model/agent, and
+prompt or schema version. Keep unverified AI conclusions separate from verified business
+facts, especially for contacts, ownership, acreage, decision makers, project values,
+deadlines, site research, and recommended actions.
+
+### Duplicate Detection and Controlled Status Changes
+
+Before creating a company, contact, site, or opportunity, compare normalized identifying
+information:
+
+* Company name, domain, and address
+* Contact email and name/company combination
+* Site address, coordinates, and project name
+* Opportunity site, customer, contract type, and approximate bid period
+
+Return likely matches with `DUPLICATE_FOUND`; do not create repeated records from
+repeated research. Mutation endpoints must support idempotency keys or an equivalent
+safe-retry mechanism where practical.
+
+Opportunity status changes must follow controlled, audited transitions. The expected
+progression may include `NEW`, `RESEARCHING`, `QUALIFIED`, `CONTACTED`, `RESPONDED`,
+`BID`, `PROPOSAL_SUBMITTED`, `NEGOTIATING`, and `WON` or `LOST`. Not every status is
+required for every opportunity, but nonsensical transitions must be rejected and
+transition history retained.
+
+### Validation, Limits, and Errors
+
+Authenticated AI input is still untrusted. Validate types, IDs, organization ownership,
+relationships, dates, status values and transitions, URL schemes, required fields,
+maximum lengths, enumerations, and allowed values in the backend.
+
+Apply per-agent read and mutation limits, payload and search-result limits, timeouts,
+and abuse protection. Bulk operations require bounded batch sizes, a preview, and
+approval where appropriate. Prevent accidental loops from creating unbounded records.
+
+Use stable error codes that help a client recover without exposing internal details:
+`NOT_FOUND`, `UNAUTHORIZED`, `FORBIDDEN`, `VALIDATION_ERROR`, `DUPLICATE_FOUND`,
+`APPROVAL_REQUIRED`, `RATE_LIMITED`, `CONFLICT`, `INVALID_STATUS_TRANSITION`, and
+`INTERNAL_ERROR`.
+
+### Secrets and Provider Independence
+
+Never place OpenAI keys, Firebase Admin credentials, API or MCP secrets, database
+credentials, or service-account files in browser JavaScript or source-controlled
+configuration. Use managed secrets, verify ignore rules, and report any committed secret
+immediately.
+
+Do not optimize the business architecture around one AI provider. ChatGPT is the first
+integration, but AgriSolar business logic and records must remain in AgriSolar services.
+Provider prompts must not become the only implementation of a business process.
+
+### Documents and Future Tools
+
+Prepare, but do not necessarily implement, these future business tools:
+
+* `search_companies` and `get_company`
+* `search_contacts`, `create_contact`, and `update_contact`
+* `search_sites`, `get_site`, and `create_site`
+* `update_opportunity` and `qualify_opportunity`
+* `draft_outreach`, `get_communications`, and `record_communication`
+* `draft_estimate` and `calculate_estimate`
+* `draft_proposal` and `get_proposal`
+* `create_project`, `search_projects`, and `get_upcoming_services`
+* `create_field_report`
+* `get_site_profitability`, `get_contract_renewals`, and `get_equipment_status`
+* `get_daily_priorities`
+
+`send_email` is explicitly excluded until separately approved.
+
+Future document tools may upload and retrieve documents, analyze RFPs, extract bid
+requirements, and compare requirements to capabilities. Preserve the original document,
+extraction, page/source locations, model and version, timestamp, and confidence where
+appropriate.
+
+### Intended ChatGPT and Agent Use Cases
+
+The controlled tools should eventually support requests such as:
+
+* Show qualified opportunities that have not been contacted.
+* Identify the opportunities that need attention today.
+* Show bids due during the next two weeks.
+* Show the five largest opportunities or opportunities over 50 acres.
+* Create an internal task to follow up with a company on a specified date.
+* Add a researched solar project as an unreviewed opportunity.
+* Summarize the current sales pipeline.
+* Research a bounded list of opportunities and recommend priorities.
+
+When an appropriate AgriSolar tool exists, the AI client should retrieve authorized
+current data through that tool instead of answering from memory.
+
+### Observability and Testing
+
+Provide structured logs, request IDs, API metrics, error tracking, and auditable action
+history sufficient to answer what an agent changed, which AI-created records exist,
+which actions failed, and which approvals are pending.
+
+Test authentication, authorization, organization isolation, validation, duplicate
+handling, audit logging, AI-agent permissions, read-only restrictions, internal-action
+permissions, approval-required actions, idempotency, and implemented rate limiting.
+Include negative tests, such as an agent with `task.create` attempting to modify a
+contract and receiving `FORBIDDEN`.
+
+### First Deliverable and Vertical Slice
+
+Before MCP implementation, provide:
+
+1. Current architecture assessment
+2. Recommended API and MCP architectures
+3. Authentication, authorization, capability, and agent-identity designs
+4. Approval and audit models
+5. Proposed schemas for the first five tools
+6. API endpoints supporting those tools
+7. Required database changes and files/modules affected
+8. Security concerns and implementation milestones
+9. Work that can proceed without disrupting existing website development
+10. The smallest recommended working vertical slice
+
+The preferred DEV-only vertical slice authenticates one agent with only the minimum
+opportunity, task, and analytics capabilities; implements the first five tools; appends
+audit events; detects duplicates; enforces organization isolation; exposes a thin MCP
+adapter; and uses synthetic development data. It must not connect MCP to production
+without explicit approval.
+
+This milestone is complete only when an approved DEV client can search and open real DEV
+opportunities, create a follow-up task, add a researched opportunity, and retrieve the
+sales pipeline while every request is authorized, organization-scoped, auditable,
+duplicate-aware, and mediated by AgriSolar business services.
+
+The supporting technical assessment and proposed design are maintained in
+[`doc/trd.md`](trd.md).

@@ -485,6 +485,80 @@
         ".validate": false
       }
     },
+    "organizations": {
+      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".write": false
+    },
+    "organization_memberships": {
+      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".write": false
+    },
+    "agent_identities": {
+      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".write": false,
+      ".indexOn": [
+        "organizationId",
+        "externalSubject",
+        "status",
+        "environment"
+      ]
+    },
+    "opportunities": {
+      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".write": false,
+      ".indexOn": [
+        "organizationId",
+        "status",
+        "state",
+        "priority",
+        "bidDeadlineOn",
+        "companyId",
+        "siteId"
+      ]
+    },
+    "opportunity_status_events": {
+      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".write": false
+    },
+    "tasks": {
+      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".write": false,
+      ".indexOn": [
+        "organizationId",
+        "status",
+        "dueOn",
+        "ownerUserId",
+        "relatedEntityId"
+      ]
+    },
+    "approval_requests": {
+      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".write": false,
+      ".indexOn": [
+        "organizationId",
+        "status",
+        "requestedAt"
+      ]
+    },
+    "audit_events": {
+      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".write": false,
+      ".indexOn": [
+        "organizationId",
+        "occurredAt",
+        "actorId",
+        "action",
+        "requestId"
+      ]
+    },
+    "idempotency_records": {
+      ".read": false,
+      ".write": false
+    },
+    "rate_limit_counters": {
+      ".read": false,
+      ".write": false
+    },
     "email_recipients": {
       ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
       "$recipient": {

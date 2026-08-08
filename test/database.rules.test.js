@@ -606,4 +606,60 @@ describe('Realtime Database contact submission rules', () => {
             actualMicroUsd: 999999999
         }));
     });
+
+    it('keeps API business records server-written and organization data private', async () => {
+        await testEnv.withSecurityRulesDisabled(async context => {
+            await update(ref(context.database()), {
+                'organizations/agrisolar': { name: 'AgriSolar LLC' },
+                'agent_identities/dev-agent': {
+                    organizationId: 'agrisolar',
+                    environment: 'DEV',
+                    status: 'active',
+                    capabilities: ['opportunity.read']
+                },
+                'opportunities/opportunity-1': {
+                    organizationId: 'agrisolar',
+                    status: 'NEW'
+                },
+                'tasks/task-1': {
+                    organizationId: 'agrisolar',
+                    status: 'open'
+                },
+                'audit_events/audit-1': {
+                    organizationId: 'agrisolar',
+                    action: 'opportunity.create'
+                },
+                'idempotency_records/agrisolar/key-1': { requestDigest: 'abc' },
+                'rate_limit_counters/agrisolar/agent/1/read': { count: 1 }
+            });
+        });
+
+        const approvedDb = testEnv
+            .authenticatedContext('approved-admin', { email: adminEmail })
+            .database();
+        const otherDb = testEnv
+            .authenticatedContext('other-user', { email: 'other@example.com' })
+            .database();
+        const publicDb = testEnv.unauthenticatedContext().database();
+
+        for (const path of [
+            'organizations/agrisolar',
+            'agent_identities/dev-agent',
+            'opportunities/opportunity-1',
+            'tasks/task-1',
+            'audit_events/audit-1'
+        ]) {
+            await assertSucceeds(get(ref(approvedDb, path)));
+            await assertFails(get(ref(otherDb, path)));
+            await assertFails(get(ref(publicDb, path)));
+            await assertFails(set(ref(approvedDb, path), { clientWrite: true }));
+        }
+
+        await assertFails(get(ref(approvedDb, 'idempotency_records/agrisolar/key-1')));
+        await assertFails(get(ref(approvedDb, 'rate_limit_counters/agrisolar')));
+        await assertFails(set(
+            ref(approvedDb, 'idempotency_records/agrisolar/client-write'),
+            { requestDigest: 'not-allowed' }
+        ));
+    });
 });
