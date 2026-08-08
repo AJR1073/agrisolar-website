@@ -6,7 +6,7 @@
     "build:hosting": "node scripts/build-hosting.js",
     "test": "npm run test:unit",
     "test:unit": "npm run test:syntax && npm run test:business-api && npm run test:oidc && npm run test:mcp && npm run test:ai-outreach && npm run test:html && npm run test:structure",
-    "test:emulated": "firebase emulators:exec --only hosting,database,storage,functions --project agrisolar-website \"npm run test:rules && npm run test:emulator-smoke && npm run test:form-attachment && npm run test:admin-attachment && npm run test:admin-schedule && npm run test:admin-outreach && npm run test:admin-review\"",
+    "test:emulated": "npx --yes firebase-tools@15.26.0 emulators:exec --only hosting,database,storage,functions --project agrisolar-website \"npm run test:rules && npm run test:emulator-smoke && npm run test:form-attachment && npm run test:admin-attachment && npm run test:admin-schedule && npm run test:admin-outreach && npm run test:admin-review\"",
     "test:full": "npm run test:unit && npm run build:hosting && npm run test:emulated",
     "test:html": "html-validate index.html 404.html about.html about/index.html admin/index.html contact/index.html faq/index.html privacy/index.html projects/index.html service-area/index.html services/index.html services/*/index.html",
     "test:structure": "node test/site-structure.test.js",
