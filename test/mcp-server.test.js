@@ -62,7 +62,8 @@ function createFixture() {
                     data: { opportunity: { opportunityId: input.opportunityId } }
                 };
             }
-            if (name === 'create_opportunity') {
+            if (name === 'create_opportunity'
+                || name === 'submit_opportunity_candidate') {
                 return {
                     requestId: 'request-create-opportunity',
                     data: {
@@ -215,7 +216,8 @@ async function run() {
                     'create_task',
                     'get_opportunity',
                     'get_sales_pipeline',
-                    'search_opportunities'
+                    'search_opportunities',
+                    'submit_opportunity_candidate'
                 ]
             );
             assert.ok(!listed.tools.some(tool => /email|send|contract|invoice/i.test(tool.name)));
@@ -234,6 +236,11 @@ async function run() {
             );
             assert.equal(
                 listed.tools.find(tool => tool.name === 'create_opportunity')
+                    .annotations.readOnlyHint,
+                false
+            );
+            assert.equal(
+                listed.tools.find(tool => tool.name === 'submit_opportunity_candidate')
                     .annotations.readOnlyHint,
                 false
             );
@@ -267,6 +274,27 @@ async function run() {
                 'pending_review'
             );
 
+            const submitted = await client.callTool({
+                name: 'submit_opportunity_candidate',
+                arguments: {
+                    company: { name: 'Second Synthetic Solar Operations' },
+                    site: { name: 'Second Synthetic Prairie Solar', state: 'IL' },
+                    opportunityType: 'vegetation_management',
+                    source: {
+                        type: 'public_web',
+                        title: 'Second synthetic source',
+                        url: 'https://second-synthetic.example/opportunity'
+                    },
+                    priority: 'normal',
+                    idempotencyKey: 'mcp-candidate-0001'
+                }
+            });
+            assert.equal(submitted.isError, undefined);
+            assert.equal(
+                submitted.structuredContent.data.reviewStatus,
+                'pending_review'
+            );
+
             const callsBeforeInvalid = fixture.calls.length;
             const invalid = await client.callTool({
                 name: 'create_task',
@@ -284,6 +312,7 @@ async function run() {
         assert.ok(fixture.calls.every(call => call.context.organizationId === 'agrisolar'));
         assert.ok(fixture.calls.some(call => call.name === 'search_opportunities'));
         assert.ok(fixture.calls.some(call => call.name === 'create_opportunity'));
+        assert.ok(fixture.calls.some(call => call.name === 'submit_opportunity_candidate'));
 
         console.log(
             'PASS: MCP Streamable HTTP, OAuth boundary, tool contracts, annotations, validation, and no-send surface'

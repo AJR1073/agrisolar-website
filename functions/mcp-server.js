@@ -24,6 +24,45 @@ const opportunityOutput = z.object({
     page: z.record(z.string(), z.unknown()).optional(),
     replayed: z.boolean().optional()
 });
+const opportunityCandidateInput = {
+    company: z.object({
+        companyId: z.string().regex(/^[A-Za-z0-9_-]+$/).max(128).optional(),
+        name: z.string().max(120).optional(),
+        domain: z.string().max(253).optional()
+    }),
+    site: z.object({
+        siteId: z.string().regex(/^[A-Za-z0-9_-]+$/).max(128).optional(),
+        name: z.string().max(160).optional(),
+        address: z.string().max(240).optional(),
+        city: z.string().max(100).optional(),
+        state: z.string().length(2).optional()
+    }),
+    estimatedAcreage: z.number().min(0).max(100000).optional(),
+    projectDetails: z.string().max(4000).optional(),
+    opportunityType: z.string().min(1).max(80),
+    estimatedContractValue: z.number().min(0).max(1000000000).optional(),
+    deadlineOn: optionalDate,
+    contact: z.object({
+        contactId: z.string().regex(/^[A-Za-z0-9_-]+$/).max(128).optional(),
+        name: z.string().max(120).optional(),
+        email: z.string().email().max(254).optional()
+    }).optional(),
+    source: z.object({
+        type: z.string().min(1).max(60),
+        title: z.string().min(1).max(200),
+        url: z.string().url().max(500),
+        retrievedAt: z.number().int().optional()
+    }),
+    notes: z.string().max(4000).optional(),
+    aiResearch: z.object({
+        summary: z.string().max(4000).optional(),
+        confidence: z.number().min(0).max(1).optional(),
+        model: z.string().max(120).optional()
+    }).optional(),
+    priority: z.enum(PRIORITY_VALUES).optional(),
+    nextAction: z.string().max(500).optional(),
+    idempotencyKey: z.string().regex(/^[A-Za-z0-9._:-]+$/).min(8).max(128)
+};
 
 function toolError(error) {
     const safe = error instanceof ApiError
@@ -120,45 +159,7 @@ function createAgriSolarMcpServer({ businessApi, context }) {
     server.registerTool('create_opportunity', {
         title: 'Create an unreviewed AgriSolar opportunity',
         description: 'Create one source-backed internal opportunity for administrator review after search_opportunities confirms it is not already recorded. This does not contact anyone.',
-        inputSchema: {
-            company: z.object({
-                companyId: z.string().regex(/^[A-Za-z0-9_-]+$/).max(128).optional(),
-                name: z.string().max(120).optional(),
-                domain: z.string().max(253).optional()
-            }),
-            site: z.object({
-                siteId: z.string().regex(/^[A-Za-z0-9_-]+$/).max(128).optional(),
-                name: z.string().max(160).optional(),
-                address: z.string().max(240).optional(),
-                city: z.string().max(100).optional(),
-                state: z.string().length(2).optional()
-            }),
-            estimatedAcreage: z.number().min(0).max(100000).optional(),
-            projectDetails: z.string().max(4000).optional(),
-            opportunityType: z.string().min(1).max(80),
-            estimatedContractValue: z.number().min(0).max(1000000000).optional(),
-            deadlineOn: optionalDate,
-            contact: z.object({
-                contactId: z.string().regex(/^[A-Za-z0-9_-]+$/).max(128).optional(),
-                name: z.string().max(120).optional(),
-                email: z.string().email().max(254).optional()
-            }).optional(),
-            source: z.object({
-                type: z.string().min(1).max(60),
-                title: z.string().min(1).max(200),
-                url: z.string().url().max(500),
-                retrievedAt: z.number().int().optional()
-            }),
-            notes: z.string().max(4000).optional(),
-            aiResearch: z.object({
-                summary: z.string().max(4000).optional(),
-                confidence: z.number().min(0).max(1).optional(),
-                model: z.string().max(120).optional()
-            }).optional(),
-            priority: z.enum(PRIORITY_VALUES).optional(),
-            nextAction: z.string().max(500).optional(),
-            idempotencyKey: z.string().regex(/^[A-Za-z0-9._:-]+$/).min(8).max(128)
-        },
+        inputSchema: opportunityCandidateInput,
         outputSchema: opportunityOutput,
         securitySchemes: oauth,
         _meta: oauthMeta,
@@ -175,6 +176,36 @@ function createAgriSolarMcpServer({ businessApi, context }) {
                 result.replayed
                     ? 'Returned the prior idempotent opportunity result.'
                     : 'Created one internal opportunity pending administrator review.'
+            );
+        } catch (error) {
+            return toolError(error);
+        }
+    });
+
+    server.registerTool('submit_opportunity_candidate', {
+        title: 'Submit an AgriSolar opportunity candidate',
+        description: 'Submit one source-backed prospect to the protected AgriSolar AI Review Center after search_opportunities confirms it is not already recorded. The record remains pending until an administrator approves or rejects it. This does not contact anyone.',
+        inputSchema: opportunityCandidateInput,
+        outputSchema: opportunityOutput,
+        securitySchemes: oauth,
+        _meta: oauthMeta,
+        annotations: {
+            readOnlyHint: false,
+            destructiveHint: false,
+            openWorldHint: false
+        }
+    }, async input => {
+        try {
+            const result = await businessApi.executeTool(
+                context,
+                'submit_opportunity_candidate',
+                input
+            );
+            return toolSuccess(
+                result,
+                result.replayed
+                    ? 'Returned the prior idempotent candidate result.'
+                    : 'Submitted one opportunity candidate for administrator review.'
             );
         } catch (error) {
             return toolError(error);

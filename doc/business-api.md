@@ -108,6 +108,7 @@ returns `CONFLICT`. Read and mutation requests are rate-limited per identity.
 | `GET /opportunities` | `opportunity.read` | 1 | Bounded summaries and next cursor |
 | `GET /opportunities/{id}` | `opportunity.read` | 1 | Organization-scoped working view |
 | `POST /opportunities` | `opportunity.create` | 3 | New opportunity or duplicate candidates |
+| `POST /opportunity-candidates` | `opportunity.create` | 3 | Source-backed opportunity forced into protected administrator review |
 | `POST /tasks` | `task.create` | 3 | Internal task associated with an authorized record |
 | `GET /analytics/sales-pipeline` | `analytics.read` | 1 | Calculated pipeline metrics |
 | `GET /admin/review-center` | `opportunity.update` + owner USER | 4 | Protected review queue, sanitized agents, approvals, and audit events |
@@ -179,6 +180,18 @@ company/site combinations, and addresses are checked for likely duplicates befor
 new record is created. Linked company or site IDs must already belong to the same
 organization.
 
+### Submit an opportunity candidate
+
+`POST /api/v1/opportunity-candidates` accepts the same bounded opportunity fields and
+requires an `Idempotency-Key`. It always creates a `pending_review` record, including
+when the approved administrator submits it from the Outreach screen. `candidateSource`
+must be `chatgpt_work`, `outreach_api`, `manual`, or `import`.
+
+The service records the submission source, actor, timestamp, and a server-generated
+duplicate-check key in `candidateSubmission`. It reuses the same validation, duplicate
+detection, organization checks, idempotency, and audit transaction as opportunity
+creation. It has no email or other external side effect.
+
 ### Create a task
 
 ```json
@@ -203,8 +216,9 @@ record must belong to the caller's organization. AI-created tasks are `pending_r
 GET /api/v1/analytics/sales-pipeline?state=IL
 ```
 
-Metrics are calculated from organization-scoped opportunity and task records. They
-include stage counts, pipeline value, approaching bid deadlines, overdue follow-ups,
+Metrics are calculated from organization-scoped approved/reviewed opportunity and task
+records. Pending and rejected opportunity candidates do not affect pipeline totals. The
+metrics include stage counts, pipeline value, approaching bid deadlines, overdue follow-ups,
 and up to five high-priority opportunities.
 
 ### Administrator review center

@@ -354,6 +354,48 @@ async function run() {
     assert.equal(crossOrganizationLink.statusCode, 404);
     assert.equal(crossOrganizationLink.payload.error.code, 'NOT_FOUND');
 
+    const outreachCandidate = await invoke(handler, {
+        method: 'POST',
+        path: '/api/v1/opportunity-candidates',
+        token: 'owner-token',
+        idempotencyKey: 'outreach-candidate-0001',
+        body: opportunityInput({
+            candidateSource: 'outreach_api',
+            company: {
+                name: 'Outreach Candidate Solar',
+                domain: 'outreach-candidate.example'
+            },
+            site: {
+                name: 'Outreach Candidate Site',
+                address: 'Southern Illinois'
+            },
+            source: {
+                type: 'public_web',
+                title: 'Outreach candidate source',
+                url: 'https://outreach-candidate.example/project',
+                retrievedAt: 1786078800000
+            }
+        })
+    });
+    assert.equal(outreachCandidate.statusCode, 201);
+    const outreachOpportunityId = outreachCandidate.payload.data.opportunityId;
+    assert.equal(
+        admin.data.opportunities[outreachOpportunityId].reviewStatus,
+        'pending_review'
+    );
+    assert.equal(
+        admin.data.opportunities[outreachOpportunityId].candidateSubmission.source,
+        'outreach_api'
+    );
+    assert.equal(
+        admin.data.opportunities[outreachOpportunityId].createdByActorType,
+        'USER'
+    );
+    assert.equal(
+        admin.data.opportunities[outreachOpportunityId].aiProvenance.aiGenerated,
+        true
+    );
+
     const created = await invoke(handler, {
         method: 'POST',
         token: 'sales-token',
@@ -366,6 +408,10 @@ async function run() {
     assert.equal(admin.data.opportunities[opportunityId].organizationId, 'agrisolar');
     assert.equal(admin.data.opportunities[opportunityId].reviewStatus, 'pending_review');
     assert.equal(admin.data.opportunities[opportunityId].aiProvenance.aiGenerated, true);
+    assert.equal(
+        admin.data.opportunities[opportunityId].candidateSubmission.source,
+        'manual'
+    );
 
     const replayed = await invoke(handler, {
         method: 'POST',
@@ -378,7 +424,7 @@ async function run() {
     assert.equal(replayed.payload.data.opportunityId, opportunityId);
     assert.equal(Object.values(admin.data.opportunities).filter(record => (
         record.organizationId === 'agrisolar'
-    )).length, 1);
+    )).length, 2);
 
     const conflictingKey = await invoke(handler, {
         method: 'POST',
@@ -452,11 +498,14 @@ async function run() {
         path: '/api/v1/admin/review-center'
     });
     assert.equal(pendingReview.statusCode, 200);
-    assert.equal(pendingReview.payload.data.opportunities.length, 1);
-    assert.equal(
-        pendingReview.payload.data.opportunities[0].opportunityId,
-        opportunityId
-    );
+    assert.equal(pendingReview.payload.data.opportunities.length, 2);
+    assert.ok(pendingReview.payload.data.opportunities.some(item => (
+        item.opportunityId === opportunityId
+    )));
+    assert.ok(pendingReview.payload.data.opportunities.some(item => (
+        item.opportunityId === outreachOpportunityId
+        && item.candidateSubmission.source === 'outreach_api'
+    )));
     assert.equal(pendingReview.payload.data.tasks.length, 1);
     assert.equal(pendingReview.payload.data.tasks[0].taskId, task.payload.data.taskId);
     assert.ok(pendingReview.payload.data.agents.length >= 2);
@@ -602,7 +651,7 @@ async function run() {
         query: { status: 'all', limit: '100' }
     });
     assert.equal(completedReview.statusCode, 200);
-    assert.equal(completedReview.payload.data.opportunities.length, 1);
+    assert.equal(completedReview.payload.data.opportunities.length, 2);
     assert.equal(completedReview.payload.data.tasks.length, 1);
     assert.equal(completedReview.payload.data.approvals.length, 2);
     assert.ok(completedReview.payload.data.approvals.every(record => (

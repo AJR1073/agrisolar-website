@@ -124,6 +124,9 @@
         const confidenceText = Number.isFinite(confidence)
             ? `${Math.round(confidence * 100)}%`
             : 'Not recorded';
+        const submissionSource = displayStatus(
+            record.candidateSubmission?.source || 'manual'
+        );
         const createdBy = record.createdByActorType === 'AI_AGENT'
             ? `AI agent ${record.createdByActorId || record.aiProvenance?.agentId || 'unknown'}`
             : 'Administrator';
@@ -151,6 +154,7 @@
                 <section class="review-panel ai">
                     <h4>AI inference — verify before approval</h4>
                     <p><strong>Created by:</strong> ${escapeHtml(createdBy)}</p>
+                    <p><strong>Submitted through:</strong> ${escapeHtml(submissionSource)}</p>
                     <p><strong>Model:</strong> ${escapeHtml(record.aiProvenance?.model || 'Not recorded')}</p>
                     <p><strong>Confidence:</strong> ${escapeHtml(confidenceText)}</p>
                     <p>${escapeHtml(record.aiProvenance?.researchSummary || 'No AI research summary recorded.')}</p>

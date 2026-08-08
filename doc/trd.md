@@ -768,6 +768,7 @@ The initial registered tools are:
 * `search_opportunities`
 * `get_opportunity`
 * `create_opportunity`
+* `submit_opportunity_candidate`
 * `create_task`
 * `get_sales_pipeline`
 
@@ -786,6 +787,20 @@ must not contain independent duplicate, approval, or status-transition logic.
 
 The initial MCP adapter excludes email sending. Future external-action tools must pass
 through the reusable approval service.
+
+### 14.1 Shared candidate submission service
+
+`submit_opportunity_candidate` and `POST /api/v1/opportunity-candidates` call the same
+business operation used by controlled opportunity creation. The operation forces
+`reviewStatus: pending_review`, applies duplicate and idempotency checks, writes an audit
+event, and records `candidateSubmission.source` as `chatgpt_work`, `outreach_api`,
+`manual`, or `import`.
+
+The Outreach browser no longer directly creates new records under
+`prospect_candidates`; that path remains temporarily available only for legacy records
+and the existing reviewed email-draft workflow. New submissions appear in the AI Review
+Center. A later migration slice may retire the legacy paths after approved opportunities
+can participate fully in the outreach-draft workflow.
 
 ## 15. Observability
 
@@ -973,8 +988,8 @@ limits. The following decisions remain before Milestone 3 or any production acti
 * Retention period and export policy for audit events
 * Whether `task.read` is also required by the first agent; it is described in the PRD's
   example grant but not required by the minimum four-capability vertical slice
-* Exact boundary between existing `prospect_candidates` and new `opportunities`,
-  including the reviewed conversion workflow
+* Migration and eventual retirement plan for legacy `prospect_candidates`; new
+  candidate creation now uses reviewed `opportunities`
 * The controlled process for creating, rotating, expiring, and revoking the first DEV
   external-agent identity
 

@@ -7,12 +7,13 @@
 
 ## Current Safety State
 
-The MCP adapter implements Streamable HTTP and exposes exactly five private business
+The MCP adapter implements Streamable HTTP and exposes six private business
 tools:
 
 * `search_opportunities`
 * `get_opportunity`
 * `create_opportunity`
+* `submit_opportunity_candidate`
 * `create_task`
 * `get_sales_pipeline`
 
@@ -23,6 +24,32 @@ anonymous access, or unverified bearer tokens.
 There is no email-sending, contract-changing, invoicing, payment, scheduling, raw
 database, or production-system tool. Creation tools add internal DEV records marked for
 administrator review.
+
+`submit_opportunity_candidate` is the preferred ChatGPT Work write tool. The older
+`create_opportunity` name remains available for compatibility and uses the same protected
+business service. Both perform duplicate checks, require an idempotency key, record
+source evidence, and create `pending_review` records; neither sends email.
+
+## Shared Review Queue
+
+MCP is the secure tool doorway; it does not discover or populate records by itself.
+ChatGPT Work, the AgriSolar Outreach module, a manual administrator form, or a reviewed
+import must explicitly submit a candidate. New submissions use the same opportunity
+review workflow and store `candidateSubmission.source` as one of:
+
+* `chatgpt_work`
+* `outreach_api`
+* `manual`
+* `import`
+
+The submission metadata also stores a server-generated duplicate-check key, submitter
+type/ID, and timestamp. Source URL/evidence and AI confidence/model remain in the
+existing source and AI-provenance fields. Pending and rejected candidates are excluded
+from sales-pipeline totals.
+
+The Outreach screen still reads legacy `prospect_candidates` records for existing
+history and email-draft workflows, but all newly saved candidates are sent through
+`POST /api/v1/opportunity-candidates` and appear in **Admin → AI Review Center**.
 
 ## Architecture
 
@@ -136,7 +163,7 @@ After selecting and configuring the provider:
 6. Verify missing, expired, wrong-audience, wrong-issuer, and insufficient-scope tokens
    are rejected.
 7. Verify an authenticated but inactive/unmapped subject is rejected.
-8. Initialize MCP, inspect all five tools, and call them with synthetic DEV data.
+8. Initialize MCP, inspect all six tools, and call them with synthetic DEV data.
 9. Confirm AI-created opportunity/task records are `pending_review` and audit events use
    source `MCP`.
 10. Confirm duplicate and idempotent replays behave the same through REST and MCP.
@@ -149,7 +176,7 @@ Once MCP Inspector passes with the configured provider:
 1. In ChatGPT, open **Settings → Security and login** and enable Developer Mode.
 2. Open ChatGPT Plugins and add the stable DEV MCP URL.
 3. Complete OAuth linking with the approved DEV identity.
-4. Scan and review the five tool schemas and annotations.
+4. Scan and review the six tool schemas and annotations.
 5. Run direct, indirect, invalid-input, duplicate, out-of-scope, and no-send tests.
 6. Copy the technical connection ID from the ChatGPT URL. It begins with
    `plugin_asdk_app`.
@@ -176,3 +203,4 @@ Do not delete audit history to perform a rollback.
 * [Build an MCP server](https://developers.openai.com/plugins/build/mcp-server)
 * [Authenticate MCP users](https://developers.openai.com/plugins/build/auth)
 * [Package a plugin](https://developers.openai.com/plugins/build/plugins)
+* [MCP safety and write-action confirmation](https://developers.openai.com/api/docs/mcp#non-prompt-injection-related-risks)

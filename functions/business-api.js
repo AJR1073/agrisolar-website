@@ -19,6 +19,12 @@ const OPPORTUNITY_STATUSES = new Set([
 const PRIORITIES = new Set(['low', 'normal', 'high', 'urgent']);
 const REVIEW_STATUSES = new Set(['pending_review', 'approved', 'rejected']);
 const REVIEW_ENTITY_TYPES = new Set(['opportunity', 'task']);
+const CANDIDATE_SOURCES = new Set([
+    'chatgpt_work',
+    'outreach_api',
+    'manual',
+    'import'
+]);
 const INITIAL_AGENT_CAPABILITIES = new Set([
     'opportunity.read',
     'opportunity.create',
@@ -727,7 +733,7 @@ function createBusinessApi(options) {
         }).slice(0, 5).map(record => opportunitySummary(record.id, record));
     }
 
-    async function createOpportunity(context, body, req, requestId) {
+    async function createOpportunity(context, body, req, requestId, options = {}) {
         authorize(context, 'opportunity.create', 3);
         const key = idempotencyKey(req);
         const idempotency = await existingIdempotentResult(context, key, body);
@@ -764,6 +770,35 @@ function createBusinessApi(options) {
         const opportunityId = database.ref('/opportunities').push().key;
         const auditId = database.ref('/audit_events').push().key;
         const timestamp = now();
+        const defaultCandidateSource = context.source === 'MCP'
+            ? 'chatgpt_work'
+            : 'manual';
+        const candidateSource = cleanString(
+            options.candidateSource || body.candidateSource || defaultCandidateSource,
+            40,
+            true
+        );
+        if (!CANDIDATE_SOURCES.has(candidateSource)) {
+            throw new ApiError(
+                'VALIDATION_ERROR',
+                'Candidate source must be chatgpt_work, outreach_api, manual, or import.',
+                400
+            );
+        }
+        const requiresReview = options.forcePendingReview === true
+            || context.actorType === 'AI_AGENT';
+        const aiGenerated = context.actorType === 'AI_AGENT'
+            || ['chatgpt_work', 'outreach_api'].includes(candidateSource);
+        const auditAction = options.forcePendingReview === true
+            ? 'opportunity.candidate.submit'
+            : 'opportunity.create';
+        const duplicateCheckKey = digest({
+            company: normalizeText(input.companyName),
+            domain: normalizeText(input.companyDomain),
+            site: normalizeText(input.siteName),
+            address: normalizeText(input.address),
+            email: normalizeText(input.contact.email)
+        });
         const record = {
             organizationId: context.organizationId,
             companyId: input.companyId,
@@ -789,14 +824,21 @@ function createBusinessApi(options) {
             source: input.source,
             contactSnapshot: input.contact,
             aiProvenance: {
-                aiGenerated: context.actorType === 'AI_AGENT',
+                aiGenerated,
                 agentId: context.actorType === 'AI_AGENT' ? context.actorId : '',
                 model: input.aiResearch.model,
                 schemaVersion: 'opportunity-create-v1',
                 confidence: input.aiResearch.confidence ?? 0,
                 researchSummary: input.aiResearch.summary
             },
-            reviewStatus: context.actorType === 'AI_AGENT' ? 'pending_review' : 'reviewed',
+            candidateSubmission: {
+                source: candidateSource,
+                duplicateCheckKey,
+                submittedAt: timestamp,
+                submittedByActorType: context.actorType,
+                submittedByActorId: context.actorId
+            },
+            reviewStatus: requiresReview ? 'pending_review' : 'reviewed',
             createdAt: timestamp,
             createdByActorType: context.actorType,
             createdByActorId: context.actorId,
@@ -808,12 +850,17 @@ function createBusinessApi(options) {
             [`opportunities/${opportunityId}`]: record,
             [`audit_events/${auditId}`]: auditRecord(
                 context,
-                'opportunity.create',
+                auditAction,
                 'opportunity',
                 opportunityId,
                 requestId,
                 'success',
-                { now: timestamp, changeSummary: 'Created unreviewed opportunity.' }
+                {
+                    now: timestamp,
+                    changeSummary: requiresReview
+                        ? `Submitted ${candidateSource} opportunity candidate for review.`
+                        : 'Created reviewed opportunity.'
+                }
             ),
             [`idempotency_records/${context.organizationId}/${idempotency.keyHash}`]: {
                 actorId: context.actorId,
@@ -1123,6 +1170,7 @@ function createBusinessApi(options) {
         authorize(context, 'analytics.read', 1);
         const state = cleanString(query.state, 2).toUpperCase();
         const opportunities = (await organizationOpportunities(context))
+            .filter(record => ['approved', 'reviewed'].includes(record.reviewStatus))
             .filter(record => !state || record.state === state);
         const tasksSnapshot = await once('/tasks');
         const today = new Date(now()).toISOString().slice(0, 10);
@@ -1172,11 +1220,16 @@ function createBusinessApi(options) {
 
     async function executeTool(context, toolName, input = {}) {
         const requestId = crypto.randomUUID();
-        const mutation = toolName === 'create_opportunity' || toolName === 'create_task';
+        const mutation = [
+            'create_opportunity',
+            'submit_opportunity_candidate',
+            'create_task'
+        ].includes(toolName);
         const actionByTool = {
             search_opportunities: ['opportunity.search', 'opportunity'],
             get_opportunity: ['opportunity.read', 'opportunity'],
             create_opportunity: ['opportunity.create', 'opportunity'],
+            submit_opportunity_candidate: ['opportunity.candidate.submit', 'opportunity'],
             create_task: ['task.create', 'task'],
             get_sales_pipeline: ['analytics.sales_pipeline.read', 'analytics']
         };
@@ -1197,13 +1250,17 @@ function createBusinessApi(options) {
                 }, requestId);
             } else if (toolName === 'get_opportunity') {
                 result = await getOpportunity(context, input.opportunityId, requestId);
-            } else if (toolName === 'create_opportunity') {
+            } else if (toolName === 'create_opportunity'
+                || toolName === 'submit_opportunity_candidate') {
                 const req = {
                     body: input,
                     headers: { 'idempotency-key': input.idempotencyKey || '' },
                     get(name) { return this.headers[String(name).toLowerCase()] || ''; }
                 };
-                result = await createOpportunity(context, input, req, requestId);
+                result = await createOpportunity(context, input, req, requestId, {
+                    forcePendingReview: true,
+                    candidateSource: 'chatgpt_work'
+                });
             } else if (toolName === 'create_task') {
                 const req = {
                     body: input,
@@ -1286,6 +1343,14 @@ function createBusinessApi(options) {
                 action = 'opportunity.create';
                 entityType = 'opportunity';
                 result = await createOpportunity(context, req.body || {}, req, requestId);
+            } else if (method === 'POST'
+                && path === `${API_PREFIX}/opportunity-candidates`) {
+                action = 'opportunity.candidate.submit';
+                entityType = 'opportunity';
+                result = await createOpportunity(context, req.body || {}, req, requestId, {
+                    forcePendingReview: true,
+                    candidateSource: req.body?.candidateSource || 'manual'
+                });
             } else if (method === 'POST' && path === `${API_PREFIX}/tasks`) {
                 action = 'task.create';
                 entityType = 'task';
