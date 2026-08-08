@@ -1,8 +1,8 @@
 # AgriSolar Technical Requirements and Design
 
-**Status:** DEV API vertical slice implemented; MCP/OAuth not yet connected  
-**Updated:** August 7, 2026  
-**Environment in scope:** Firebase development project `agrisolar-website`  
+**Status:** DEV API and MCP protocol implemented; OAuth provider/ChatGPT connection pending
+**Updated:** August 7, 2026
+**Environment in scope:** Firebase development project `agrisolar-website`
 **Product requirements:** [`prd.md`](prd.md)
 
 ## 1. Purpose and Decision Gate
@@ -38,8 +38,10 @@ Milestones 1 and 2 now have a tested DEV implementation:
   regressions.
 
 No external agent identity or business fixture has been inserted into Firebase. No MCP
-server, ChatGPT Work connection, OAuth authorization server, or email-sending AI tool is
-enabled. See [`business-api.md`](business-api.md) for the implemented contract.
+OAuth provider, ChatGPT Work connection, or email-sending AI tool is enabled. The MCP
+endpoint and five tools are implemented but fail closed until OAuth is configured. See
+[`business-api.md`](business-api.md) and [`mcp-integration.md`](mcp-integration.md) for
+the implemented contracts and activation gate.
 
 ## 2. Current Architecture Assessment
 
@@ -894,10 +896,12 @@ only synthetic DEV identities/data through a controlled fixture process.
 Implement the five `/api/v1` endpoints through opportunity, task, duplicate, and pipeline
 services. Confirm organization isolation, rate limits, provenance, and audit behavior.
 
-### Milestone 3 — Thin MCP Adapter — Next
+### Milestone 3 — Thin MCP Adapter — Protocol Implemented; Provider Connection Pending
 
-Register the five tools, map schemas to the same services, add MCP authentication and
-tool contract tests, and connect only an approved DEV client.
+The five Streamable HTTP tools, shared-service mapping, OAuth resource-server boundary,
+OIDC verification, safety annotations, and protocol contract tests are implemented. The
+endpoint remains disabled until an established DEV OAuth provider and reviewed agent
+identity are configured. Only then may an approved DEV client be connected.
 
 ### Milestone 4 — Admin Review Experience
 

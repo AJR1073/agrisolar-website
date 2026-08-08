@@ -232,10 +232,12 @@ env -u DEBUG npx firebase emulators:exec --only hosting,database,storage,functio
 
 Tests use synthetic records and must not call OpenAI or send email.
 
-## Next Milestone: ChatGPT Work MCP
+## ChatGPT Work MCP Status
 
-The next phase is a thin remote MCP adapter that calls the same business services and
-exposes five narrowly described tools. Before connecting it to ChatGPT Work, choose the
-DEV OAuth/OIDC flow, define agent provisioning and revocation, add MCP contract tests,
-and register only an approved DEV client. The MCP phase must retain tool approvals,
-organization isolation, capability checks, audit records, and the no-send boundary.
+The thin remote MCP adapter now calls these same business operations and exposes five
+narrowly described tools over Streamable HTTP. Protocol, OAuth-boundary, cryptographic
+OIDC, tool-contract, validation, and no-send tests are implemented. The endpoint fails
+closed until a DEV OAuth/OIDC provider and reviewed agent identity are configured.
+
+See [`mcp-integration.md`](mcp-integration.md) for the provider requirements, activation
+sequence, MCP Inspector checks, ChatGPT Developer Mode registration, and rollback plan.

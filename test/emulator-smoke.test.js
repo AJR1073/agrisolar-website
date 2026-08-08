@@ -40,6 +40,7 @@ async function run() {
         '/doc/prd.txt',
         '/doc/prd.md',
         '/doc/trd.md',
+        '/doc/mcp-integration.md',
         '/doc/annual-schedule-implementation-plan.md',
         '/.github/workflows/firebase-hosting-merge.yml'
     ]) {
@@ -61,6 +62,24 @@ async function run() {
         'UNAUTHORIZED',
         'Business API should return its structured authentication error'
     );
+
+    const disabledMcpMetadata = await request('/.well-known/oauth-protected-resource');
+    assert.equal(
+        disabledMcpMetadata.status,
+        503,
+        'MCP OAuth discovery should stay disabled until an issuer is configured'
+    );
+    assert.equal(
+        (await disabledMcpMetadata.json()).error,
+        'MCP_AUTH_NOT_CONFIGURED'
+    );
+
+    const disabledMcp = await fetch(`${hostingBase}/mcp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}'
+    });
+    assert.equal(disabledMcp.status, 503, 'Unconfigured DEV MCP must fail closed');
 
     for (const name of ['discoverProspects', 'draftOutreachEmail']) {
         const getResponse = await fetch(`${functionsBase}/${name}`);

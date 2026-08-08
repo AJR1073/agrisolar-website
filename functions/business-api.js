@@ -331,7 +331,7 @@ function capabilitiesFrom(value) {
         .map(([capability]) => capability));
 }
 
-function createBusinessApiHandler(options) {
+function createBusinessApi(options) {
     const admin = options.admin;
     const organizationId = options.organizationId || DEFAULT_ORGANIZATION_ID;
     const environment = options.environment || DEFAULT_ENVIRONMENT;
@@ -341,6 +341,41 @@ function createBusinessApiHandler(options) {
 
     async function once(path) {
         return database.ref(path).once('value');
+    }
+
+    async function resolveAgentContext(subject, claimedAgentId = '', source = 'API') {
+        let agentId = '';
+        let agent = null;
+        if (claimedAgentId) {
+            agentId = cleanRecordId(claimedAgentId, 'agentId', true);
+            const snapshot = await once(`/agent_identities/${agentId}`);
+            if (snapshot.exists()) agent = snapshot.val();
+        } else {
+            const snapshot = await once('/agent_identities');
+            const match = Object.entries(snapshot.val() || {}).find(([, candidate]) => (
+                candidate.externalSubject === subject
+                && candidate.organizationId === organizationId
+                && candidate.environment === environment
+            ));
+            if (match) [agentId, agent] = match;
+        }
+        if (!agent
+            || agent.status !== 'active'
+            || agent.organizationId !== organizationId
+            || agent.environment !== environment
+            || (agent.externalSubject && agent.externalSubject !== subject)
+            || (Number(agent.expiresAt) > 0 && Number(agent.expiresAt) <= now())) {
+            throw new ApiError('FORBIDDEN', 'This identity is not authorized.', 403);
+        }
+        return {
+            actorType: 'AI_AGENT',
+            actorId: agentId,
+            organizationId: agent.organizationId,
+            environment: agent.environment,
+            authorityLevel: Number(agent.authorityLevel) || 1,
+            capabilities: capabilitiesFrom(agent.capabilities),
+            source
+        };
     }
 
     async function authenticate(req) {
@@ -371,30 +406,11 @@ function createBusinessApiHandler(options) {
             };
         }
 
-        const agentId = cleanRecordId(
-            token.agentId || token.agent_id || token.uid,
-            'agentId',
-            true
+        return resolveAgentContext(
+            token.uid,
+            token.agentId || token.agent_id || '',
+            'API'
         );
-        const snapshot = await once(`/agent_identities/${agentId}`);
-        const agent = snapshot.val();
-        if (!snapshot.exists()
-            || agent.status !== 'active'
-            || agent.organizationId !== organizationId
-            || agent.environment !== environment
-            || (agent.externalSubject && agent.externalSubject !== token.uid)
-            || (Number(agent.expiresAt) > 0 && Number(agent.expiresAt) <= now())) {
-            throw new ApiError('FORBIDDEN', 'This identity is not authorized.', 403);
-        }
-        return {
-            actorType: 'AI_AGENT',
-            actorId: agentId,
-            organizationId: agent.organizationId,
-            environment: agent.environment,
-            authorityLevel: Number(agent.authorityLevel) || 1,
-            capabilities: capabilitiesFrom(agent.capabilities),
-            source: 'API'
-        };
     }
 
     function authorize(context, capability, authorityLevel) {
@@ -878,6 +894,78 @@ function createBusinessApiHandler(options) {
         return { data: { metrics, highPriorityOpportunities: highPriority }, page: null };
     }
 
+    async function executeTool(context, toolName, input = {}) {
+        const requestId = crypto.randomUUID();
+        const mutation = toolName === 'create_opportunity' || toolName === 'create_task';
+        const actionByTool = {
+            search_opportunities: ['opportunity.search', 'opportunity'],
+            get_opportunity: ['opportunity.read', 'opportunity'],
+            create_opportunity: ['opportunity.create', 'opportunity'],
+            create_task: ['task.create', 'task'],
+            get_sales_pipeline: ['analytics.sales_pipeline.read', 'analytics']
+        };
+        const actionInfo = actionByTool[toolName];
+        if (!actionInfo) {
+            throw new ApiError('NOT_FOUND', 'MCP tool was not found.', 404);
+        }
+        await rateLimiter(context, mutation);
+        try {
+            let result;
+            if (toolName === 'search_opportunities') {
+                result = await searchOpportunities(context, {
+                    ...input,
+                    status: Array.isArray(input.status) ? input.status.join(',') : input.status,
+                    priority: Array.isArray(input.priority)
+                        ? input.priority.join(',')
+                        : input.priority
+                }, requestId);
+            } else if (toolName === 'get_opportunity') {
+                result = await getOpportunity(context, input.opportunityId, requestId);
+            } else if (toolName === 'create_opportunity') {
+                const req = {
+                    body: input,
+                    headers: { 'idempotency-key': input.idempotencyKey || '' },
+                    get(name) { return this.headers[String(name).toLowerCase()] || ''; }
+                };
+                result = await createOpportunity(context, input, req, requestId);
+            } else if (toolName === 'create_task') {
+                const req = {
+                    body: input,
+                    headers: { 'idempotency-key': input.idempotencyKey || '' },
+                    get(name) { return this.headers[String(name).toLowerCase()] || ''; }
+                };
+                result = await createTask(context, input, req, requestId);
+            } else {
+                result = await getSalesPipeline(context, input, requestId);
+            }
+            return {
+                requestId,
+                data: result.data,
+                ...(result.page ? { page: result.page } : {}),
+                ...(result.replayed ? { replayed: true } : {})
+            };
+        } catch (error) {
+            const apiError = error instanceof ApiError
+                ? error
+                : new ApiError('INTERNAL_ERROR', 'The request could not be completed.', 500);
+            try {
+                const ref = database.ref('/audit_events').push();
+                await ref.set(auditRecord(
+                    context,
+                    actionInfo[0],
+                    actionInfo[1],
+                    '',
+                    requestId,
+                    'failed',
+                    { now: now(), errorCode: apiError.code }
+                ));
+            } catch {
+                console.error('AgriSolar MCP failure audit could not be written.');
+            }
+            throw apiError;
+        }
+    }
+
     async function handler(req, res) {
         const requestId = crypto.randomUUID();
         let context;
@@ -975,12 +1063,17 @@ function createBusinessApiHandler(options) {
         }
     }
 
-    return handler;
+    return { handler, executeTool, resolveAgentContext };
+}
+
+function createBusinessApiHandler(options) {
+    return createBusinessApi(options).handler;
 }
 
 module.exports = {
     ApiError,
     OPPORTUNITY_STATUSES,
+    createBusinessApi,
     createBusinessApiHandler,
     validateCreateOpportunity,
     validateCreateTask
