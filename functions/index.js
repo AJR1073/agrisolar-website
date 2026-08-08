@@ -1,7 +1,14 @@
 const { onRequest } = require('firebase-functions/v2/https');
 const { onValueCreated } = require('firebase-functions/v2/database');
+const crypto = require('node:crypto');
 const admin = require('firebase-admin');
 const nodemailer = require('nodemailer');
+const {
+    AiOutreachError,
+    discoverProspectsWithOpenAI,
+    draftOutreachWithOpenAI
+} = require('./ai-outreach');
+const { createBusinessApiHandler } = require('./business-api');
 
 admin.initializeApp();
 
@@ -161,6 +168,111 @@ function setCorsHeaders(req, res) {
     return !origin;
 }
 
+function prepareAuthenticatedPost(req, res) {
+    if (!setCorsHeaders(req, res)) {
+        res.status(403).json({ error: 'Origin not allowed.' });
+        return false;
+    }
+    if (req.method === 'OPTIONS') {
+        res.status(204).send('');
+        return false;
+    }
+    if (req.method !== 'POST') {
+        res.status(405).json({ error: 'Method not allowed.' });
+        return false;
+    }
+    return true;
+}
+
+async function requireAdministrator(req) {
+    const authHeader = req.get('authorization') || '';
+    if (!authHeader.startsWith('Bearer ')) {
+        throw new AiOutreachError('Authentication required.', 401, 'authentication_required');
+    }
+    let decodedToken;
+    try {
+        decodedToken = await admin.auth().verifyIdToken(authHeader.slice(7));
+    } catch {
+        throw new AiOutreachError('Authentication required.', 401, 'authentication_required');
+    }
+    if (decodedToken.email !== ADMIN_EMAIL) {
+        throw new AiOutreachError('Administrator access required.', 403, 'administrator_required');
+    }
+    return decodedToken;
+}
+
+async function requireAiOutreachEnabled() {
+    const snapshot = await admin.database().ref('/ai_settings/outreachEnabled').once('value');
+    if (snapshot.exists() && snapshot.val() === false) {
+        throw new AiOutreachError(
+            'AI outreach is paused by the administrator.',
+            503,
+            'ai_paused'
+        );
+    }
+}
+
+async function reserveAiUsage(uid, kind, dailyLimit) {
+    const day = new Date().toISOString().slice(0, 10);
+    const ref = admin.database().ref(`/ai_usage/${uid}/${day}/${kind}`);
+    const transaction = await ref.transaction((current) => {
+        const count = Number(current?.count) || 0;
+        if (count >= dailyLimit) return;
+        return {
+            count: count + 1,
+            updatedAt: Date.now(),
+            administratorUid: uid
+        };
+    }, undefined, false);
+    if (!transaction.committed) {
+        throw new AiOutreachError(
+            'The daily AI usage limit has been reached.',
+            429,
+            'daily_limit_reached'
+        );
+    }
+}
+
+function sendAiError(res, error) {
+    if (error instanceof AiOutreachError) {
+        res.status(error.status).json({ error: error.message, code: error.code });
+        return;
+    }
+    console.error('AI outreach request failed.', error?.message || error);
+    res.status(500).json({
+        error: 'The AI outreach request could not be completed.',
+        code: 'ai_outreach_failed'
+    });
+}
+
+function aiSafetyIdentifier(uid) {
+    return crypto.createHash('sha256').update(`agrisolar:${uid}`).digest('hex');
+}
+
+async function recordAiCostEvent(kind, cost, administratorUid, relatedRecordId = '') {
+    const eventRef = admin.database().ref('/ai_cost_events').push();
+    const createdAt = Date.now();
+    const event = {
+        kind,
+        costType: 'estimate',
+        estimatedMicroUsd: Number(cost?.estimatedMicroUsd) || 0,
+        estimateAvailable: cost?.available === true,
+        model: cleanString(cost?.actualModel, 100),
+        pricingModel: cleanString(cost?.pricingModel, 100),
+        pricingVersion: cleanString(cost?.pricingVersion, 100),
+        inputTokens: Number(cost?.inputTokens) || 0,
+        cachedInputTokens: Number(cost?.cachedInputTokens) || 0,
+        cacheWriteTokens: Number(cost?.cacheWriteTokens) || 0,
+        outputTokens: Number(cost?.outputTokens) || 0,
+        webSearchCalls: Number(cost?.webSearchCalls) || 0,
+        relatedRecordId: cleanString(relatedRecordId, 100),
+        createdAt,
+        administratorUid
+    };
+    await eventRef.set(event);
+    return { id: eventRef.key, ...event };
+}
+
 exports.sendEmailOnNewContactSubmission = onValueCreated(
     {
         ref: '/contact_submissions/{submissionId}',
@@ -299,4 +411,168 @@ exports.sendReply = onRequest(
             res.status(500).json({ error: 'Unable to send the reply. Please try again.' });
         }
     }
+);
+
+exports.discoverProspects = onRequest(
+    {
+        region: 'us-central1',
+        memory: '512MiB',
+        timeoutSeconds: 120,
+        secrets: ['OPENAI_API_KEY']
+    },
+    async (req, res) => {
+        if (!prepareAuthenticatedPost(req, res)) return;
+        try {
+            const administrator = await requireAdministrator(req);
+            await requireAiOutreachEnabled();
+            await reserveAiUsage(administrator.uid, 'discovery', 20);
+            const result = await discoverProspectsWithOpenAI(
+                process.env.OPENAI_API_KEY,
+                req.body,
+                { safetyIdentifier: aiSafetyIdentifier(administrator.uid) }
+            );
+            let costEvent = null;
+            try {
+                costEvent = await recordAiCostEvent(
+                    'discovery',
+                    result.cost,
+                    administrator.uid
+                );
+            } catch (error) {
+                console.error('AI discovery cost event could not be saved.', error?.message || error);
+            }
+            res.json({ ...result, costEvent });
+        } catch (error) {
+            sendAiError(res, error);
+        }
+    }
+);
+
+exports.draftOutreachEmail = onRequest(
+    {
+        region: 'us-central1',
+        memory: '256MiB',
+        timeoutSeconds: 90,
+        secrets: ['OPENAI_API_KEY']
+    },
+    async (req, res) => {
+        if (!prepareAuthenticatedPost(req, res)) return;
+        try {
+            const administrator = await requireAdministrator(req);
+            await requireAiOutreachEnabled();
+            const prospectId = cleanString(req.body?.prospectId, 80);
+            const goal = cleanString(req.body?.goal, 500);
+            if (!prospectId) {
+                throw new AiOutreachError('A prospect is required.', 400, 'prospect_required');
+            }
+
+            const prospectSnapshot = await admin
+                .database()
+                .ref(`/prospect_candidates/${prospectId}`)
+                .once('value');
+            const prospect = prospectSnapshot.val();
+            if (!prospectSnapshot.exists()) {
+                throw new AiOutreachError('Prospect not found.', 404, 'prospect_not_found');
+            }
+            if (prospect.verificationStatus !== 'Verified') {
+                throw new AiOutreachError(
+                    'Verify this prospect before drafting outreach.',
+                    409,
+                    'prospect_not_verified'
+                );
+            }
+            if (prospect.suppressed === true || prospect.outreachStatus === 'Do not contact') {
+                throw new AiOutreachError(
+                    'Drafting is blocked by the do-not-contact record.',
+                    409,
+                    'prospect_suppressed'
+                );
+            }
+
+            const [sourceSnapshot, suppressionSnapshot] = await Promise.all([
+                admin.database().ref(`/prospect_sources/${prospect.sourceId}`).once('value'),
+                admin.database().ref('/suppression_entries')
+                    .orderByChild('prospectId')
+                    .equalTo(prospectId)
+                    .once('value')
+            ]);
+            const activeSuppression = Object.values(suppressionSnapshot.val() || {})
+                .some((entry) => entry?.active === true);
+            if (activeSuppression) {
+                throw new AiOutreachError(
+                    'Drafting is blocked by the do-not-contact record.',
+                    409,
+                    'prospect_suppressed'
+                );
+            }
+            if (!sourceSnapshot.exists()) {
+                throw new AiOutreachError(
+                    'Verified public-source evidence is required.',
+                    409,
+                    'source_required'
+                );
+            }
+
+            await reserveAiUsage(administrator.uid, 'drafting', 50);
+            const draft = await draftOutreachWithOpenAI(
+                process.env.OPENAI_API_KEY,
+                prospect,
+                sourceSnapshot.val(),
+                goal,
+                { safetyIdentifier: aiSafetyIdentifier(administrator.uid) }
+            );
+            let costEvent = null;
+            try {
+                costEvent = await recordAiCostEvent(
+                    'drafting',
+                    draft.cost,
+                    administrator.uid,
+                    prospectId
+                );
+            } catch (error) {
+                console.error('AI drafting cost event could not be saved.', error?.message || error);
+            }
+            const draftRef = admin.database().ref('/outreach_drafts').push();
+            await draftRef.set({
+                prospectId,
+                sourceId: prospect.sourceId,
+                subject: draft.subject,
+                body: draft.body,
+                personalizationBasis: draft.personalizationBasis,
+                claimsToVerify: draft.claimsToVerify,
+                status: 'Draft',
+                model: draft.model,
+                promptVersion: draft.promptVersion,
+                costEventId: costEvent?.id || '',
+                estimatedMicroUsd: Number(draft.cost?.estimatedMicroUsd) || 0,
+                sendingAllowed: false,
+                createdAt: admin.database.ServerValue.TIMESTAMP,
+                updatedAt: admin.database.ServerValue.TIMESTAMP,
+                administratorUid: administrator.uid
+            });
+            res.json({
+                draftId: draftRef.key,
+                ...draft,
+                costEvent,
+                sendingAllowed: false
+            });
+        } catch (error) {
+            sendAiError(res, error);
+        }
+    }
+);
+
+exports.apiV1 = onRequest(
+    {
+        region: 'us-central1',
+        memory: '256MiB',
+        timeoutSeconds: 60,
+        cors: false
+    },
+    createBusinessApiHandler({
+        admin,
+        administratorEmail: ADMIN_EMAIL,
+        organizationId: 'agrisolar',
+        environment: 'DEV'
+    })
 );

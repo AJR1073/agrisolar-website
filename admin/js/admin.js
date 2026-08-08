@@ -24,6 +24,37 @@ function formatFileSize(bytes) {
         : `${Math.max(1, Math.ceil(size / 1024))} KB`;
 }
 
+function getAuthenticationMessage(error, action = 'login') {
+    const code = String(error?.code || '').toLowerCase();
+    const details = String(error?.message || '').toUpperCase();
+
+    if (
+        code.includes('invalid-credential')
+        || code.includes('invalid-login-credentials')
+        || code.includes('wrong-password')
+        || code.includes('user-not-found')
+        || details.includes('INVALID_LOGIN_CREDENTIALS')
+    ) {
+        return 'The email or password is incorrect. Re-enter both fields or use Forgot password? to create a new password.';
+    }
+
+    if (code.includes('invalid-email')) {
+        return 'Enter a valid email address.';
+    }
+
+    if (code.includes('too-many-requests')) {
+        return 'Too many attempts were made. Wait a few minutes, then try again or reset the password.';
+    }
+
+    if (code.includes('network-request-failed')) {
+        return 'The browser could not reach Firebase Authentication. Check the internet connection and try again.';
+    }
+
+    return action === 'reset'
+        ? 'The password reset email could not be sent. Check the address and try again.'
+        : 'Login could not be completed. Check the email and password, then try again.';
+}
+
 function renderAttachments(submissionId, attachments) {
     if (!Array.isArray(attachments) || !attachments.length) {
         return '';
@@ -221,13 +252,23 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const email = emailInput.value.trim();
         const password = passwordInput.value;
+        const loginButton = loginForm.querySelector('button[type="submit"]');
+        const originalText = loginButton.textContent;
+
+        loginButton.disabled = true;
+        loginButton.textContent = 'Signing in...';
 
         try {
             await auth.signInWithEmailAndPassword(email, password);
             showMessage('Logged in successfully!', 'success');
         } catch (error) {
             console.error('Login error:', error);
-            showMessage(error.message, 'error');
+            passwordInput.value = '';
+            passwordInput.focus();
+            showMessage(getAuthenticationMessage(error), 'error');
+        } finally {
+            loginButton.disabled = false;
+            loginButton.textContent = originalText;
         }
     };
 
@@ -250,7 +291,7 @@ document.addEventListener('DOMContentLoaded', function() {
             showMessage('Password reset email sent. Check your inbox and spam folder.', 'success');
         } catch (error) {
             console.error('Password reset error:', error);
-            showMessage(error.message, 'error');
+            showMessage(getAuthenticationMessage(error, 'reset'), 'error');
         } finally {
             forgotPasswordBtn.textContent = originalText;
             forgotPasswordBtn.disabled = false;

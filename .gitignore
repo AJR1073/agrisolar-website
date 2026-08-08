@@ -1,6 +1,10 @@
 .DS_Store
 node_modules/
 .env
+.env.*
+!.env.example
+.secret.local
+functions/.secret.local
 *.log
 .firebase/
 dist/

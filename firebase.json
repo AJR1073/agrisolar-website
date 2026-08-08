@@ -27,6 +27,15 @@
       "firebase-debug.log",
       "*.log"
     ],
+    "rewrites": [
+      {
+        "source": "/api/v1/**",
+        "function": {
+          "functionId": "apiV1",
+          "region": "us-central1"
+        }
+      }
+    ],
     "headers": [
       {
         "source": "**",
