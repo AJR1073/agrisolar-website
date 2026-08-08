@@ -62,6 +62,14 @@ async function run() {
         'UNAUTHORIZED',
         'Business API should return its structured authentication error'
     );
+    const unauthenticatedReviewCenter = await request(
+        '/api/v1/admin/review-center?status=all&limit=100'
+    );
+    assert.equal(
+        unauthenticatedReviewCenter.status,
+        401,
+        'The administrator review center API must require authentication'
+    );
 
     const disabledMcpMetadata = await request('/.well-known/oauth-protected-resource');
     assert.equal(

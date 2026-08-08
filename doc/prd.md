@@ -2070,6 +2070,28 @@ The first MCP/API version must not send email automatically. It may draft an ema
 select a proposed recipient, suggest a subject, and recommend a follow-up date, but
 external sending remains a separate human-approved action.
 
+### Administrator AI Review Center
+
+Provide an administrator-only review center for AI-created opportunities and internal
+tasks. It must:
+
+* Clearly separate source-backed facts from AI-generated conclusions.
+* Show source links, model/agent provenance, confidence, review state, and linked audit
+  history without exposing credentials or raw access-token subjects.
+* Show active, revoked, and expired agent identities with only safe status, expiry,
+  authority, and capability information.
+* Allow the immutable approved administrator identity to approve or reject only records
+  in `pending_review` through organization-scoped backend services.
+* Require a reason when rejecting, retain rejected records, prevent a second decision,
+  and write the decision, approval record, audit event, and idempotency record together.
+* Keep direct browser writes to opportunities, tasks, identities, approvals, and audit
+  records denied.
+* Provide no email, publishing, contract, scheduling, invoicing, or payment action.
+
+Email address alone must never confer administrator access. Functions, Realtime
+Database, and Storage must use the approved immutable Firebase UID or a separately
+reviewed administrator custom claim.
+
 ### Audit and AI Provenance
 
 Important operations must append centralized immutable-style audit events containing:

@@ -155,6 +155,18 @@ async function run() {
                 name: 'Other Organization Company'
             }
         },
+        opportunities: {
+            'other-opportunity': {
+                organizationId: 'other-business',
+                companyNameSnapshot: 'Other Organization Company',
+                siteNameSnapshot: 'Other Site',
+                status: 'NEW',
+                priority: 'normal',
+                reviewStatus: 'pending_review',
+                createdAt: fixedNow - 1000,
+                updatedAt: fixedNow - 1000
+            }
+        },
         agent_identities: {
             'read-agent': {
                 organizationId: 'agrisolar',
@@ -184,20 +196,64 @@ async function run() {
                 status: 'active',
                 authorityLevel: 3,
                 capabilities: ['opportunity.read']
+            },
+            'missing-subject-agent': {
+                organizationId: 'agrisolar',
+                environment: 'DEV',
+                status: 'active',
+                authorityLevel: 1,
+                capabilities: ['opportunity.read']
+            },
+            'issuer-agent': {
+                organizationId: 'agrisolar',
+                externalSubject: 'issuer-subject',
+                issuer: 'https://identity.synthetic.example/',
+                environment: 'DEV',
+                status: 'active',
+                authorityLevel: 1,
+                capabilities: ['opportunity.read']
             }
         }
     });
     admin.tokens.set('owner-token', {
         uid: 'approved-admin',
+        email: 'aaronreifschneider@outlook.com',
+        admin: true,
+        organizationId: 'agrisolar'
+    });
+    admin.tokens.set('email-only-token', {
+        uid: 'email-only-admin',
         email: 'aaronreifschneider@outlook.com'
+    });
+    admin.tokens.set('uid-owner-token', {
+        uid: 'uid-only-admin',
+        email: 'owner-address-can-change@example.com'
+    });
+    admin.tokens.set('wrong-admin-organization-token', {
+        uid: 'approved-admin',
+        admin: true,
+        organizationId: 'other-business'
     });
     admin.tokens.set('read-token', { uid: 'read-subject', agentId: 'read-agent' });
     admin.tokens.set('sales-token', { uid: 'sales-subject', agentId: 'sales-agent' });
     admin.tokens.set('other-token', { uid: 'other-subject', agentId: 'other-agent' });
+    admin.tokens.set('missing-subject-token', {
+        uid: 'missing-subject',
+        agentId: 'missing-subject-agent'
+    });
+    admin.tokens.set('issuer-token', {
+        uid: 'issuer-subject',
+        agentId: 'issuer-agent',
+        iss: 'https://identity.synthetic.example/'
+    });
+    admin.tokens.set('wrong-issuer-token', {
+        uid: 'issuer-subject',
+        agentId: 'issuer-agent',
+        iss: 'https://wrong-identity.synthetic.example/'
+    });
 
     const handler = createBusinessApiHandler({
         admin,
-        administratorEmail: 'aaronreifschneider@outlook.com',
         organizationId: 'agrisolar',
         environment: 'DEV',
         now: () => fixedNow,
@@ -207,6 +263,47 @@ async function run() {
     const unauthenticated = await invoke(handler);
     assert.equal(unauthenticated.statusCode, 401);
     assert.equal(unauthenticated.payload.error.code, 'UNAUTHORIZED');
+
+    const emailOnlyAdministrator = await invoke(handler, {
+        token: 'email-only-token',
+        path: '/api/v1/admin/review-center'
+    });
+    assert.equal(emailOnlyAdministrator.statusCode, 403);
+    assert.equal(emailOnlyAdministrator.payload.error.code, 'FORBIDDEN');
+
+    const uidHandler = createBusinessApiHandler({
+        admin,
+        administratorUid: 'uid-only-admin',
+        organizationId: 'agrisolar',
+        environment: 'DEV',
+        now: () => fixedNow,
+        rateLimiter: async () => {}
+    });
+    const configuredUidAdministrator = await invoke(uidHandler, {
+        token: 'uid-owner-token',
+        path: '/api/v1/admin/review-center'
+    });
+    assert.equal(configuredUidAdministrator.statusCode, 200);
+
+    const wrongAdminOrganization = await invoke(handler, {
+        token: 'wrong-admin-organization-token',
+        path: '/api/v1/admin/review-center'
+    });
+    assert.equal(wrongAdminOrganization.statusCode, 403);
+    assert.equal(wrongAdminOrganization.payload.error.code, 'FORBIDDEN');
+
+    const missingExternalSubject = await invoke(handler, {
+        token: 'missing-subject-token'
+    });
+    assert.equal(missingExternalSubject.statusCode, 403);
+    assert.equal(missingExternalSubject.payload.error.code, 'FORBIDDEN');
+
+    const wrongIssuer = await invoke(handler, { token: 'wrong-issuer-token' });
+    assert.equal(wrongIssuer.statusCode, 403);
+    assert.equal(wrongIssuer.payload.error.code, 'FORBIDDEN');
+
+    const exactIssuer = await invoke(handler, { token: 'issuer-token' });
+    assert.equal(exactIssuer.statusCode, 200);
 
     const otherOrganization = await invoke(handler, { token: 'other-token' });
     assert.equal(otherOrganization.statusCode, 403);
@@ -279,7 +376,9 @@ async function run() {
     assert.equal(replayed.statusCode, 200);
     assert.equal(replayed.payload.replayed, true);
     assert.equal(replayed.payload.data.opportunityId, opportunityId);
-    assert.equal(Object.keys(admin.data.opportunities).length, 1);
+    assert.equal(Object.values(admin.data.opportunities).filter(record => (
+        record.organizationId === 'agrisolar'
+    )).length, 1);
 
     const conflictingKey = await invoke(handler, {
         method: 'POST',
@@ -341,6 +440,175 @@ async function run() {
     assert.equal(task.statusCode, 201);
     assert.equal(task.payload.data.reviewStatus, 'pending_review');
 
+    const agentReviewForbidden = await invoke(handler, {
+        token: 'sales-token',
+        path: '/api/v1/admin/review-center'
+    });
+    assert.equal(agentReviewForbidden.statusCode, 403);
+    assert.equal(agentReviewForbidden.payload.error.code, 'FORBIDDEN');
+
+    const pendingReview = await invoke(handler, {
+        token: 'owner-token',
+        path: '/api/v1/admin/review-center'
+    });
+    assert.equal(pendingReview.statusCode, 200);
+    assert.equal(pendingReview.payload.data.opportunities.length, 1);
+    assert.equal(
+        pendingReview.payload.data.opportunities[0].opportunityId,
+        opportunityId
+    );
+    assert.equal(pendingReview.payload.data.tasks.length, 1);
+    assert.equal(pendingReview.payload.data.tasks[0].taskId, task.payload.data.taskId);
+    assert.ok(pendingReview.payload.data.agents.length >= 2);
+    assert.ok(pendingReview.payload.data.agents.every(agent => (
+        !Object.hasOwn(agent, 'externalSubject')
+    )));
+    assert.equal(pendingReview.payload.data.approvals.length, 0);
+    assert.ok(pendingReview.payload.data.auditEvents.every(event => (
+        event.organizationId === 'agrisolar'
+    )));
+
+    const invalidReviewStatus = await invoke(handler, {
+        token: 'owner-token',
+        path: '/api/v1/admin/review-center',
+        query: { status: 'deleted' }
+    });
+    assert.equal(invalidReviewStatus.statusCode, 400);
+    assert.equal(invalidReviewStatus.payload.error.code, 'VALIDATION_ERROR');
+
+    const rejectedWithoutReason = await invoke(handler, {
+        method: 'POST',
+        token: 'owner-token',
+        path: '/api/v1/admin/reviews',
+        idempotencyKey: 'review-task-no-reason',
+        body: {
+            entityType: 'task',
+            entityId: task.payload.data.taskId,
+            decision: 'reject'
+        }
+    });
+    assert.equal(rejectedWithoutReason.statusCode, 400);
+    assert.equal(rejectedWithoutReason.payload.error.code, 'VALIDATION_ERROR');
+
+    const approvedOpportunity = await invoke(handler, {
+        method: 'POST',
+        token: 'owner-token',
+        path: '/api/v1/admin/reviews',
+        idempotencyKey: 'review-opportunity-approve-1',
+        body: {
+            entityType: 'opportunity',
+            entityId: opportunityId,
+            decision: 'approve',
+            reason: 'The source and opportunity details were verified.'
+        }
+    });
+    assert.equal(approvedOpportunity.statusCode, 200);
+    assert.equal(approvedOpportunity.payload.data.reviewStatus, 'approved');
+    assert.equal(
+        approvedOpportunity.payload.data.reviewedByAdministratorUid,
+        'approved-admin'
+    );
+    assert.equal(admin.data.opportunities[opportunityId].reviewStatus, 'approved');
+    assert.equal(
+        admin.data.opportunities[opportunityId].reviewedByAdministratorUid,
+        'approved-admin'
+    );
+
+    const replayedApproval = await invoke(handler, {
+        method: 'POST',
+        token: 'owner-token',
+        path: '/api/v1/admin/reviews',
+        idempotencyKey: 'review-opportunity-approve-1',
+        body: {
+            entityType: 'opportunity',
+            entityId: opportunityId,
+            decision: 'approve',
+            reason: 'The source and opportunity details were verified.'
+        }
+    });
+    assert.equal(replayedApproval.statusCode, 200);
+    assert.equal(replayedApproval.payload.replayed, true);
+    assert.equal(
+        replayedApproval.payload.data.approvalId,
+        approvedOpportunity.payload.data.approvalId
+    );
+
+    const conflictingReviewKey = await invoke(handler, {
+        method: 'POST',
+        token: 'owner-token',
+        path: '/api/v1/admin/reviews',
+        idempotencyKey: 'review-opportunity-approve-1',
+        body: {
+            entityType: 'opportunity',
+            entityId: opportunityId,
+            decision: 'reject',
+            reason: 'Different request with the same key.'
+        }
+    });
+    assert.equal(conflictingReviewKey.statusCode, 409);
+    assert.equal(conflictingReviewKey.payload.error.code, 'CONFLICT');
+
+    const secondOpportunityDecision = await invoke(handler, {
+        method: 'POST',
+        token: 'owner-token',
+        path: '/api/v1/admin/reviews',
+        idempotencyKey: 'review-opportunity-reject-2',
+        body: {
+            entityType: 'opportunity',
+            entityId: opportunityId,
+            decision: 'reject',
+            reason: 'Attempt to decide an already reviewed record.'
+        }
+    });
+    assert.equal(secondOpportunityDecision.statusCode, 409);
+    assert.equal(secondOpportunityDecision.payload.error.code, 'CONFLICT');
+
+    const crossOrganizationReview = await invoke(handler, {
+        method: 'POST',
+        token: 'owner-token',
+        path: '/api/v1/admin/reviews',
+        idempotencyKey: 'review-cross-organization-1',
+        body: {
+            entityType: 'opportunity',
+            entityId: 'other-opportunity',
+            decision: 'approve',
+            reason: 'This record must not be visible.'
+        }
+    });
+    assert.equal(crossOrganizationReview.statusCode, 404);
+    assert.equal(crossOrganizationReview.payload.error.code, 'NOT_FOUND');
+
+    const rejectedTask = await invoke(handler, {
+        method: 'POST',
+        token: 'owner-token',
+        path: '/api/v1/admin/reviews',
+        idempotencyKey: 'review-task-reject-0001',
+        body: {
+            entityType: 'task',
+            entityId: task.payload.data.taskId,
+            decision: 'reject',
+            reason: 'This follow-up is unnecessary.'
+        }
+    });
+    assert.equal(rejectedTask.statusCode, 200);
+    assert.equal(rejectedTask.payload.data.reviewStatus, 'rejected');
+    assert.ok(admin.data.tasks[task.payload.data.taskId]);
+    assert.equal(admin.data.tasks[task.payload.data.taskId].status, 'open');
+    assert.equal(admin.data.tasks[task.payload.data.taskId].reviewStatus, 'rejected');
+
+    const completedReview = await invoke(handler, {
+        token: 'owner-token',
+        path: '/api/v1/admin/review-center',
+        query: { status: 'all', limit: '100' }
+    });
+    assert.equal(completedReview.statusCode, 200);
+    assert.equal(completedReview.payload.data.opportunities.length, 1);
+    assert.equal(completedReview.payload.data.tasks.length, 1);
+    assert.equal(completedReview.payload.data.approvals.length, 2);
+    assert.ok(completedReview.payload.data.approvals.every(record => (
+        record.organizationId === 'agrisolar'
+    )));
+
     const pipeline = await invoke(handler, {
         token: 'read-token',
         path: '/api/v1/analytics/sales-pipeline'
@@ -368,9 +636,16 @@ async function run() {
         && event.result === 'failed'
         && event.errorCode === 'FORBIDDEN'));
     assert.ok(audits.some(event => event.action === 'analytics.sales_pipeline.read'));
+    assert.ok(audits.some(event => event.action === 'opportunity.review.approve'
+        && event.approvalId === approvedOpportunity.payload.data.approvalId));
+    assert.ok(audits.some(event => event.action === 'task.review.reject'
+        && event.approvalId === rejectedTask.payload.data.approvalId));
+    assert.ok(audits.some(event => event.action === 'admin.review'
+        && event.result === 'failed'
+        && event.errorCode === 'VALIDATION_ERROR'));
 
     console.log(
-        'PASS: Business API enforces identity, capability, organization, idempotency, duplicates, audit, and no-send boundaries'
+        'PASS: Business API enforces identity, admin review, organization, idempotency, retained rejection, audit, and no-send boundaries'
     );
 }
 

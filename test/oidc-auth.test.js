@@ -46,6 +46,7 @@ async function run() {
 
     const verified = await verifier.verify(await token());
     assert.equal(verified.subject, 'synthetic-subject');
+    assert.equal(verified.issuer, issuer);
     assert.equal(verified.agentId, 'synthetic-agent');
     assert.equal(verified.authInfo.resource.href, audience);
     assert.deepEqual(verified.authInfo.scopes, ['openid', 'agrisolar:mcp']);

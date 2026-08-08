@@ -78,6 +78,7 @@ function createOidcTokenVerifier(options) {
             }
             return {
                 subject: payload.sub,
+                issuer: typeof payload.iss === 'string' ? payload.iss : issuer,
                 agentId: typeof payload.agent_id === 'string'
                     ? payload.agent_id
                     : (typeof payload['https://agrisolarllc.com/agent_id'] === 'string'

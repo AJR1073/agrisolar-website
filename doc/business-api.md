@@ -36,18 +36,22 @@ Every request requires a Firebase bearer token:
 Authorization: Bearer <Firebase ID token>
 ```
 
-The approved owner token receives the initial administrative API permissions. Other
+The approved owner token is matched by immutable Firebase UID (or an explicit reviewed
+`admin: true` custom claim) and receives the administrative API permissions. Email
+address alone never grants API access. Other
 tokens must map to an active server-controlled record at
 `agent_identities/{agentId}`. The record fixes the organization, environment, authority
 level, capabilities, external subject, status, and optional expiration.
 
 Agent capabilities are stored as an array because Realtime Database keys cannot contain
-periods:
+periods. `externalSubject` is mandatory and exact; an identity with `issuer` is also
+bound to the verified token issuer:
 
 ```json
 {
   "organizationId": "agrisolar",
   "externalSubject": "provider-issued-subject",
+  "issuer": "https://approved-issuer.example/",
   "environment": "DEV",
   "status": "active",
   "authorityLevel": 3,
@@ -106,6 +110,8 @@ returns `CONFLICT`. Read and mutation requests are rate-limited per identity.
 | `POST /opportunities` | `opportunity.create` | 3 | New opportunity or duplicate candidates |
 | `POST /tasks` | `task.create` | 3 | Internal task associated with an authorized record |
 | `GET /analytics/sales-pipeline` | `analytics.read` | 1 | Calculated pipeline metrics |
+| `GET /admin/review-center` | `opportunity.update` + owner USER | 4 | Protected review queue, sanitized agents, approvals, and audit events |
+| `POST /admin/reviews` | `opportunity.update` + owner USER | 4 | Idempotent opportunity/task approval or rejection |
 
 ### Search opportunities
 
@@ -201,6 +207,34 @@ Metrics are calculated from organization-scoped opportunity and task records. Th
 include stage counts, pipeline value, approaching bid deadlines, overdue follow-ups,
 and up to five high-priority opportunities.
 
+### Administrator review center
+
+```text
+GET /api/v1/admin/review-center?status=all&limit=100
+```
+
+`status` accepts `pending_review`, `approved`, `rejected`, or `all`; `limit` accepts
+1–100. Results are organization-scoped and include reviewable opportunities and tasks,
+sanitized agent status/capabilities, approval records, and recent audit events. Agent
+subjects and credentials are never returned.
+
+Review a pending record through the service rather than writing to Realtime Database:
+
+```json
+{
+  "entityType": "opportunity",
+  "entityId": "generated-opportunity-id",
+  "decision": "approve",
+  "reason": "Reviewed the cited source and verified the business facts."
+}
+```
+
+Send the body to `POST /api/v1/admin/reviews` with an `Idempotency-Key`. Rejection
+requires a reason. Only `pending_review` records can transition, rejected records are
+retained, and the record update, approval record, audit event, and idempotency record are
+written together. These routes are not MCP tools and have no email or external side
+effect.
+
 ## Data and Security Boundaries
 
 The browser rules deny writes to `organizations`, `agent_identities`, `opportunities`,
@@ -213,21 +247,16 @@ draft functions are separate administrator-only workflows.
 
 ## Local Verification
 
-Run unit and rules tests:
+Run the self-contained unit suite:
 
 ```bash
-npm run test:syntax
-npm run test:business-api
-env -u DEBUG npx firebase emulators:exec --only database,storage \
-  --project agrisolar-website "npm run test:rules"
+npm test
 ```
 
-Run Hosting/Functions integration checks:
+Run the complete unit, rules, browser, and emulator suite:
 
 ```bash
-npm run build:hosting
-env -u DEBUG npx firebase emulators:exec --only hosting,database,storage,functions \
-  --project agrisolar-website "npm run test:emulator-smoke"
+env -u DEBUG npm run test:full
 ```
 
 Tests use synthetic records and must not call OpenAI or send email.

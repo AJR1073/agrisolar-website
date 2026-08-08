@@ -23,7 +23,8 @@ The required sequence is:
 
 ### 1.1 Implementation Snapshot
 
-Milestones 1 and 2 now have a tested DEV implementation:
+Milestones 1, 2, and the first Milestone 4 administrator-review slice now have a tested
+DEV implementation:
 
 * One Firebase HTTPS function serves the five `/api/v1` operations.
 * Firebase ID tokens are verified server-side and mapped to the owner or a revocable
@@ -36,6 +37,11 @@ Milestones 1 and 2 now have a tested DEV implementation:
 * Tests cover authentication, cross-organization denial, capabilities, validation,
   duplicates, idempotency, audit events, rules, Hosting rewrites, and existing admin
   regressions.
+* The owner-only AI Review Center lists pending opportunities/tasks, separates sourced
+  facts from AI provenance, shows sanitized agent/approval/audit state, and performs
+  idempotent approve/reject decisions through the backend.
+* Functions, Realtime Database, and Storage recognize the administrator by immutable
+  Firebase UID rather than a mutable email address.
 
 No external agent identity or business fixture has been inserted into Firebase. No MCP
 OAuth provider, ChatGPT Work connection, or email-sending AI tool is enabled. The MCP
@@ -903,11 +909,14 @@ OIDC verification, safety annotations, and protocol contract tests are implement
 endpoint remains disabled until an established DEV OAuth provider and reviewed agent
 identity are configured. Only then may an approved DEV client be connected.
 
-### Milestone 4 — Admin Review Experience
+### Milestone 4 — Admin Review Experience — Initial Slice Implemented in DEV
 
-Add UI views for AI-created opportunities, review state, audit history, agent status,
-and pending approvals as needed. Move relevant browser mutations behind services
-incrementally.
+The administrator-only review center now shows AI-created opportunities/tasks, review
+state, source and model provenance, linked audit history, sanitized agent status, and
+pending approvals. Approve/reject operations are owner-only backend mutations with
+organization checks, idempotency, retained rejection history, and atomic approval/audit
+records. Future slices may add richer record editing and proposal/document review, but
+no external sending or execution is enabled.
 
 ### Milestone 5 — Future Controlled Actions
 

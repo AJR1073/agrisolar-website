@@ -17,6 +17,8 @@ const OPPORTUNITY_STATUSES = new Set([
     'LOST'
 ]);
 const PRIORITIES = new Set(['low', 'normal', 'high', 'urgent']);
+const REVIEW_STATUSES = new Set(['pending_review', 'approved', 'rejected']);
+const REVIEW_ENTITY_TYPES = new Set(['opportunity', 'task']);
 const INITIAL_AGENT_CAPABILITIES = new Set([
     'opportunity.read',
     'opportunity.create',
@@ -305,6 +307,35 @@ function validateCreateTask(body) {
     };
 }
 
+function validateReviewDecision(body) {
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+        throw new ApiError('VALIDATION_ERROR', 'A JSON object is required.', 400);
+    }
+    const entityType = cleanString(body.entityType, 32, true);
+    if (!REVIEW_ENTITY_TYPES.has(entityType)) {
+        throw new ApiError(
+            'VALIDATION_ERROR',
+            'entityType must be opportunity or task.',
+            400
+        );
+    }
+    const decision = cleanString(body.decision, 16, true);
+    if (!['approve', 'reject'].includes(decision)) {
+        throw new ApiError(
+            'VALIDATION_ERROR',
+            'decision must be approve or reject.',
+            400
+        );
+    }
+    const reason = cleanString(body.reason, 1000, decision === 'reject');
+    return {
+        entityType,
+        entityId: cleanRecordId(body.entityId, 'entityId', true),
+        decision,
+        reason
+    };
+}
+
 function auditRecord(context, action, entityType, entityId, requestId, result, extra = {}) {
     return {
         organizationId: context.organizationId,
@@ -316,7 +347,7 @@ function auditRecord(context, action, entityType, entityId, requestId, result, e
         entityId: entityId || '',
         source: context.source,
         requestId,
-        approvalId: '',
+        approvalId: extra.approvalId || '',
         modelOrAgent: context.actorType === 'AI_AGENT' ? context.actorId : '',
         result,
         errorCode: extra.errorCode || '',
@@ -335,7 +366,10 @@ function createBusinessApi(options) {
     const admin = options.admin;
     const organizationId = options.organizationId || DEFAULT_ORGANIZATION_ID;
     const environment = options.environment || DEFAULT_ENVIRONMENT;
-    const administratorEmail = options.administratorEmail;
+    const administratorUids = new Set([
+        ...(Array.isArray(options.administratorUids) ? options.administratorUids : []),
+        ...(options.administratorUid ? [options.administratorUid] : [])
+    ].filter(value => typeof value === 'string' && value.length > 0));
     const now = options.now || Date.now;
     const database = admin.database();
 
@@ -343,7 +377,14 @@ function createBusinessApi(options) {
         return database.ref(path).once('value');
     }
 
-    async function resolveAgentContext(subject, claimedAgentId = '', source = 'API') {
+    async function resolveAgentContext(
+        subject,
+        claimedAgentId = '',
+        source = 'API',
+        verifiedIssuer = ''
+    ) {
+        const exactSubject = cleanString(subject, 500, true);
+        const exactIssuer = cleanString(verifiedIssuer, 500);
         let agentId = '';
         let agent = null;
         if (claimedAgentId) {
@@ -353,7 +394,7 @@ function createBusinessApi(options) {
         } else {
             const snapshot = await once('/agent_identities');
             const match = Object.entries(snapshot.val() || {}).find(([, candidate]) => (
-                candidate.externalSubject === subject
+                candidate.externalSubject === exactSubject
                 && candidate.organizationId === organizationId
                 && candidate.environment === environment
             ));
@@ -363,7 +404,9 @@ function createBusinessApi(options) {
             || agent.status !== 'active'
             || agent.organizationId !== organizationId
             || agent.environment !== environment
-            || (agent.externalSubject && agent.externalSubject !== subject)
+            || !agent.externalSubject
+            || agent.externalSubject !== exactSubject
+            || (agent.issuer && agent.issuer !== exactIssuer)
             || (Number(agent.expiresAt) > 0 && Number(agent.expiresAt) <= now())) {
             throw new ApiError('FORBIDDEN', 'This identity is not authorized.', 403);
         }
@@ -390,7 +433,13 @@ function createBusinessApi(options) {
             throw new ApiError('UNAUTHORIZED', 'Authentication is invalid or expired.', 401);
         }
 
-        if (administratorEmail && token.email === administratorEmail) {
+        const tokenOrganization = typeof token.organizationId === 'string'
+            ? token.organizationId
+            : (typeof token.organization_id === 'string' ? token.organization_id : '');
+        const approvedAdministrator = administratorUids.has(token.uid)
+            || (token.admin === true
+                && (!tokenOrganization || tokenOrganization === organizationId));
+        if (approvedAdministrator) {
             return {
                 actorType: 'USER',
                 actorId: token.uid,
@@ -409,7 +458,8 @@ function createBusinessApi(options) {
         return resolveAgentContext(
             token.uid,
             token.agentId || token.agent_id || '',
-            'API'
+            'API',
+            typeof token.iss === 'string' ? token.iss : ''
         );
     }
 
@@ -450,6 +500,17 @@ function createBusinessApi(options) {
             'success',
             { now: now() }
         ));
+    }
+
+    function authorizeAdministratorReview(context) {
+        authorize(context, 'opportunity.update', 4);
+        if (context.actorType !== 'USER') {
+            throw new ApiError(
+                'FORBIDDEN',
+                'Administrator review requires an authorized user account.',
+                403
+            );
+        }
     }
 
     function idempotencyKey(req) {
@@ -843,6 +904,221 @@ function createBusinessApi(options) {
         return { data: response, page: null, replayed: false };
     }
 
+    function reviewCollection(records, context, status, limit, idName) {
+        return Object.entries(records || {})
+            .filter(([, record]) => (
+                record.organizationId === context.organizationId
+                && (status === 'all' || record.reviewStatus === status)
+            ))
+            .map(([id, record]) => ({ ...record, [idName]: id }))
+            .sort((left, right) => (
+                (Number(right.updatedAt) || Number(right.createdAt) || 0)
+                - (Number(left.updatedAt) || Number(left.createdAt) || 0)
+                || left[idName].localeCompare(right[idName])
+            ))
+            .slice(0, limit);
+    }
+
+    async function getReviewCenter(context, query, requestId) {
+        authorizeAdministratorReview(context);
+        const status = cleanString(query.status, 32) || 'pending_review';
+        if (status !== 'all' && !REVIEW_STATUSES.has(status)) {
+            throw new ApiError(
+                'VALIDATION_ERROR',
+                'Review status must be pending_review, approved, rejected, or all.',
+                400
+            );
+        }
+        const requestedLimit = query.limit === undefined || query.limit === ''
+            ? 50
+            : Number(query.limit);
+        if (!Number.isInteger(requestedLimit)
+            || requestedLimit < 1
+            || requestedLimit > 100) {
+            throw new ApiError(
+                'VALIDATION_ERROR',
+                'Limit must be an integer from 1 to 100.',
+                400
+            );
+        }
+
+        const [opportunities, tasks, agents, approvals, audits] = await Promise.all([
+            once('/opportunities'),
+            once('/tasks'),
+            once('/agent_identities'),
+            once('/approval_requests'),
+            once('/audit_events')
+        ]);
+        const scopedAgents = Object.entries(agents.val() || {})
+            .filter(([, agent]) => (
+                agent.organizationId === context.organizationId
+                && agent.environment === context.environment
+            ))
+            .map(([agentId, agent]) => ({
+                agentId,
+                organizationId: agent.organizationId,
+                environment: agent.environment,
+                status: agent.status,
+                authorityLevel: Number(agent.authorityLevel) || 0,
+                capabilities: [...capabilitiesFrom(agent.capabilities)].sort(),
+                expiresAt: Number(agent.expiresAt) || 0
+            }))
+            .sort((left, right) => left.agentId.localeCompare(right.agentId));
+        const scopedApprovals = Object.entries(approvals.val() || {})
+            .filter(([, record]) => record.organizationId === context.organizationId)
+            .map(([approvalId, record]) => ({ ...record, approvalId }))
+            .sort((left, right) => (
+                (Number(right.decidedAt) || Number(right.requestedAt) || 0)
+                - (Number(left.decidedAt) || Number(left.requestedAt) || 0)
+            ))
+            .slice(0, requestedLimit);
+        const scopedAudits = Object.entries(audits.val() || {})
+            .filter(([, record]) => record.organizationId === context.organizationId)
+            .map(([auditEventId, record]) => ({ ...record, auditEventId }))
+            .sort((left, right) => Number(right.occurredAt) - Number(left.occurredAt))
+            .slice(0, requestedLimit);
+        const reviewOpportunities = reviewCollection(
+            opportunities.val(),
+            context,
+            status,
+            requestedLimit,
+            'opportunityId'
+        );
+        const reviewTasks = reviewCollection(
+            tasks.val(),
+            context,
+            status,
+            requestedLimit,
+            'taskId'
+        );
+
+        await appendReadAudit(
+            context,
+            'admin.review_center.read',
+            'review_center',
+            '',
+            requestId
+        );
+        return {
+            data: {
+                opportunities: reviewOpportunities,
+                tasks: reviewTasks,
+                agents: scopedAgents,
+                approvals: scopedApprovals,
+                auditEvents: scopedAudits,
+                filters: { status, limit: requestedLimit },
+                totals: {
+                    opportunities: reviewOpportunities.length,
+                    tasks: reviewTasks.length
+                }
+            },
+            page: null
+        };
+    }
+
+    async function reviewEntity(context, body, req, requestId) {
+        authorizeAdministratorReview(context);
+        const key = idempotencyKey(req);
+        const idempotency = await existingIdempotentResult(context, key, body);
+        if (idempotency.response) {
+            return {
+                data: idempotency.response,
+                page: null,
+                replayed: true,
+                statusCode: 200
+            };
+        }
+        const input = validateReviewDecision(body);
+        const collection = input.entityType === 'opportunity' ? 'opportunities' : 'tasks';
+        const snapshot = await once(`/${collection}/${input.entityId}`);
+        const record = snapshot.val();
+        if (!snapshot.exists()
+            || record.organizationId !== context.organizationId) {
+            throw new ApiError('NOT_FOUND', 'Review record was not found.', 404);
+        }
+        if (record.reviewStatus !== 'pending_review') {
+            throw new ApiError(
+                'CONFLICT',
+                'Only a pending_review record can be approved or rejected.',
+                409,
+                { currentReviewStatus: record.reviewStatus || '' }
+            );
+        }
+
+        const timestamp = now();
+        const reviewStatus = input.decision === 'approve' ? 'approved' : 'rejected';
+        const approvalId = database.ref('/approval_requests').push().key;
+        const auditId = database.ref('/audit_events').push().key;
+        const response = {
+            entityType: input.entityType,
+            entityId: input.entityId,
+            decision: input.decision,
+            reviewStatus,
+            reason: input.reason,
+            reviewedAt: timestamp,
+            reviewedByAdministratorUid: context.actorId,
+            approvalId
+        };
+        const reviewedRecord = {
+            ...record,
+            reviewStatus,
+            reviewDecision: input.decision,
+            reviewReason: input.reason,
+            reviewedAt: timestamp,
+            reviewedByActorId: context.actorId,
+            reviewedByAdministratorUid: context.actorId,
+            updatedAt: timestamp,
+            updatedByActorId: context.actorId
+        };
+        const approvalRecord = {
+            organizationId: context.organizationId,
+            actionType: `${input.entityType}.review`,
+            status: reviewStatus,
+            riskLevel: 4,
+            requestedByActorType: record.createdByActorType || 'UNKNOWN',
+            requestedByActorId: record.createdByActorId || '',
+            requestedAt: Number(record.createdAt) || timestamp,
+            payloadDigest: `sha256:${digest({
+                entityType: input.entityType,
+                entityId: input.entityId,
+                createdAt: record.createdAt || 0
+            })}`,
+            relatedEntityType: input.entityType,
+            relatedEntityId: input.entityId,
+            approverActorId: context.actorId,
+            decision: input.decision,
+            reason: input.reason,
+            decidedAt: timestamp,
+            executionStatus: 'not_required',
+            resultCode: reviewStatus
+        };
+        await database.ref().update({
+            [`${collection}/${input.entityId}`]: reviewedRecord,
+            [`approval_requests/${approvalId}`]: approvalRecord,
+            [`audit_events/${auditId}`]: auditRecord(
+                context,
+                `${input.entityType}.review.${input.decision}`,
+                input.entityType,
+                input.entityId,
+                requestId,
+                'success',
+                {
+                    now: timestamp,
+                    approvalId,
+                    changeSummary: `${input.entityType} review changed from pending_review to ${reviewStatus}.`
+                }
+            ),
+            [`idempotency_records/${context.organizationId}/${idempotency.keyHash}`]: {
+                actorId: context.actorId,
+                requestDigest: idempotency.requestDigest,
+                response,
+                createdAt: timestamp,
+                expiresAt: timestamp + 86400000
+            }
+        });
+        return { data: response, page: null, replayed: false, statusCode: 200 };
+    }
+
     async function getSalesPipeline(context, query, requestId) {
         authorize(context, 'analytics.read', 1);
         const state = cleanString(query.state, 2).toUpperCase();
@@ -1019,11 +1295,22 @@ function createBusinessApi(options) {
                 action = 'analytics.sales_pipeline.read';
                 entityType = 'analytics';
                 result = await getSalesPipeline(context, queryValues(req), requestId);
+            } else if (method === 'GET'
+                && path === `${API_PREFIX}/admin/review-center`) {
+                action = 'admin.review_center.read';
+                entityType = 'review_center';
+                result = await getReviewCenter(context, queryValues(req), requestId);
+            } else if (method === 'POST'
+                && path === `${API_PREFIX}/admin/reviews`) {
+                action = 'admin.review';
+                entityType = 'review';
+                result = await reviewEntity(context, req.body || {}, req, requestId);
             } else {
                 throw new ApiError('NOT_FOUND', 'API route was not found.', 404);
             }
 
-            res.status(result.replayed ? 200 : (method === 'POST' ? 201 : 200)).json({
+            res.status(result.statusCode
+                ?? (result.replayed ? 200 : (method === 'POST' ? 201 : 200))).json({
                 requestId,
                 data: result.data,
                 ...(result.page ? { page: result.page } : {}),
@@ -1076,5 +1363,6 @@ module.exports = {
     createBusinessApi,
     createBusinessApiHandler,
     validateCreateOpportunity,
-    validateCreateTask
+    validateCreateTask,
+    validateReviewDecision
 };

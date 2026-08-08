@@ -3,9 +3,9 @@
     ".read": false,
     ".write": false,
     "contact_submissions": {
-      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".read": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
       "$submission": {
-        ".write": "(auth != null && auth.token.email == 'aaronreifschneider@outlook.com' && newData.exists()) || (auth == null && !data.exists() && newData.exists())",
+        ".write": "(auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92' && newData.exists()) || (auth == null && !data.exists() && newData.exists())",
         ".validate": "newData.hasChildren(['name', 'email', 'siteLocation', 'service', 'message', 'timestamp', 'status', 'viewed'])",
         "name": {
           ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
@@ -58,7 +58,7 @@
           ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= now + 60000"
         },
         "status": {
-          ".validate": "newData.isString() && (newData.val() == 'new' || (auth != null && auth.token.email == 'aaronreifschneider@outlook.com' && (newData.val() == 'viewed' || newData.val() == 'replied')))"
+          ".validate": "newData.isString() && (newData.val() == 'new' || (auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92' && (newData.val() == 'viewed' || newData.val() == 'replied')))"
         },
         "viewed": {
           ".validate": "newData.isBoolean()"
@@ -72,9 +72,9 @@
       }
     },
     "companies": {
-      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".read": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
       "$company": {
-        ".write": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com' && newData.exists()",
+        ".write": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92' && newData.exists()",
         ".validate": "newData.hasChildren(['name', 'createdAt', 'updatedAt', 'administratorUid']) && (!data.exists() || newData.child('createdAt').val() == data.child('createdAt').val()) && newData.child('administratorUid').val() == auth.uid",
         "name": {
           ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120"
@@ -94,9 +94,9 @@
       }
     },
     "solar_sites": {
-      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".read": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
       "$site": {
-        ".write": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com' && newData.exists()",
+        ".write": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92' && newData.exists()",
         ".validate": "newData.hasChildren(['companyId', 'name', 'location', 'acreage', 'targetVegetationHeight', 'active', 'createdAt', 'updatedAt', 'administratorUid']) && (!data.exists() || newData.child('createdAt').val() == data.child('createdAt').val()) && newData.child('administratorUid').val() == auth.uid",
         "companyId": {
           ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
@@ -131,7 +131,7 @@
       }
     },
     "service_seasons": {
-      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".read": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
       ".indexOn": [
         "serviceYear",
         "solarSiteId",
@@ -139,7 +139,7 @@
         "renewalStatus"
       ],
       "$season": {
-        ".write": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com' && newData.exists()",
+        ".write": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92' && newData.exists()",
         ".validate": "newData.hasChildren(['serviceYear', 'companyId', 'solarSiteId', 'plannedMowingCycles', 'plannedOtherServices', 'contractAcreage', 'targetVegetationHeight', 'contractStatus', 'renewalStatus', 'renewalNotes', 'createdAt', 'updatedAt', 'administratorUid']) && (!data.exists() || newData.child('createdAt').val() == data.child('createdAt').val()) && newData.child('administratorUid').val() == auth.uid",
         "serviceYear": {
           ".validate": "newData.isNumber() && newData.val() >= 2020 && newData.val() <= 2100"
@@ -201,7 +201,7 @@
       }
     },
     "scheduled_services": {
-      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".read": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
       ".indexOn": [
         "serviceYear",
         "solarSiteId",
@@ -211,7 +211,7 @@
         "readyForInvoicing"
       ],
       "$service": {
-        ".write": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com' && newData.exists()",
+        ".write": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92' && newData.exists()",
         ".validate": "newData.hasChildren(['serviceSeasonId', 'serviceYear', 'companyId', 'solarSiteId', 'mowingCycleNumber', 'serviceType', 'status', 'siteAcreage', 'estimatedAcresToService', 'actualAcresCompleted', 'targetVegetationHeight', 'completionDatePrecision', 'assignedCrew', 'assignedEquipment', 'reschedulingReason', 'completionNotes', 'problemsOrHazards', 'weatherDelay', 'followUpRequired', 'readyForInvoicing', 'createdAt', 'updatedAt', 'administratorUid']) && (!data.exists() || newData.child('createdAt').val() == data.child('createdAt').val()) && newData.child('administratorUid').val() == auth.uid && (newData.child('readyForInvoicing').val() == false || newData.child('status').val() == 'Completed') && ((newData.child('completionDatePrecision').val() == 'exact_date' && newData.child('completedOn').exists()) || (newData.child('completionDatePrecision').val() == 'month_only' && !newData.child('completedOn').exists() && newData.child('completionMonth').exists()) || (newData.child('completionDatePrecision').val() == 'unknown' && !newData.child('completedOn').exists() && !newData.child('completionMonth').exists()))",
         "serviceSeasonId": {
           ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
@@ -312,7 +312,7 @@
       }
     },
     "prospect_candidates": {
-      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".read": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
       ".indexOn": [
         "normalizedCompany",
         "normalizedDomain",
@@ -321,7 +321,7 @@
         "suppressed"
       ],
       "$prospect": {
-        ".write": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com' && newData.exists()",
+        ".write": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92' && newData.exists()",
         ".validate": "newData.hasChildren(['companyName', 'normalizedCompany', 'website', 'normalizedDomain', 'location', 'contactName', 'contactEmail', 'contactPhone', 'fitReason', 'sourceId', 'verificationStatus', 'outreachStatus', 'suppressed', 'createdAt', 'updatedAt', 'administratorUid']) && (!data.exists() || newData.child('createdAt').val() == data.child('createdAt').val()) && newData.child('administratorUid').val() == auth.uid && (newData.child('suppressed').val() == false || newData.child('outreachStatus').val() == 'Do not contact')",
         "companyName": {
           ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120"
@@ -377,12 +377,12 @@
       }
     },
     "prospect_sources": {
-      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".read": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
       ".indexOn": [
         "prospectId"
       ],
       "$source": {
-        ".write": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com' && newData.exists()",
+        ".write": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92' && newData.exists()",
         ".validate": "newData.hasChildren(['prospectId', 'url', 'title', 'evidenceSummary', 'accessedAt', 'createdAt', 'administratorUid']) && (!data.exists() || newData.child('createdAt').val() == data.child('createdAt').val()) && newData.child('administratorUid').val() == auth.uid",
         "prospectId": {
           ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
@@ -411,14 +411,14 @@
       }
     },
     "suppression_entries": {
-      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".read": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
       ".indexOn": [
         "value",
         "active",
         "prospectId"
       ],
       "$suppression": {
-        ".write": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com' && newData.exists()",
+        ".write": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92' && newData.exists()",
         ".validate": "newData.hasChildren(['prospectId', 'type', 'value', 'reason', 'active', 'createdAt', 'administratorUid']) && (!data.exists() || newData.child('createdAt').val() == data.child('createdAt').val()) && newData.child('administratorUid').val() == auth.uid",
         "prospectId": {
           ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
@@ -447,7 +447,7 @@
       }
     },
     "outreach_drafts": {
-      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".read": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
       ".write": false,
       ".indexOn": [
         "prospectId",
@@ -456,11 +456,11 @@
       ]
     },
     "ai_usage": {
-      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".read": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
       ".write": false
     },
     "ai_cost_events": {
-      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".read": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
       ".write": false,
       ".indexOn": [
         "createdAt",
@@ -469,8 +469,8 @@
       ]
     },
     "ai_settings": {
-      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
-      ".write": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com' && newData.exists()",
+      ".read": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
+      ".write": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92' && newData.exists()",
       ".validate": "newData.hasChildren(['outreachEnabled', 'updatedAt', 'administratorUid']) && newData.child('administratorUid').val() == auth.uid",
       "outreachEnabled": {
         ".validate": "newData.isBoolean()"
@@ -486,15 +486,15 @@
       }
     },
     "organizations": {
-      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".read": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
       ".write": false
     },
     "organization_memberships": {
-      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".read": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
       ".write": false
     },
     "agent_identities": {
-      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".read": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
       ".write": false,
       ".indexOn": [
         "organizationId",
@@ -504,7 +504,7 @@
       ]
     },
     "opportunities": {
-      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".read": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
       ".write": false,
       ".indexOn": [
         "organizationId",
@@ -517,11 +517,11 @@
       ]
     },
     "opportunity_status_events": {
-      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".read": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
       ".write": false
     },
     "tasks": {
-      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".read": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
       ".write": false,
       ".indexOn": [
         "organizationId",
@@ -532,7 +532,7 @@
       ]
     },
     "approval_requests": {
-      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".read": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
       ".write": false,
       ".indexOn": [
         "organizationId",
@@ -541,7 +541,7 @@
       ]
     },
     "audit_events": {
-      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".read": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
       ".write": false,
       ".indexOn": [
         "organizationId",
@@ -560,9 +560,9 @@
       ".write": false
     },
     "email_recipients": {
-      ".read": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+      ".read": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
       "$recipient": {
-        ".write": "auth != null && auth.token.email == 'aaronreifschneider@outlook.com'",
+        ".write": "auth != null && auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92'",
         ".validate": "newData.hasChildren(['name', 'email'])",
         "name": {
           ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"

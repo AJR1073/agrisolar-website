@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="css/admin.css?v=20260727-phase-b2">
     <link rel="stylesheet" href="css/schedule.css?v=20260802-whiteboard-grid">
     <link rel="stylesheet" href="css/outreach.css?v=20260802-ai-cost-v1">
+    <link rel="stylesheet" href="css/review-center.css?v=20260807-milestone-4a">
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -74,6 +75,7 @@
                 <button type="button" class="nav-btn active" data-tab="submissions">Submissions</button>
                 <button type="button" class="nav-btn" data-tab="schedule">Annual Schedule</button>
                 <button type="button" class="nav-btn" data-tab="outreach">Outreach</button>
+                <button type="button" class="nav-btn" data-tab="reviewCenter">AI Review Center</button>
                 <button type="button" class="nav-btn" data-tab="distribution">Email Distribution</button>
             </nav>
 
@@ -303,6 +305,58 @@
                     Loading prospect candidates…
                 </div>
                 <div id="outreachList" class="outreach-list"></div>
+            </div>
+
+            <!-- AI Review Center Tab -->
+            <div id="reviewCenterTab" class="tab-content">
+                <div class="review-heading">
+                    <div>
+                        <p class="review-eyebrow">Administrator review required</p>
+                        <h2>AI Review Center</h2>
+                        <p>
+                            Inspect AI-created business records, their public evidence, and
+                            their audit history before accepting or rejecting them.
+                        </p>
+                    </div>
+                    <button type="button" id="reviewRefreshBtn" class="action-btn secondary">
+                        <i class="fas fa-rotate" aria-hidden="true"></i>
+                        Refresh
+                    </button>
+                </div>
+
+                <div class="review-safety-note" role="note">
+                    <i class="fas fa-shield-halved" aria-hidden="true"></i>
+                    <div>
+                        <strong>Review decisions only update internal records.</strong>
+                        <span>This section cannot send email, publish content, sign contracts, or create invoices.</span>
+                    </div>
+                </div>
+
+                <div id="reviewTotals" class="review-totals" aria-live="polite"></div>
+
+                <div class="review-toolbar">
+                    <div class="review-view-buttons" role="group" aria-label="AI review center views">
+                        <button type="button" class="review-view-btn active" data-review-view="opportunities">Opportunities</button>
+                        <button type="button" class="review-view-btn" data-review-view="tasks">Tasks</button>
+                        <button type="button" class="review-view-btn" data-review-view="agents">Agents</button>
+                        <button type="button" class="review-view-btn" data-review-view="approvals">Approvals</button>
+                        <button type="button" class="review-view-btn" data-review-view="audit">Audit history</button>
+                    </div>
+                    <label class="sr-only" for="reviewStatusFilter">Filter review status</label>
+                    <select id="reviewStatusFilter" class="form-control">
+                        <option value="all">All review states</option>
+                        <option value="pending_review">Pending review</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                    <label class="sr-only" for="reviewSearch">Search review records</label>
+                    <input type="search" id="reviewSearch" class="form-control" placeholder="Search company, site, task, agent, or action…">
+                </div>
+
+                <div id="reviewLoading" class="review-empty" role="status">
+                    Open this section to load protected review records.
+                </div>
+                <div id="reviewList" class="review-list"></div>
             </div>
         </div>
     </div>
@@ -737,9 +791,37 @@
         </div>
     </div>
 
+    <div id="reviewDecisionModal" class="modal review-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="reviewDecisionTitle">
+        <div class="modal-content review-modal-content">
+            <div class="modal-header">
+                <div>
+                    <p class="review-eyebrow">Administrator decision</p>
+                    <h3 id="reviewDecisionTitle">Review record</h3>
+                </div>
+                <button type="button" class="modal-close-btn" data-close-review-decision aria-label="Close">&times;</button>
+            </div>
+            <p id="reviewDecisionSummary" class="form-help"></p>
+            <form id="reviewDecisionForm">
+                <input type="hidden" id="reviewDecisionEntityType">
+                <input type="hidden" id="reviewDecisionEntityId">
+                <input type="hidden" id="reviewDecisionValue">
+                <div class="form-group">
+                    <label for="reviewDecisionReason">Decision notes</label>
+                    <textarea id="reviewDecisionReason" rows="4" maxlength="1000" placeholder="Record what you verified or why the record was rejected."></textarea>
+                    <small>Notes become part of the protected audit trail. Do not include passwords or secrets.</small>
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" id="reviewDecisionSubmit" class="action-btn">Confirm decision</button>
+                    <button type="button" class="action-btn cancel" data-close-review-decision>Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="js/admin.js?v=20260802-auth-errors"></script>
     <script src="js/schedule.js?v=20260802-whiteboard-grid"></script>
     <script src="js/schedule-import.js?v=20260727-phase-b2"></script>
     <script src="js/outreach.js?v=20260802-ai-cost-v1"></script>
+    <script src="js/review-center.js?v=20260807-milestone-4a"></script>
 </body>
 </html>

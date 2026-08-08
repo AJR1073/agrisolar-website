@@ -21,8 +21,8 @@ function createFixture() {
     const calls = [];
     const contexts = [];
     const businessApi = {
-        async resolveAgentContext(subject, agentId, source) {
-            contexts.push({ subject, agentId, source });
+        async resolveAgentContext(subject, agentId, source, issuer) {
+            contexts.push({ subject, agentId, source, issuer });
             if (subject === 'inactive-subject') throw new Error('inactive');
             return {
                 actorType: 'AI_AGENT',
@@ -103,6 +103,7 @@ function createFixture() {
                 : 'synthetic-subject';
             return {
                 subject,
+                issuer: 'https://identity.synthetic.example/',
                 agentId: 'synthetic-agent',
                 authInfo: {
                     token,

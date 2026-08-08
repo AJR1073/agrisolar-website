@@ -359,7 +359,8 @@ function createMcpHandler(options) {
             context = await businessApi.resolveAgentContext(
                 verified.subject,
                 verified.agentId,
-                'MCP'
+                'MCP',
+                verified.issuer
             );
         } catch {
             return res.status(403).json({

@@ -14,7 +14,7 @@ const { createMcpHandler } = require('./mcp-server');
 admin.initializeApp();
 
 const SMTP_SENDER = 'aaron@agrisolarllc.com';
-const ADMIN_EMAIL = 'aaronreifschneider@outlook.com';
+const ADMIN_UID = 'fWscNuWSoGdWmDIhyjneNqFU0r92';
 const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || SMTP_SENDER;
 const MAX_ATTACHMENT_COUNT = 10;
 const MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024;
@@ -201,7 +201,7 @@ async function requireAdministrator(req) {
     } catch {
         throw new AiOutreachError('Authentication required.', 401, 'authentication_required');
     }
-    if (decodedToken.email !== ADMIN_EMAIL) {
+    if (decodedToken.uid !== ADMIN_UID) {
         throw new AiOutreachError('Administrator access required.', 403, 'administrator_required');
     }
     return decodedToken;
@@ -376,7 +376,7 @@ exports.sendReply = onRequest(
 
         try {
             const decodedToken = await admin.auth().verifyIdToken(authHeader.slice(7));
-            if (decodedToken.email !== ADMIN_EMAIL) {
+            if (decodedToken.uid !== ADMIN_UID) {
                 res.status(403).json({ error: 'Not authorized to send replies.' });
                 return;
             }
@@ -594,7 +594,7 @@ exports.draftOutreachEmail = onRequest(
 
 const businessApi = createBusinessApi({
     admin,
-    administratorEmail: ADMIN_EMAIL,
+    administratorUid: ADMIN_UID,
     organizationId: 'agrisolar',
     environment: 'DEV'
 });

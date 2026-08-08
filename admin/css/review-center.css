@@ -1,0 +1,339 @@
+.review-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.review-heading h2,
+.review-heading p {
+    margin-top: 0;
+}
+
+.review-heading p:not(.review-eyebrow) {
+    max-width: 760px;
+    color: #52605a;
+    line-height: 1.6;
+}
+
+.review-eyebrow {
+    margin: 0 0 0.35rem;
+    color: #1a6a42;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.review-safety-note {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+    padding: 1rem 1.1rem;
+    margin-bottom: 1.25rem;
+    border: 1px solid #b8d9c7;
+    border-radius: 10px;
+    background: #eff8f3;
+    color: #183d2b;
+}
+
+.review-safety-note i {
+    margin-top: 0.15rem;
+    color: #198754;
+}
+
+.review-safety-note span {
+    display: block;
+    margin-top: 0.2rem;
+    color: #476157;
+}
+
+.review-totals {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(125px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.review-total {
+    padding: 1rem;
+    border: 1px solid #d8e1dc;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(20, 55, 37, 0.06);
+}
+
+.review-total strong {
+    display: block;
+    color: #153e2a;
+    font-size: 1.55rem;
+}
+
+.review-total span {
+    color: #5e6b65;
+    font-size: 0.82rem;
+}
+
+.review-toolbar {
+    display: grid;
+    grid-template-columns: minmax(420px, 1fr) minmax(155px, 190px) minmax(220px, 320px);
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.review-view-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.review-view-btn {
+    padding: 0.58rem 0.75rem;
+    border: 1px solid #becbc4;
+    border-radius: 6px;
+    background: #fff;
+    color: #294438;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.review-view-btn:hover,
+.review-view-btn:focus-visible,
+.review-view-btn.active {
+    border-color: #1a4731;
+    background: #1a4731;
+    color: #fff;
+}
+
+.review-empty {
+    padding: 2rem;
+    border: 1px dashed #bdc9c2;
+    border-radius: 10px;
+    background: #f8faf9;
+    color: #58645f;
+    text-align: center;
+}
+
+.review-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.review-card {
+    overflow: hidden;
+    border: 1px solid #d6dfda;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 3px 12px rgba(22, 58, 40, 0.07);
+}
+
+.review-card-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid #e1e7e3;
+    background: #f8faf9;
+}
+
+.review-card-header h3 {
+    margin: 0 0 0.25rem;
+    color: #183d2b;
+    font-size: 1.06rem;
+}
+
+.review-card-subtitle {
+    margin: 0;
+    color: #607068;
+    font-size: 0.85rem;
+}
+
+.review-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.4rem;
+}
+
+.review-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.28rem 0.5rem;
+    border-radius: 999px;
+    background: #e8eeeb;
+    color: #334b40;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+
+.review-badge.pending_review,
+.review-badge.pending {
+    background: #fff3cd;
+    color: #765b00;
+}
+
+.review-badge.reviewed,
+.review-badge.active,
+.review-badge.approved {
+    background: #d9f2e4;
+    color: #17643e;
+}
+
+.review-badge.rejected,
+.review-badge.revoked,
+.review-badge.expired {
+    background: #f8d7da;
+    color: #842029;
+}
+
+.review-card-body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    padding: 1.1rem;
+}
+
+.review-panel {
+    min-width: 0;
+    padding: 0.9rem;
+    border-radius: 8px;
+    background: #f7f9f8;
+}
+
+.review-panel.ai {
+    border-left: 4px solid #8064a2;
+    background: #f7f3fa;
+}
+
+.review-panel h4 {
+    margin: 0 0 0.6rem;
+    color: #284639;
+    font-size: 0.86rem;
+}
+
+.review-panel p,
+.review-panel li {
+    color: #4d5b55;
+    font-size: 0.84rem;
+    line-height: 1.55;
+}
+
+.review-panel p {
+    margin: 0.3rem 0;
+}
+
+.review-panel a {
+    overflow-wrap: anywhere;
+}
+
+.review-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    padding: 0 1.1rem 1.1rem;
+}
+
+.review-card-actions .reject {
+    border: 1px solid #b4232d;
+    background: #fff;
+    color: #9b1c25;
+}
+
+.review-card-actions .reject:hover {
+    background: #9b1c25;
+    color: #fff;
+}
+
+.review-audit {
+    grid-column: 1 / -1;
+    border-top: 1px solid #dfe5e1;
+    padding-top: 0.7rem;
+}
+
+.review-audit summary {
+    cursor: pointer;
+    color: #244b37;
+    font-weight: 600;
+}
+
+.review-audit-list {
+    display: grid;
+    gap: 0.45rem;
+    margin-top: 0.65rem;
+}
+
+.review-audit-event {
+    display: grid;
+    grid-template-columns: minmax(125px, 0.35fr) minmax(150px, 0.5fr) 1fr;
+    gap: 0.75rem;
+    padding: 0.55rem 0.65rem;
+    border-radius: 6px;
+    background: #eef3f0;
+    color: #405249;
+    font-size: 0.79rem;
+}
+
+.review-modal-content {
+    max-width: 620px;
+}
+
+.review-modal textarea {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 1050px) {
+    .admin-nav {
+        flex-wrap: wrap;
+    }
+
+    .review-totals {
+        grid-template-columns: repeat(3, minmax(130px, 1fr));
+    }
+
+    .review-toolbar {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .review-view-buttons {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 700px) {
+    .review-heading,
+    .review-card-header {
+        flex-direction: column;
+    }
+
+    .review-totals,
+    .review-toolbar,
+    .review-card-body {
+        grid-template-columns: 1fr;
+    }
+
+    .review-view-buttons,
+    .review-toolbar > * {
+        grid-column: 1;
+    }
+
+    .review-view-btn {
+        flex: 1 1 125px;
+    }
+
+    .review-badges {
+        justify-content: flex-start;
+    }
+
+    .review-audit-event {
+        grid-template-columns: 1fr;
+        gap: 0.2rem;
+    }
+}
