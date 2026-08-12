@@ -1,0 +1,43 @@
+{
+  "environment": "DEV",
+  "endpoint": "https://agrisolar-website.web.app/mcp",
+  "deployedCommit": "COPY_FULL_DEPLOYED_SHA",
+  "deploymentTimestamp": "COPY_DEPLOYMENT_TIMESTAMP",
+  "oauthProvider": "Auth0",
+  "authenticatedRead": {
+    "status": "pending",
+    "toolName": "get_sales_pipeline",
+    "connectionId": "COPY_PLUGIN_CONNECTION_ID",
+    "completedAt": "COPY_TEST_TIMESTAMP",
+    "requestId": "COPY_REQUEST_ID",
+    "agentId": "COPY_AGENT_ID",
+    "auditEventId": "COPY_AUDIT_EVENT_ID",
+    "organizationId": "agrisolar"
+  },
+  "confirmedCandidateWrite": {
+    "status": "pending",
+    "toolName": "submit_opportunity_candidate",
+    "connectionId": "COPY_SAME_PLUGIN_CONNECTION_ID",
+    "completedAt": "COPY_TEST_TIMESTAMP",
+    "chatgptWriteConfirmed": false,
+    "syntheticRecord": true,
+    "requestId": "COPY_REQUEST_ID",
+    "opportunityId": "COPY_OPPORTUNITY_ID",
+    "approvalId": "COPY_APPROVAL_ID",
+    "administratorUid": "COPY_ADMINISTRATOR_UID",
+    "auditEventIds": [
+      "COPY_SUBMISSION_AUDIT_EVENT_ID",
+      "COPY_APPROVAL_AUDIT_EVENT_ID"
+    ],
+    "candidateSubmissionSource": "chatgpt_work",
+    "initialReviewStatus": "pending_review",
+    "finalReviewStatus": "approved",
+    "emailSent": false,
+    "sourceUrl": "COPY_PUBLIC_HTTPS_SOURCE_URL"
+  },
+  "safety": {
+    "noBusinessFeaturesAdded": true,
+    "noUnapprovedRecordsAdded": true,
+    "noEmailSent": true
+  }
+}

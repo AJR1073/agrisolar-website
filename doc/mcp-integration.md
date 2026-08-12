@@ -114,6 +114,51 @@ MCP_AUTH_JWKS_URL=https://YOUR-DEV-ISSUER.example/.well-known/jwks.json
 MCP_AUTH_SCOPE=agrisolar:mcp
 ```
 
+Use these exact Auth0 resource-server settings:
+
+* **API name:** `AgriSolar MCP DEV`
+* **API identifier/audience:** `https://agrisolar-website.web.app/mcp`
+* **Signing algorithm:** `RS256`
+* **Permission/scope name:** `agrisolar:mcp`
+* **Issuer:** copy the exact `issuer` value from
+  `https://YOUR_AUTH0_DOMAIN/.well-known/openid-configuration`; retain its trailing slash
+* **JWKS URL:** copy the exact `jwks_uri` value from the same discovery document
+* **Client registration:** enable Auth0's supported MCP/third-party client-registration
+  path (Client ID Metadata Document or dynamic client registration), or create the
+  confidential ChatGPT client requested by the ChatGPT connection screen
+* **Redirect URL:** copy the exact URL shown by ChatGPT when adding the connection; it
+  has the form `https://chatgpt.com/connector/oauth/{callback_id}`. Do not invent the
+  callback ID.
+
+The values still requiring Aaron's authorized Auth0 action are the tenant domain/issuer,
+JWKS URL, client-registration choice and resulting client ID, and exact ChatGPT redirect
+URL. The audience and scope above are already fixed.
+
+For Firebase Functions v2, place only the five non-secret `MCP_*` variables above in the
+ignored `functions/.env.agrisolar-website` file, then deploy from the repository root:
+
+```bash
+chmod 600 functions/.env.agrisolar-website
+npx --yes firebase-tools@15.26.0 deploy \
+  --project agrisolar-website \
+  --only functions:mcp,hosting
+```
+
+No OAuth client secret is consumed by the current MCP resource server, so do not create
+or copy one into this repository. If a later reviewed server-side change genuinely needs
+an Auth0 secret, bind it with Firebase Functions `defineSecret` first and create it
+interactively with:
+
+```bash
+npx --yes firebase-tools@15.26.0 functions:secrets:set AUTH0_CLIENT_SECRET \
+  --project agrisolar-website
+```
+
+Never put a client secret, access token, refresh token, private key, administrator token,
+or password in `functions/.env.*`, GitHub variables/secrets, source code, release evidence,
+or chat. Auth0 client credentials used directly by ChatGPT belong only in the provider
+and ChatGPT connection screens.
+
 `MCP_AUTH_AUDIENCE` must exactly match `MCP_RESOURCE_URL`. Issuer, audience, and JWKS
 values must use HTTPS. These identifiers are not secrets, but environment files must
 remain ignored and must never contain access tokens, refresh tokens, private keys, or
@@ -205,6 +250,22 @@ non-destructive process.
 The milestone is not complete if either test uses a direct database write, an owner
 credential as the agent, a locally forged token, or an MCP Inspector call in place of
 ChatGPT Work. Inspector remains a prerequisite diagnostic only.
+
+After both interactive ChatGPT Work tests and the administrator approval are complete,
+record only non-secret IDs and outcomes in the ignored `.mcp-e2e-evidence.json` file and
+run:
+
+```bash
+cp doc/mcp-e2e-evidence.template.json .mcp-e2e-evidence.json
+npm run verify:mcp-release-gate
+```
+
+The validator fails closed unless both tools used the same installed ChatGPT connection,
+the read has a request/agent/audit trail, the write was confirmed, the synthetic record
+moved from `pending_review` to `approved`, approval and audit IDs are present, and no
+email was sent. It also rejects evidence containing credential-like fields. This
+mechanical evidence validation supplements—rather than replaces—the required interactive
+ChatGPT Work tests.
 
 ## Connect to ChatGPT Developer Mode
 
