@@ -199,13 +199,20 @@ Status: not started
 
 ### Phase D — Authorization and Audit Gate
 
-Status: required before enabling the broader Phase 5 admin foundation
+Status: immutable administrator authorization implemented in DEV; legacy workflow audit
+coverage remains incremental
 
-* Resolve the approved administrator UID or establish an `admin: true` custom claim.
-* Update Realtime Database, Storage, and backend authorization without relying solely on email comparison.
+* Completed: resolved the approved administrator UID and added optional reviewed
+  `admin: true` API claim support.
+* Completed: Realtime Database, Storage, and backend authorization no longer rely on
+  email comparison.
 * Keep browser authentication checks as user-interface behavior, not the security boundary.
-* Add append-only `audit_events` records with server-validated actor UID and timestamps.
-* Add emulator tests for anonymous, ordinary authenticated, approved administrator, and future crew access.
+* Completed for the controlled API and AI Review Center: append-only `audit_events`
+  records use a server-validated actor UID and timestamp. Legacy schedule/customer
+  mutations will move behind audited services incrementally.
+* Completed for current roles: emulator tests cover anonymous, ordinary authenticated,
+  same-email/wrong-UID, and approved-administrator access. Future crew access remains a
+  separate role-design phase.
 * Prepare an exact backend deployment plan and do not deploy it without Aaron approving the branch and commit.
 
 ### Phase E — Admin Customer and Service-Log Foundation

@@ -12,12 +12,26 @@ async function run() {
 
     try {
         const page = await browser.newPage();
+        const candidateSubmissions = [];
         page.setDefaultTimeout(5000);
         await page.setViewport({ width: 1440, height: 1000 });
         page.on('pageerror', error => console.error('Browser page error:', error.message));
         await page.setRequestInterception(true);
         page.on('request', request => {
-            if (request.url().endsWith('/discoverProspects')) {
+            if (request.url().includes('/api/v1/opportunity-candidates')) {
+                candidateSubmissions.push(JSON.parse(request.postData() || '{}'));
+                request.respond({
+                    status: 201,
+                    contentType: 'application/json',
+                    body: JSON.stringify({
+                        requestId: 'candidate-request',
+                        data: {
+                            opportunityId: `candidate-${candidateSubmissions.length}`,
+                            reviewStatus: 'pending_review'
+                        }
+                    })
+                });
+            } else if (request.url().endsWith('/discoverProspects')) {
                 if (request.method() === 'OPTIONS') {
                     request.respond({
                         status: 204,
@@ -269,12 +283,14 @@ async function run() {
             /Current vegetation-management vendor/
         );
         await page.click('[data-outreach-action="save-discovery"]');
-        await page.waitForFunction(() => window.__outreachUpdates.length === 1);
-        const discoveryUpdate = await page.evaluate(() => window.__outreachUpdates[0]);
-        assert.ok(Object.values(discoveryUpdate).some(value => (
-            value?.companyName === 'AI Discovered Solar'
-            && value?.verificationStatus === 'Needs review'
-        )));
+        await page.waitForFunction(() => (
+            document.querySelector('[data-outreach-action="save-discovery"]')
+                ?.textContent.includes('Submitted')
+        ));
+        assert.equal(candidateSubmissions.length, 1);
+        assert.equal(candidateSubmissions[0].candidateSource, 'outreach_api');
+        assert.equal(candidateSubmissions[0].company.name, 'AI Discovered Solar');
+        assert.equal(candidateSubmissions[0].aiResearch.model, 'test-model');
         await page.click('[data-close-ai-discovery]');
 
         await page.click('#addProspectBtn');
@@ -287,7 +303,8 @@ async function run() {
         await page.waitForFunction(() => (
             document.querySelector('.message.error')?.textContent.includes('already exists')
         ));
-        assert.equal(await page.evaluate(() => window.__outreachUpdates.length), 1);
+        assert.equal(candidateSubmissions.length, 1);
+        assert.equal(await page.evaluate(() => window.__outreachUpdates.length), 0);
         assert.equal(
             await page.$eval('#prospectModal', modal => modal.style.display),
             'block'
@@ -296,16 +313,13 @@ async function run() {
         await page.$eval('#prospectCompany', input => { input.value = 'Second Synthetic Solar'; });
         await page.$eval('#prospectWebsite', input => { input.value = 'https://second.example.org'; });
         await page.$eval('#prospectForm', form => form.requestSubmit());
-        await page.waitForFunction(() => window.__outreachUpdates.length === 2);
-
-        const createUpdate = await page.evaluate(() => window.__outreachUpdates[1]);
-        const prospectPath = Object.keys(createUpdate).find(path => path.startsWith('prospect_candidates/'));
-        const sourcePath = Object.keys(createUpdate).find(path => path.startsWith('prospect_sources/'));
-        assert.ok(prospectPath);
-        assert.ok(sourcePath);
-        assert.equal(createUpdate[prospectPath].verificationStatus, 'Needs review');
-        assert.equal(createUpdate[prospectPath].suppressed, false);
-        assert.equal(createUpdate[sourcePath].url, 'https://example.com/duplicate');
+        await page.waitForFunction(() => (
+            document.querySelector('#prospectModal').style.display === 'none'
+        ));
+        assert.equal(candidateSubmissions.length, 2);
+        assert.equal(candidateSubmissions[1].candidateSource, 'manual');
+        assert.equal(candidateSubmissions[1].company.name, 'Second Synthetic Solar');
+        assert.equal(candidateSubmissions[1].source.url, 'https://example.com/duplicate');
 
         await page.click('[data-outreach-action="draft"][data-prospect-id="prospect2"]');
         await page.$eval('#aiDraftForm', form => form.requestSubmit());
@@ -324,8 +338,8 @@ async function run() {
         await page.click('[data-close-ai-draft]');
 
         await page.click('[data-outreach-action="verify"][data-prospect-id="prospect1"]');
-        await page.waitForFunction(() => window.__outreachUpdates.length === 3);
-        const verifyUpdate = await page.evaluate(() => window.__outreachUpdates[2]);
+        await page.waitForFunction(() => window.__outreachUpdates.length === 1);
+        const verifyUpdate = await page.evaluate(() => window.__outreachUpdates[0]);
         assert.equal(
             verifyUpdate['prospect_candidates/prospect1/verificationStatus'],
             'Verified'
@@ -333,8 +347,8 @@ async function run() {
 
         page.once('dialog', dialog => dialog.accept());
         await page.click('[data-outreach-action="suppress"][data-prospect-id="prospect1"]');
-        await page.waitForFunction(() => window.__outreachUpdates.length === 4);
-        const suppressionUpdate = await page.evaluate(() => window.__outreachUpdates[3]);
+        await page.waitForFunction(() => window.__outreachUpdates.length === 2);
+        const suppressionUpdate = await page.evaluate(() => window.__outreachUpdates[1]);
         assert.equal(suppressionUpdate['prospect_candidates/prospect1/suppressed'], true);
         assert.ok(
             Object.keys(suppressionUpdate).some(path => path.startsWith('suppression_entries/'))

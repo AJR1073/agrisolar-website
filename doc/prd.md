@@ -1973,6 +1973,19 @@ source provenance, record the user or agent identity, append an audit event, and
 AI-created records as unreviewed until a human reviews them. A likely duplicate must be
 returned to the caller rather than silently creating another record.
 
+#### `submit_opportunity_candidate`
+
+Provide a purpose-specific candidate submission action for ChatGPT Work and the
+administrator Outreach module. Both must call the same organization-scoped backend
+business service rather than writing directly to Firestore or Realtime Database.
+
+Every candidate must enter the AI Review Center as `pending_review` with a source of
+`chatgpt_work`, `outreach_api`, `manual`, or `import`; cited source URL and evidence;
+AI model/confidence when applicable; a server-generated duplicate-check key; submitter
+identity; timestamps; and audit history. Pending or rejected candidates must not count
+in the active sales pipeline. Submission does not authorize email or any other external
+action.
+
 #### `create_task`
 
 Create an internal follow-up or operational task associated with an opportunity,
@@ -2069,6 +2082,28 @@ reject actions.
 The first MCP/API version must not send email automatically. It may draft an email,
 select a proposed recipient, suggest a subject, and recommend a follow-up date, but
 external sending remains a separate human-approved action.
+
+### Administrator AI Review Center
+
+Provide an administrator-only review center for AI-created opportunities and internal
+tasks. It must:
+
+* Clearly separate source-backed facts from AI-generated conclusions.
+* Show source links, model/agent provenance, confidence, review state, and linked audit
+  history without exposing credentials or raw access-token subjects.
+* Show active, revoked, and expired agent identities with only safe status, expiry,
+  authority, and capability information.
+* Allow the immutable approved administrator identity to approve or reject only records
+  in `pending_review` through organization-scoped backend services.
+* Require a reason when rejecting, retain rejected records, prevent a second decision,
+  and write the decision, approval record, audit event, and idempotency record together.
+* Keep direct browser writes to opportunities, tasks, identities, approvals, and audit
+  records denied.
+* Provide no email, publishing, contract, scheduling, invoicing, or payment action.
+
+Email address alone must never confer administrator access. Functions, Realtime
+Database, and Storage must use the approved immutable Firebase UID or a separately
+reviewed administrator custom claim.
 
 ### Audit and AI Provenance
 

@@ -5,6 +5,7 @@ node_modules/
 !.env.example
 .secret.local
 functions/.secret.local
+.mcp-e2e-evidence.json
 *.log
 .firebase/
 dist/

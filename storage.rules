@@ -4,7 +4,7 @@ service firebase.storage {
   match /b/{bucket}/o {
     function isApprovedAdmin() {
       return request.auth != null
-        && request.auth.token.email == 'aaronreifschneider@outlook.com';
+        && request.auth.uid == 'fWscNuWSoGdWmDIhyjneNqFU0r92';
     }
 
     match /quote-attachments/{submissionId}/{attachmentId} {
