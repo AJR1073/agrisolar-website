@@ -21,8 +21,9 @@ function httpsUrl(value, name) {
 }
 
 function normalizeIssuer(value) {
-    const url = httpsUrl(value, 'MCP_AUTH_ISSUER');
-    return url.href.replace(/\/$/, '');
+    const exactIssuer = String(value || '').trim();
+    httpsUrl(exactIssuer, 'MCP_AUTH_ISSUER');
+    return exactIssuer;
 }
 
 function scopeValues(payload) {

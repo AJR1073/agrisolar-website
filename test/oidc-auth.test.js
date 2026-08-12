@@ -80,6 +80,22 @@ async function run() {
         MCP_AUTH_JWKS_URL: 'https://identity.example/jwks.json'
     }), OidcConfigurationError);
 
+    const auth0Issuer = 'https://agrisolar-dev.us.auth0.com/';
+    const auth0Verifier = createOidcTokenVerifier({
+        issuer: auth0Issuer,
+        audience,
+        keySet,
+        requiredScope: 'agrisolar:mcp'
+    });
+    const auth0Token = await token({ issuer: auth0Issuer });
+    const auth0Verified = await auth0Verifier.verify(auth0Token);
+    assert.equal(auth0Verified.issuer, auth0Issuer);
+    assert.equal(oidcConfigurationFromEnvironment({
+        MCP_AUTH_ISSUER: auth0Issuer,
+        MCP_AUTH_AUDIENCE: audience,
+        MCP_AUTH_JWKS_URL: 'https://agrisolar-dev.us.auth0.com/.well-known/jwks.json'
+    }).issuer, auth0Issuer);
+
     console.log(
         'PASS: OIDC verifies signature, issuer, audience, expiry, scope, and agent identity claim'
     );

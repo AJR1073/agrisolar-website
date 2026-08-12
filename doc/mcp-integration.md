@@ -1,6 +1,7 @@
 # AgriSolar ChatGPT Work MCP Integration
 
-**Status:** DEV MCP protocol implemented; OAuth provider and ChatGPT connection pending
+**Status:** OAuth/ChatGPT connection milestone in progress; feature work frozen until
+the two required end-to-end tests pass
 **Endpoint:** `https://agrisolar-website.web.app/mcp`
 **Protected-resource metadata:**
 `https://agrisolar-website.web.app/.well-known/oauth-protected-resource`
@@ -92,6 +93,15 @@ Firebase email/password authentication by itself is not a compliant authorizatio
 server for this remote MCP connection. Never reuse the AgriSolar administrator password
 or Firebase owner token as the ChatGPT credential.
 
+For this milestone, use an Auth0 development tenant unless Aaron explicitly selects a
+different established provider. Auth0 is included in OpenAI's current authenticated MCP
+guidance and can provide discovery, API audience/scopes, signed JWT access tokens, and
+ChatGPT client registration. Do not implement an authorization server inside this
+repository.
+
+The Auth0 issuer must be copied exactly from its discovery document, including a trailing
+slash when present. The resource server verifies the JWT `iss` value exactly.
+
 ## DEV OAuth Values
 
 Configure these non-secret runtime values for the `mcp` Firebase function:
@@ -168,6 +178,33 @@ After selecting and configuring the provider:
    source `MCP`.
 10. Confirm duplicate and idempotent replays behave the same through REST and MCP.
 11. Confirm no email/send/raw-database tool appears.
+
+## Mandatory End-to-End Release Gate
+
+Do not build, merge, or deploy unrelated features until both tests below pass through the
+installed AgriSolar plugin in ChatGPT Work. Synthetic DEV records are required.
+
+### Test 1 — authenticated read
+
+Prompt ChatGPT Work to use AgriSolar to summarize the sales pipeline. Confirm it selects
+`get_sales_pipeline`, completes OAuth as the approved DEV agent, returns calculated DEV
+metrics, and writes a successful organization-scoped read audit event. Record the plugin
+connection ID, timestamp, request ID, agent ID, and audit-event ID.
+
+### Test 2 — confirmed candidate write and administrator decision
+
+Provide one synthetic, publicly cited candidate and ask ChatGPT Work to add it to
+AgriSolar. Confirm ChatGPT requests write approval, calls
+`submit_opportunity_candidate`, creates exactly one `pending_review` opportunity with
+`candidateSubmission.source: chatgpt_work`, and sends no email. In Admin → AI Review
+Center, verify the source/evidence and approve the record. Record the confirmation,
+request ID, opportunity ID, approval ID, audit-event IDs, and administrator UID. Remove
+or clearly label the synthetic record after evidence is captured using a reviewed,
+non-destructive process.
+
+The milestone is not complete if either test uses a direct database write, an owner
+credential as the agent, a locally forged token, or an MCP Inspector call in place of
+ChatGPT Work. Inspector remains a prerequisite diagnostic only.
 
 ## Connect to ChatGPT Developer Mode
 
