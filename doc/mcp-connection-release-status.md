@@ -1,26 +1,35 @@
 # MCP OAuth and ChatGPT Work Release Status
 
-**Gate status:** BLOCKED — Auth0 setup and both interactive ChatGPT Work tests are pending  
-**Firebase project:** `agrisolar-website` (DEV)  
-**Deployed application commit:** `00a1f7644b2253e66e04251f29c4f60411f90d9e`  
-**MCP revision deployment timestamp:** `2026-08-12T03:26:26.317236686Z`
-(`2026-08-11 10:26:26 PM CDT`)  
-**MCP revision:** `mcp-00003-qox`  
+**Gate status:** PASSED — OAuth, authenticated read, confirmed write, and administrator
+approval were verified end to end in DEV
+
+**Firebase project:** `agrisolar-website` (DEV)
+
+**Deployed application commit:** `2a6fb196451747fd5c31e5436472ce2030e50476`
+
+**MCP revision update timestamp:** `2026-08-12T04:02:58.101236174Z`
+(`2026-08-11 11:02:58 PM CDT`)
+
+**MCP deployment completed:** `2026-08-12T04:04:23.673248135Z`
+
+**MCP revision:** `mcp-00004-qap`
+
 **API revision:** `apiv1-00004-gox`
 
 ## Verified Deployment State
 
 * `https://agrisolar-website.web.app/admin/` returns HTTP `200`.
-* `https://agrisolar-website.web.app/mcp` returns HTTP `503` with
-  `MCP_AUTH_NOT_CONFIGURED`.
 * `https://agrisolar-website.web.app/.well-known/oauth-protected-resource` returns HTTP
-  `503` with `MCP_AUTH_NOT_CONFIGURED`.
-* This is the required fail-closed state. The endpoint must remain locked until all
-  required OAuth values are present and valid.
+  `200` with the Auth0 issuer and `agrisolar:mcp` scope.
+* An unauthenticated `POST https://agrisolar-website.web.app/mcp` returns HTTP `401` with
+  a `WWW-Authenticate` challenge pointing to the protected-resource metadata.
+* Authenticated requests require an exact active DEV mapping in `agent_identities`.
+* MCP initialization, tool discovery, the required read, the confirmed candidate write,
+  and administrator approval all passed without sending email.
 
-## Auth0 Setup Required From Aaron
+## Auth0 Configuration
 
-Create or connect an Auth0 **development** tenant, then configure one Auth0 API with:
+The Auth0 development tenant is configured as follows:
 
 | Auth0 field | Exact value or action |
 | --- | --- |
@@ -28,14 +37,15 @@ Create or connect an Auth0 **development** tenant, then configure one Auth0 API 
 | API identifier/audience | `https://agrisolar-website.web.app/mcp` |
 | Signing algorithm | `RS256` |
 | Permission/scope | `agrisolar:mcp` |
-| Issuer | Copy the exact `issuer` from the tenant's `/.well-known/openid-configuration`, including a trailing slash |
-| JWKS URL | Copy the exact `jwks_uri` from that discovery document |
-| Client registration | Enable Auth0's supported MCP/third-party CIMD or dynamic-client-registration path; if ChatGPT requests a pre-registered client, create it and copy its non-secret client ID |
-| Redirect URL | Copy the exact `https://chatgpt.com/connector/oauth/{callback_id}` shown by ChatGPT; never guess `{callback_id}` |
+| Issuer | `https://agrisolar-mcp-dev.us.auth0.com/` |
+| JWKS URL | `https://agrisolar-mcp-dev.us.auth0.com/.well-known/jwks.json` |
+| Resource Parameter Compatibility Profile | Enabled |
+| Client registration | Client ID Metadata Document (CIMD) enabled; DCR disabled |
+| ChatGPT connection ID | `plugin_asdk_app_6a7c00656bc4819181f3c09ee09f9d2c` |
 
-Aaron may provide the non-secret issuer, JWKS URL, registration method/client ID, and
-redirect URL. Do not send a client secret, access token, refresh token, password, private
-key, or administrator token through chat.
+The approved Auth0 subject is mapped to the active DEV identity
+`chatgpt-work-aaron-dev`. No OAuth client secret is stored by this repository or required
+by the MCP resource server.
 
 ## Firebase Runtime Configuration
 
@@ -44,8 +54,8 @@ The current MCP resource server requires these non-secret Firebase Functions var
 ```dotenv
 MCP_RESOURCE_URL=https://agrisolar-website.web.app/mcp
 MCP_AUTH_AUDIENCE=https://agrisolar-website.web.app/mcp
-MCP_AUTH_ISSUER=https://YOUR_AUTH0_DOMAIN/
-MCP_AUTH_JWKS_URL=https://YOUR_AUTH0_DOMAIN/.well-known/jwks.json
+MCP_AUTH_ISSUER=https://agrisolar-mcp-dev.us.auth0.com/
+MCP_AUTH_JWKS_URL=https://agrisolar-mcp-dev.us.auth0.com/.well-known/jwks.json
 MCP_AUTH_SCOPE=agrisolar:mcp
 ```
 
@@ -74,29 +84,38 @@ Do not run that example command for the current implementation because
 issues one for a pre-registered client, belongs only in the Auth0 and ChatGPT connection
 screens—not Firebase, GitHub, source code, release evidence, or chat.
 
-After the first approved Auth0 login, the exact Auth0 `sub` and issuer must be mapped to
-one active, DEV-only, server-controlled `agent_identities` record before MCP calls can be
-authorized. This record must not be created through a public/browser database write.
+The identity mapping was provisioned through an authenticated server-admin transaction,
+not a public/browser database write. Browser security rules continue to deny writes to
+the identity registry.
 
 ## Automated Release Gate
 
 The repository command below validates non-secret evidence from both required tests:
 
 ```bash
-cp doc/mcp-e2e-evidence.template.json .mcp-e2e-evidence.json
 npm run verify:mcp-release-gate
 ```
 
-The command is currently and intentionally **BLOCKED** because the ignored
-`.mcp-e2e-evidence.json` file does not exist. It can pass only after:
+The command returns **MCP RELEASE GATE: PASSED** with this verified evidence:
 
-1. The installed ChatGPT Work connection calls `get_sales_pipeline` and the request,
-   agent, organization, and read-audit IDs are recorded.
-2. The same connection requests confirmation and calls
-   `submit_opportunity_candidate` with a cited synthetic DEV candidate.
-3. The record appears once as `pending_review` with source `chatgpt_work`, sends no
-   email, and an administrator approves it in the AI Review Center.
-4. The opportunity, approval, administrator, request, and audit IDs are recorded.
+| Evidence | Identifier |
+| --- | --- |
+| ChatGPT connection | `plugin_asdk_app_6a7c00656bc4819181f3c09ee09f9d2c` |
+| Read request | `87a0bd1d-d561-4597-b8c3-f0c8ec497271` |
+| Read audit | `-OzoXSYSUUBx-1MIls_q` |
+| DEV agent | `chatgpt-work-aaron-dev` |
+| Confirmed-write request | `1215270c-53ff-4a80-a75f-f41e67ce886b` |
+| Synthetic opportunity | `-OzoaY13ewr0rpZYoP86` |
+| Submission audit | `-OzoaY13ewr0rpZYoP87` |
+| Administrator approval | `-OzocB9WH6kENgghL3ot` |
+| Approval audit | `-OzocB9WH6kENgghL3ou` |
+| Approval API request | `ad1ecab3-46c6-4b8d-b2fa-b4ca96dcc3e4` |
+| Approving administrator UID | `fWscNuWSoGdWmDIhyjneNqFU0r92` |
+
+The candidate was created exactly once as `pending_review`, then changed to `approved`
+through the AI Review Center at `2026-08-12T06:20:04.134Z`. Correlation found no related
+task, email, external communication, email event, email draft, or email-function
+invocation.
 
 The validator rejects evidence containing credential-like fields. It validates recorded
 evidence but does not replace the two interactive ChatGPT Work tests.
@@ -109,7 +128,15 @@ release-gate validation, AI boundaries, HTML/site structure, Firebase Database a
 Storage Rules, emulator smoke tests, attachments, scheduling, outreach, and the Admin
 Review Center.
 
-This milestone added only OAuth hardening, release-gate automation, tests, and
-documentation. It added no business feature, sent no email, imported no business data,
-and created no Firebase business or approval record. The synthetic E2E record has not
-been created because Auth0 and ChatGPT Work are not connected.
+`npm run verify:mcp-release-gate` passed after the authenticated read, confirmed write,
+and administrator decision were correlated with Firebase request and audit records.
+
+This milestone added OAuth hardening, release-gate automation, tests, and documentation;
+it added no unrelated business feature. The release test intentionally created one
+synthetic DEV opportunity and one associated approval record. It created no task, sent
+no email or external communication, and imported no business data.
+
+## Milestone Disposition
+
+The OAuth and ChatGPT Work connection milestone is complete and stopped. Further product
+feature work requires a new, separately scoped request.
