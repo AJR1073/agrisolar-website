@@ -14,6 +14,7 @@ const publicPages = [
     'service-area/index.html',
     'services/index.html',
     'services/commercial-mowing/index.html',
+    'services/solar-grazing/index.html',
     'services/vegetation-herbicide-management/index.html',
     'services/native-planting/index.html',
     'services/erosion-control/index.html',
