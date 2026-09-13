@@ -138,16 +138,27 @@ document.addEventListener('DOMContentLoaded', () => {
             const formData = new FormData(form);
             const attachmentInput = form.querySelector('.attachment-input');
             const attachmentFiles = Array.from(attachmentInput?.files || []);
+            const fieldValue = (name) => String(formData.get(name) || '').trim();
+            const projectContext = [
+                fieldValue('facilityType') && `Facility type: ${fieldValue('facilityType')}`,
+                fieldValue('serviceFrequency') && `Service frequency: ${fieldValue('serviceFrequency')}`,
+                fieldValue('vegetationCondition') && `Vegetation condition: ${fieldValue('vegetationCondition')}`
+            ].filter(Boolean);
+            const message = [
+                ...projectContext,
+                projectContext.length ? '' : null,
+                fieldValue('message')
+            ].filter((value) => value !== null).join('\n').slice(0, 2000);
             const payload = {
-                name: formData.get('name').trim(),
-                company: formData.get('company').trim(),
-                email: formData.get('email').trim(),
-                phone: formData.get('phone').trim(),
-                siteLocation: formData.get('siteLocation').trim(),
-                acreage: formData.get('acreage').trim(),
-                service: formData.get('service').trim(),
-                schedule: formData.get('schedule').trim(),
-                message: formData.get('message').trim(),
+                name: fieldValue('name'),
+                company: fieldValue('company'),
+                email: fieldValue('email'),
+                phone: fieldValue('phone'),
+                siteLocation: fieldValue('siteLocation'),
+                acreage: fieldValue('acreage'),
+                service: fieldValue('service'),
+                schedule: fieldValue('schedule'),
+                message,
                 timestamp:
                     typeof firebase !== 'undefined' && firebase.database
                         ? firebase.database.ServerValue.TIMESTAMP

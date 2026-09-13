@@ -1,57 +1,56 @@
-# AgriSolar Solutions Website
+# AgriSolar LLC website and operations app
 
-A modern, responsive website for an agricultural solar energy company.
+This repository contains the public AgriSolar LLC marketing website and its authenticated Firebase administration tools.
 
-## Project Structure
+## Environments
 
-```
-agrisolar-website/
-├── index.html
-├── css/
-│   └── style.css
-├── js/
-│   └── main.js
-└── images/
-```
+- Development site: <https://agrisolar-website.web.app/>
+- Production domain: <https://agrisolarllc.com/>
 
-## Features
+The Firebase site is the development and review environment. Changes to the production domain, Namecheap, DNS, cPanel, or business email require separate owner approval.
 
-- Responsive design that works on all devices
-- Modern and clean UI
-- Smooth scrolling navigation
-- Mobile-friendly navigation menu
-- Contact form
-- Social media integration
+Pull requests create temporary Firebase Hosting previews. Merges to `main` update the Firebase development site through GitHub Actions.
 
-## Setup
+## Public website
 
-1. Clone this repository
-2. Add your images to the `images/` directory:
-   - hero-bg.jpg (hero section background)
-   - solar-installation.jpg
-   - energy-consulting.jpg
-   - maintenance.jpg
+- Commercial solar-farm mowing and vegetation management
+- Service details
+- 75-mile service area from Belleville, Illinois
+- Safety and equipment planning
+- Project-planning information
+- Quote and site-assessment form with optional attachments
+- FAQ, privacy policy, sitemap, robots file, and custom 404 page
 
-## Required Images
+## Administration
 
-You'll need to add the following images to the `images` directory:
-- hero-bg.jpg: A high-resolution image showing solar panels in an agricultural setting
-- solar-installation.jpg: Image showing solar panel installation
-- energy-consulting.jpg: Image showing energy consultation
-- maintenance.jpg: Image showing maintenance work
+The `/admin/` area includes reviewed workflows for contacts, scheduling, outreach, AI cost tracking, and the business API foundation. Public submissions and private administrative records are protected by Firebase Realtime Database and Cloud Storage rules.
 
-## Development
-
-To run this website locally, you can use any local server. For example, using Python:
+## Local development
 
 ```bash
-python -m http.server 8000
+npm ci
+python3 -m http.server 8000
 ```
 
-Then visit `http://localhost:8000` in your web browser.
+Open <http://localhost:8000/>.
 
-## Customization
+For the Firebase-hosted build:
 
-- Colors can be modified in the `:root` section of `css/style.css`
-- Contact form submission logic can be added in `js/main.js`
-- Social media links can be updated in the footer section of `index.html`
+```bash
+npm run build:hosting
+```
+
+## Validation
+
+```bash
+npm run test:html
+npm run test:structure
+npm run test:syntax
+npm run test:business-api
+```
+
+Firebase rule tests require the Firebase emulators and Java 21 or newer.
+
+## Content controls
+
+Do not publish customer names, project claims, testimonials, insurance statements, equipment ownership, certifications, or photographs without verification and approval. Review `CONTENT_REVIEW_REQUIRED.md` before promoting a preview to the development site or production.

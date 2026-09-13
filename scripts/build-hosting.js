@@ -14,6 +14,7 @@ const allowedDirectories = [
     'js',
     'privacy',
     'projects',
+    'safety-equipment',
     'service-area',
     'services'
 ];
