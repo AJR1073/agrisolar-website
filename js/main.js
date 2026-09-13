@@ -7,6 +7,46 @@ document.addEventListener('DOMContentLoaded', () => {
         element.textContent = new Date().getFullYear();
     });
 
+    const heroVideo = document.querySelector('.commercial-hero__video');
+    if (heroVideo) {
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+        let restartTimer;
+
+        function shouldPlayHeroVideo() {
+            return !reducedMotion.matches && document.visibilityState === 'visible';
+        }
+
+        function playHeroVideo() {
+            window.clearTimeout(restartTimer);
+            if (!shouldPlayHeroVideo()) {
+                heroVideo.pause();
+                return;
+            }
+
+            const playback = heroVideo.play();
+            if (playback) {
+                playback.catch(() => {
+                    // The poster remains visible if a browser blocks autoplay.
+                });
+            }
+        }
+
+        heroVideo.addEventListener('canplay', playHeroVideo);
+        heroVideo.addEventListener('pause', () => {
+            if (shouldPlayHeroVideo()) {
+                restartTimer = window.setTimeout(playHeroVideo, 150);
+            }
+        });
+        heroVideo.addEventListener('ended', () => {
+            heroVideo.currentTime = 0;
+            playHeroVideo();
+        });
+        document.addEventListener('visibilitychange', playHeroVideo);
+        window.addEventListener('pageshow', playHeroVideo);
+        reducedMotion.addEventListener('change', playHeroVideo);
+        playHeroVideo();
+    }
+
     if (!menuToggle || !navLinks) {
         return;
     }
@@ -54,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.addEventListener('resize', () => {
-        if (window.innerWidth > 768) {
+        if (window.innerWidth > 1180) {
             setMenu(false);
         }
     });
