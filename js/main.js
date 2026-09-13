@@ -9,11 +9,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const heroVideo = document.querySelector('.commercial-hero__video');
     if (heroVideo) {
+        const heroMedia = heroVideo.closest('.commercial-hero__media');
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
         let restartTimer;
+        let playbackMonitor;
+        let lastPlaybackTime = -1;
+        let stalledChecks = 0;
+        let usingFallback = false;
 
         function shouldPlayHeroVideo() {
-            return !reducedMotion.matches && document.visibilityState === 'visible';
+            return !usingFallback && !reducedMotion.matches && document.visibilityState === 'visible';
+        }
+
+        function showAnimatedFallback() {
+            if (usingFallback || reducedMotion.matches) {
+                return;
+            }
+
+            usingFallback = true;
+            window.clearInterval(playbackMonitor);
+            heroMedia?.classList.add('is-video-stalled');
+            heroVideo.pause();
         }
 
         function playHeroVideo() {
@@ -25,9 +41,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const playback = heroVideo.play();
             if (playback) {
-                playback.catch(() => {
-                    // The poster remains visible if a browser blocks autoplay.
-                });
+                playback.catch(showAnimatedFallback);
+            }
+        }
+
+        function checkHeroPlayback() {
+            if (!shouldPlayHeroVideo() || heroVideo.readyState < 2 || heroVideo.paused) {
+                lastPlaybackTime = heroVideo.currentTime;
+                stalledChecks = 0;
+                return;
+            }
+
+            const playbackAdvanced = Math.abs(heroVideo.currentTime - lastPlaybackTime) > 0.04;
+            stalledChecks = playbackAdvanced ? 0 : stalledChecks + 1;
+            lastPlaybackTime = heroVideo.currentTime;
+
+            if (stalledChecks >= 3) {
+                showAnimatedFallback();
             }
         }
 
@@ -44,6 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('visibilitychange', playHeroVideo);
         window.addEventListener('pageshow', playHeroVideo);
         reducedMotion.addEventListener('change', playHeroVideo);
+        playbackMonitor = window.setInterval(checkHeroPlayback, 700);
         playHeroVideo();
     }
 
