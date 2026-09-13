@@ -10,6 +10,7 @@ const publicPages = [
     'faq/index.html',
     'privacy/index.html',
     'projects/index.html',
+    'safety-equipment/index.html',
     'service-area/index.html',
     'services/index.html',
     'services/commercial-mowing/index.html',
