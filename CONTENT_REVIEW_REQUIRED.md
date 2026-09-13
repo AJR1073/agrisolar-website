@@ -5,6 +5,7 @@ The development site deliberately avoids publishing the following until the owne
 ## Projects and photographs
 
 - Worden site: customer/public project name, exact location wording, acreage, work dates, scope, crew, equipment, results, and permission to publish.
+- Four owner-supplied September 5 photographs are included on the development Projects page with identifying details withheld. Confirm approval before promoting them to production.
 - Identify which repository photographs are owned by AgriSolar and which depict completed AgriSolar work.
 - Supply approved before-and-after captions and image dates.
 
