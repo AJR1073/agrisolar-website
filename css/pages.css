@@ -14,8 +14,8 @@
     background: #123d2b;
 }
 
-.commercial-hero__media { min-height: 650px; overflow: hidden; }
-.commercial-hero__media img { width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.commercial-hero__media { min-height: 650px; overflow: hidden; background: url('../images/about-hero.webp') center / cover; }
+.commercial-hero__video { display: block; width: 100%; height: 100%; min-height: 650px; object-fit: cover; object-position: center; }
 .commercial-hero__content { display: flex; padding: clamp(3rem, 6vw, 6.5rem); flex-direction: column; justify-content: center; color: #fff; }
 .eyebrow { margin-bottom: 1rem; color: #a8dfb9; font-family: var(--heading-font); font-size: 0.82rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
 .eyebrow--green { color: var(--action-color) !important; }
@@ -38,6 +38,17 @@
 .service-column__icon { display: grid; width: 54px; height: 54px; margin-bottom: 1.5rem; border-radius: 50%; background: #dff1e5; color: var(--action-color); place-items: center; font-size: 1.4rem; }
 .service-column h3 { margin-top: 0; color: #123d2b; font-size: clamp(1.5rem, 3vw, 2.1rem); }
 
+.grazing-callout { display: grid; margin-top: 1.5rem; padding: clamp(1.5rem, 4vw, 2.5rem); grid-template-columns: auto minmax(0, 1fr) auto; gap: 1.5rem; align-items: center; border: 1px solid #b9d8c4; border-radius: 16px; background: #f4faf6; }
+.grazing-callout__icon { display: grid; width: 60px; height: 60px; border-radius: 50%; background: #dff1e5; color: var(--action-color); place-items: center; font-size: 1.5rem; }
+.grazing-callout .eyebrow { margin-bottom: 0.4rem; }
+.grazing-callout h3 { margin: 0 0 0.45rem; color: #123d2b; font-size: clamp(1.4rem, 3vw, 2rem); }
+.grazing-callout p:last-child { margin: 0; }
+.grazing-callout .btn { white-space: nowrap; }
+
+.grazing-fit { display: grid; margin: 1.5rem 0 0; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.85rem 1.5rem; }
+.grazing-fit li { padding: 0.9rem 1rem; border-left: 4px solid var(--action-color); background: #f2f7f4; list-style: none; }
+.source-note { padding: 1rem 1.25rem; border-radius: 8px; background: #eef5f0; font-size: 0.9rem; }
+
 .site-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); background: #123d2b; }
 .site-details__image { min-height: 620px; }
 .site-details__image img { width: 100%; height: 100%; object-fit: cover; }
@@ -58,6 +69,18 @@
 .cta-panel--commercial { background: #0d2f21; }
 .cta-panel--commercial h2 { font-size: clamp(2rem, 5vw, 3.6rem); }
 
+.project-results { padding: clamp(4rem, 7vw, 6.5rem) 0; background: #eef5f0; }
+.project-comparisons { display: grid; margin-top: 2.5rem; gap: 2rem; }
+.project-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: hidden; border: 1px solid #d6e4da; border-radius: 16px; background: #fff; box-shadow: 0 12px 35px rgba(18, 61, 43, 0.09); }
+.project-comparison figure { min-width: 0; margin: 0; padding: 1rem; }
+.project-comparison figure + figure { border-left: 1px solid #d6e4da; }
+.project-photo { position: relative; overflow: hidden; border-radius: 10px; aspect-ratio: 4 / 3; background: #d8e4da; }
+.project-photo img { width: 100%; height: 100%; object-fit: cover; }
+.project-photo span { position: absolute; top: 0.75rem; left: 0.75rem; padding: 0.45rem 0.85rem; border-radius: 999px; background: rgba(13, 47, 33, 0.92); color: #fff; font-family: var(--heading-font); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.project-comparison figcaption { padding: 0.9rem 0.25rem 0.25rem; color: #46534a; font-size: 0.95rem; }
+.project-privacy-note { display: flex; margin: 1.5rem 0 0; gap: 0.6rem; align-items: center; color: #526158; font-size: 0.9rem; }
+.project-privacy-note i { color: var(--action-color); }
+
 @media (max-width: 1100px) {
     .commercial-hero { grid-template-columns: 1fr 1fr; }
     .nav-links { gap: 0.05rem; }
@@ -71,15 +94,23 @@
     .commercial-hero__content { grid-row: 1; }
     .process-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .commercial-audience .container { align-items: flex-start; flex-direction: column; gap: 0.65rem; }
+    .grazing-callout { grid-template-columns: auto minmax(0, 1fr); }
+    .grazing-callout .btn { grid-column: 2; justify-self: start; }
 }
 
 @media (max-width: 768px) {
     .commercial-hero { margin-top: 72px; }
     .commercial-hero__content { padding: 3.5rem 1.5rem; }
     .commercial-hero__media, .site-details__image { min-height: 300px; }
+    .commercial-hero__video { min-height: 300px; }
     .commercial-audience ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.55rem 1.25rem; }
     .process-grid { grid-template-columns: 1fr; }
     .site-facts div { grid-template-columns: 1fr; gap: 0.25rem; }
+    .project-comparison { grid-template-columns: 1fr; }
+    .project-comparison figure + figure { border-top: 1px solid #d6e4da; border-left: 0; }
+    .grazing-callout { grid-template-columns: 1fr; }
+    .grazing-callout .btn { grid-column: auto; justify-self: stretch; white-space: normal; }
+    .grazing-fit { grid-template-columns: 1fr; padding: 0; }
 }
 
 @media (max-width: 480px) {
@@ -510,6 +541,51 @@ textarea:focus-visible {
     }
 }
 
+@media (max-width: 1180px) {
+    .menu-toggle {
+        display: block;
+        position: relative;
+        z-index: 1002;
+        padding: 0.6rem;
+    }
+
+    .nav-links {
+        position: absolute;
+        inset: 100% 0 auto auto;
+        z-index: 1001;
+        display: flex;
+        width: min(100%, 420px);
+        min-height: calc(100vh - 80px);
+        padding: 2rem 1.5rem;
+        flex-direction: column;
+        gap: 0.4rem;
+        align-items: stretch;
+        background: #fff;
+        box-shadow: -8px 0 20px rgba(0, 0, 0, 0.12);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateX(100%);
+        transition: 0.25s ease;
+    }
+
+    .nav-links.active {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(0);
+    }
+
+    .nav-links a {
+        width: 100%;
+        padding: 0.8rem 1rem;
+        font-size: 1.1rem;
+        text-align: center;
+    }
+
+    body.menu-open {
+        overflow: hidden;
+    }
+}
+
 @media (max-width: 768px) {
     .navbar .container {
         min-height: 72px;
@@ -606,6 +682,10 @@ textarea:focus-visible {
     }
 
     .hero-video {
+        display: none;
+    }
+
+    .commercial-hero__video {
         display: none;
     }
 
