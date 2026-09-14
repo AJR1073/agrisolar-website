@@ -7,75 +7,60 @@ document.addEventListener('DOMContentLoaded', () => {
         element.textContent = new Date().getFullYear();
     });
 
-    const heroVideo = document.querySelector('.commercial-hero__video');
-    if (heroVideo) {
-        const heroMedia = heroVideo.closest('.commercial-hero__media');
+    const heroFlyover = document.querySelector('[data-flyover]');
+    if (heroFlyover) {
+        const slides = Array.from(heroFlyover.querySelectorAll('.commercial-hero__slide'));
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-        let restartTimer;
-        let playbackMonitor;
-        let lastPlaybackTime = -1;
-        let stalledChecks = 0;
-        let usingFallback = false;
+        const slideDuration = 7600;
+        let currentSlide = Math.max(0, slides.findIndex((slide) => slide.classList.contains('is-active')));
+        let slideTimer;
 
-        function shouldPlayHeroVideo() {
-            return !usingFallback && !reducedMotion.matches && document.visibilityState === 'visible';
+        function showSlide(index) {
+            slides.forEach((slide, slideIndex) => {
+                slide.classList.toggle('is-active', slideIndex === index);
+            });
+            currentSlide = index;
         }
 
-        function showAnimatedFallback() {
-            if (usingFallback || reducedMotion.matches) {
+        function stopFlyover() {
+            window.clearInterval(slideTimer);
+            slideTimer = undefined;
+        }
+
+        function startFlyover() {
+            stopFlyover();
+
+            if (slides.length < 2 || reducedMotion.matches || document.visibilityState !== 'visible') {
                 return;
             }
 
-            usingFallback = true;
-            window.clearInterval(playbackMonitor);
-            heroMedia?.classList.add('is-video-stalled');
-            heroVideo.pause();
+            slideTimer = window.setInterval(() => {
+                showSlide((currentSlide + 1) % slides.length);
+            }, slideDuration);
         }
 
-        function playHeroVideo() {
-            window.clearTimeout(restartTimer);
-            if (!shouldPlayHeroVideo()) {
-                heroVideo.pause();
-                return;
-            }
-
-            const playback = heroVideo.play();
-            if (playback) {
-                playback.catch(showAnimatedFallback);
-            }
+        if (slides.length) {
+            showSlide(currentSlide);
+            startFlyover();
         }
 
-        function checkHeroPlayback() {
-            if (!shouldPlayHeroVideo() || heroVideo.readyState < 2 || heroVideo.paused) {
-                lastPlaybackTime = heroVideo.currentTime;
-                stalledChecks = 0;
-                return;
-            }
-
-            const playbackAdvanced = Math.abs(heroVideo.currentTime - lastPlaybackTime) > 0.04;
-            stalledChecks = playbackAdvanced ? 0 : stalledChecks + 1;
-            lastPlaybackTime = heroVideo.currentTime;
-
-            if (stalledChecks >= 3) {
-                showAnimatedFallback();
-            }
-        }
-
-        heroVideo.addEventListener('canplay', playHeroVideo);
-        heroVideo.addEventListener('pause', () => {
-            if (shouldPlayHeroVideo()) {
-                restartTimer = window.setTimeout(playHeroVideo, 150);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                startFlyover();
+            } else {
+                stopFlyover();
             }
         });
-        heroVideo.addEventListener('ended', () => {
-            heroVideo.currentTime = 0;
-            playHeroVideo();
+
+        window.addEventListener('pageshow', startFlyover);
+        reducedMotion.addEventListener('change', () => {
+            if (reducedMotion.matches) {
+                stopFlyover();
+                showSlide(0);
+            } else {
+                startFlyover();
+            }
         });
-        document.addEventListener('visibilitychange', playHeroVideo);
-        window.addEventListener('pageshow', playHeroVideo);
-        reducedMotion.addEventListener('change', playHeroVideo);
-        playbackMonitor = window.setInterval(checkHeroPlayback, 700);
-        playHeroVideo();
     }
 
     if (!menuToggle || !navLinks) {
