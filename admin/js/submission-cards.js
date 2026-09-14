@@ -192,12 +192,19 @@
         root.querySelectorAll('.submission-item').forEach(enhanceCard);
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    function init() {
         const list = document.getElementById('submissionsList');
-        if (!list) return;
+        if (!list || list.dataset.leadObserverAttached === 'true') return;
 
+        list.dataset.leadObserverAttached = 'true';
         enhanceAll(list);
         const observer = new MutationObserver(() => enhanceAll(list));
         observer.observe(list, { childList: true, subtree: false });
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init, { once: true });
+    } else {
+        init();
+    }
 }());
