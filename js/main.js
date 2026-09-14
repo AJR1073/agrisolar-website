@@ -7,6 +7,48 @@ document.addEventListener('DOMContentLoaded', () => {
         element.textContent = new Date().getFullYear();
     });
 
+    function replaceServiceAreaLanguage(value) {
+        if (!value || (!value.includes('75 miles') && !value.includes('75-mile') && !value.includes('Maximum service radius') && !value.includes('The radius keeps travel'))) {
+            return value;
+        }
+
+        if (value.trim() === '75 miles') {
+            return value.replace('75 miles', 'A few hours’ drive');
+        }
+
+        return value
+            .replaceAll('within a 75-mile radius of Belleville, Illinois', 'within a few hours’ drive of Belleville, Illinois')
+            .replaceAll('within 75 miles of Belleville, Illinois', 'within a few hours’ drive of Belleville, Illinois')
+            .replaceAll('within 75 miles of Belleville', 'within a few hours’ drive of Belleville')
+            .replaceAll('75-mile maximum radius', 'A few hours’ drive')
+            .replaceAll('Maximum service radius from Belleville, Illinois', 'Typical service range from Belleville, Illinois')
+            .replaceAll('The radius keeps travel', 'This service range keeps travel')
+            .replaceAll('75 miles', 'a few hours’ drive');
+    }
+
+    const textWalker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    let textNode = textWalker.nextNode();
+    while (textNode) {
+        const parentTag = textNode.parentElement?.tagName;
+        if (parentTag !== 'SCRIPT' && parentTag !== 'STYLE') {
+            const updated = replaceServiceAreaLanguage(textNode.nodeValue);
+            if (updated !== textNode.nodeValue) {
+                textNode.nodeValue = updated;
+            }
+        }
+        textNode = textWalker.nextNode();
+    }
+
+    document
+        .querySelectorAll('meta[name="description"], meta[property="og:description"]')
+        .forEach((meta) => {
+            meta.setAttribute('content', replaceServiceAreaLanguage(meta.getAttribute('content') || ''));
+        });
+
+    document.querySelectorAll('script[type="application/ld+json"]').forEach((script) => {
+        script.textContent = replaceServiceAreaLanguage(script.textContent || '');
+    });
+
     const heroFlyover = document.querySelector('[data-flyover]');
     if (heroFlyover) {
         const slides = Array.from(heroFlyover.querySelectorAll('.commercial-hero__slide'));
