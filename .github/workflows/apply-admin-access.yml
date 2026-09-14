@@ -29,6 +29,18 @@ jobs:
       - name: Apply administrator allowlist migration
         run: node scripts/apply-admin-access.cjs
 
+      - name: Commit administrator access changes
+        run: |
+          if git diff --quiet; then
+            echo "No repository changes to commit."
+          else
+            git config user.name "AgriSolar Admin Access Bot"
+            git config user.email "167011114+AJR1073@users.noreply.github.com"
+            git add database.rules.json storage.rules functions/index.js functions/business-api.js
+            git commit -m "Grant Ryan full admin access"
+            git push origin HEAD:main
+          fi
+
       - name: Install Cloud Functions dependencies
         run: npm ci --prefix functions
 
@@ -69,21 +81,14 @@ jobs:
           });
           NODE
 
-      - name: Deploy database, storage, and admin functions
+      - name: Deploy database and storage rules
         run: |
           npx --yes firebase-tools@15.30.0 deploy \
             --project agrisolar-website \
-            --only database,storage,functions:sendReply,functions:discoverProspects,functions:draftOutreachEmail,functions:apiV1 \
+            --only database,storage \
             --non-interactive
 
-      - name: Commit administrator access changes
+      - name: Functions deployment note
         run: |
-          if git diff --quiet; then
-            echo "No repository changes to commit."
-            exit 0
-          fi
-          git config user.name "AgriSolar Admin Access Bot"
-          git config user.email "167011114+AJR1073@users.noreply.github.com"
-          git add database.rules.json storage.rules functions/index.js functions/business-api.js
-          git commit -m "Grant Ryan full admin access"
-          git push origin HEAD:main
+          echo "Function authorization changes are committed to main."
+          echo "Deploy sendReply, discoverProspects, draftOutreachEmail, and apiV1 from an account with Service Account User permission."
