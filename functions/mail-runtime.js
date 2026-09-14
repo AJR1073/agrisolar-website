@@ -8,7 +8,9 @@
 
 const nodemailer = require('nodemailer');
 
-const SMTP_HOST = 'mail.agrisolarllc.com';
+// Namecheap recommends using the shared-hosting server hostname for SMTP,
+// especially when the website DNS points somewhere other than the mail server.
+const SMTP_HOST = 'server265.web-hosting.com';
 const SMTP_SENDER = 'info@agrisolarllc.com';
 const WEBSITE_INQUIRY_RECIPIENTS = [
     'aaron@agrisolarllc.com',
