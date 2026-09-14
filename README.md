@@ -1,56 +1,53 @@
-# AgriSolar LLC website and operations app
+# AgriSolar LLC Website
 
-This repository contains the public AgriSolar LLC marketing website and its authenticated Firebase administration tools.
-
-## Environments
-
-- Development site: <https://agrisolar-website.web.app/>
-- Production domain: <https://agrisolarllc.com/>
-
-The Firebase site is the development and review environment. Changes to the production domain, Namecheap, DNS, cPanel, or business email require separate owner approval.
-
-Pull requests create temporary Firebase Hosting previews. Merges to `main` update the Firebase development site through GitHub Actions.
-
-## Public website
-
-- Commercial solar-farm mowing and vegetation management
-- Service details
-- 75-mile service area from Belleville, Illinois
-- Safety and equipment planning
-- Project-planning information
-- Quote and site-assessment form with optional attachments
-- FAQ, privacy policy, sitemap, robots file, and custom 404 page
-
-## Administration
-
-The `/admin/` area includes reviewed workflows for contacts, scheduling, outreach, AI cost tracking, and the business API foundation. Public submissions and private administrative records are protected by Firebase Realtime Database and Cloud Storage rules.
+AgriSolar's public website and Firebase-backed admin tools for solar-site vegetation management, scheduling, outreach, and quote intake.
 
 ## Local development
 
+Install dependencies with:
+
 ```bash
 npm ci
-python3 -m http.server 8000
+npm ci --prefix functions
 ```
 
-Open <http://localhost:8000/>.
+The Firebase project used for the development site is `agrisolar-website`.
 
-For the Firebase-hosted build:
+## Codex-assisted deployment
+
+This repository includes local deployment automation intended for Codex CLI or direct terminal use.
+
+Full development deploy:
 
 ```bash
-npm run build:hosting
+./scripts/deploy-dev.sh
 ```
 
-## Validation
+Cloud Functions only:
 
 ```bash
-npm run test:html
-npm run test:structure
-npm run test:syntax
-npm run test:business-api
+./scripts/deploy-functions.sh
 ```
 
-Firebase rule tests require the Firebase emulators and Java 21 or newer.
+Verify the current Firebase deployment without changing anything:
 
-## Content controls
+```bash
+./scripts/check-deployment.sh
+```
 
-Do not publish customer names, project claims, testimonials, insurance statements, equipment ownership, certifications, or photographs without verification and approval. Review `CONTENT_REVIEW_REQUIRED.md` before promoting a preview to the development site or production.
+The deployment scripts refuse to discard local changes or deploy an unexpected Firebase project. See `AGENTS.md` for Codex operating and safety rules.
+
+## Firebase development URLs
+
+- Public site: https://agrisolar-website.web.app/
+- Admin: https://agrisolar-website.web.app/admin/
+
+## Tests
+
+Run the core test suite with:
+
+```bash
+npm test
+```
+
+Additional focused tests are available through the scripts in `package.json`.
