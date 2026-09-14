@@ -4,6 +4,18 @@ let database;
 let functions;
 let storage;
 
+(function loadLeadCardAssets() {
+    const stylesheet = document.createElement('link');
+    stylesheet.rel = 'stylesheet';
+    stylesheet.href = 'css/submissions.css?v=20260914-lead-cards';
+    document.head.appendChild(stylesheet);
+
+    const script = document.createElement('script');
+    script.src = 'js/submission-cards.js?v=20260914-lead-cards';
+    script.defer = true;
+    document.head.appendChild(script);
+})();
+
 function escapeHtml(value) {
     return String(value ?? '')
         .replaceAll('&', '&amp;')
@@ -190,6 +202,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const replyAttachmentsGroup = document.getElementById('replyAttachmentsGroup');
     const replyAttachments = document.getElementById('replyAttachments');
     let submissionsCache = {};
+
+    // Keep the admin UI aligned with the live Firebase sender.
+    document.querySelectorAll('.reply-field').forEach((field) => {
+        if (field.textContent.trim() === 'aaron@agrisolarllc.com') {
+            field.textContent = 'info@agrisolarllc.com';
+        }
+    });
 
     // Auth state observer
     auth.onAuthStateChanged(async (user) => {
