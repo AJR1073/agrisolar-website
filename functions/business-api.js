@@ -335,7 +335,10 @@ function createBusinessApiHandler(options) {
     const admin = options.admin;
     const organizationId = options.organizationId || DEFAULT_ORGANIZATION_ID;
     const environment = options.environment || DEFAULT_ENVIRONMENT;
-    const administratorEmail = options.administratorEmail;
+    const administratorEmails = new Set([
+        ...(Array.isArray(options.administratorEmails) ? options.administratorEmails : []),
+        options.administratorEmail
+    ].filter(Boolean));
     const now = options.now || Date.now;
     const database = admin.database();
 
@@ -355,7 +358,7 @@ function createBusinessApiHandler(options) {
             throw new ApiError('UNAUTHORIZED', 'Authentication is invalid or expired.', 401);
         }
 
-        if (administratorEmail && token.email === administratorEmail) {
+        if (administratorEmails.has(token.email)) {
             return {
                 actorType: 'USER',
                 actorId: token.uid,
