@@ -15,8 +15,27 @@ document.addEventListener('DOMContentLoaded', () => {
         if (globalThis.crypto?.randomUUID) {
             return globalThis.crypto.randomUUID();
         }
-
         return `${Date.now()}-${Math.random().toString(36).slice(2, 14)}`;
+    }
+
+    function isMissing(value) {
+        const normalized = String(value || '').trim();
+        return !normalized || /^(not provided|none|n\/a|na|unknown|don't know|dont know)$/i.test(normalized);
+    }
+
+    function qualificationFor(values) {
+        const missing = [];
+        if (isMissing(values.company)) missing.push('company');
+        if (isMissing(values.phone)) missing.push('phone');
+        if (isMissing(values.siteLocation) || /^test only$/i.test(values.siteLocation)) {
+            missing.push('usable site location');
+        }
+        if (isMissing(values.acreage)) missing.push('acreage');
+        if (isMissing(values.schedule)) missing.push('desired schedule');
+        return {
+            status: missing.length ? 'needs_qualification' : 'ready_for_review',
+            missing
+        };
     }
 
     forms.forEach((form) => {
@@ -38,9 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
         function setFieldError(field, message) {
             const error = form.querySelector(`#${field.id}-error`);
             field.setAttribute('aria-invalid', String(Boolean(message)));
-            if (error) {
-                error.textContent = message;
-            }
+            if (error) error.textContent = message;
         }
 
         function validateField(field) {
@@ -53,10 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     message = `Choose no more than ${maxAttachmentCount} files.`;
                 } else if (files.some((file) => file.size <= 0 || file.size > maxAttachmentSize)) {
                     message = 'Each attachment must be larger than 0 bytes and no more than 5 MB.';
-                } else if (
-                    files.reduce((total, file) => total + file.size, 0)
-                    > maxTotalAttachmentSize
-                ) {
+                } else if (files.reduce((total, file) => total + file.size, 0) > maxTotalAttachmentSize) {
                     message = 'Attachments must total no more than 15 MB.';
                 } else if (files.some((file) => !allowedAttachmentTypes.has(file.type))) {
                     message = 'Attachments must be PDF, JPG, PNG, or WebP files.';
@@ -77,20 +91,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         async function uploadAttachments(submissionId, files) {
             const attachments = [];
-
             for (const [index, file] of files.entries()) {
                 setStatus(`Uploading attachment ${index + 1} of ${files.length}…`);
                 const attachmentId = createAttachmentId();
                 const path = `quote-attachments/${submissionId}/${attachmentId}`;
                 const storageRef = firebase.storage().ref(path);
-
                 await storageRef.put(file, {
                     contentType: file.type,
-                    customMetadata: {
-                        originalName: file.name
-                    }
+                    customMetadata: { originalName: file.name }
                 });
-
                 attachments.push({
                     name: file.name,
                     contentType: file.type,
@@ -98,25 +107,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     path
                 });
             }
-
             return attachments;
         }
 
         fields.forEach((field) => {
             field.addEventListener('blur', () => validateField(field));
             field.addEventListener('input', () => {
-                if (field.getAttribute('aria-invalid') === 'true') {
-                    validateField(field);
-                }
+                if (field.getAttribute('aria-invalid') === 'true') validateField(field);
             });
         });
 
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
-
-            if (submitting) {
-                return;
-            }
+            if (submitting) return;
 
             setStatus('');
             fallback.hidden = true;
@@ -139,25 +142,53 @@ document.addEventListener('DOMContentLoaded', () => {
             const attachmentInput = form.querySelector('.attachment-input');
             const attachmentFiles = Array.from(attachmentInput?.files || []);
             const fieldValue = (name) => String(formData.get(name) || '').trim();
-            const projectContext = [
-                fieldValue('facilityType') && `Facility type: ${fieldValue('facilityType')}`,
-                fieldValue('serviceFrequency') && `Service frequency: ${fieldValue('serviceFrequency')}`,
-                fieldValue('vegetationCondition') && `Vegetation condition: ${fieldValue('vegetationCondition')}`
-            ].filter(Boolean);
-            const message = [
-                ...projectContext,
-                projectContext.length ? '' : null,
-                fieldValue('message')
-            ].filter((value) => value !== null).join('\n').slice(0, 2000);
-            const payload = {
+
+            const values = {
                 name: fieldValue('name'),
                 company: fieldValue('company'),
                 email: fieldValue('email'),
                 phone: fieldValue('phone'),
                 siteLocation: fieldValue('siteLocation'),
                 acreage: fieldValue('acreage'),
+                facilityType: fieldValue('facilityType'),
+                serviceFrequency: fieldValue('serviceFrequency'),
+                vegetationCondition: fieldValue('vegetationCondition'),
                 service: fieldValue('service'),
                 schedule: fieldValue('schedule'),
+                customerNotes: fieldValue('message')
+            };
+            const qualification = qualificationFor(values);
+
+            // Keep the readable context inside message for backward compatibility with
+            // older admin code, while also storing each answer as its own Firebase field.
+            const message = [
+                `Facility type: ${values.facilityType}`,
+                `Service frequency: ${values.serviceFrequency}`,
+                values.vegetationCondition && `Vegetation condition: ${values.vegetationCondition}`,
+                qualification.status === 'needs_qualification'
+                    ? `Qualification: Needs qualification — missing: ${qualification.missing.join(', ')}`
+                    : 'Qualification: Ready for review',
+                '',
+                'Customer notes:',
+                values.customerNotes
+            ].filter(Boolean).join('\n').slice(0, 3000);
+
+            const payload = {
+                name: values.name,
+                company: values.company,
+                email: values.email,
+                phone: values.phone,
+                siteLocation: values.siteLocation,
+                acreage: values.acreage,
+                facilityType: values.facilityType,
+                serviceFrequency: values.serviceFrequency,
+                vegetationCondition: values.vegetationCondition,
+                service: values.service,
+                schedule: values.schedule,
+                customerNotes: values.customerNotes,
+                qualificationStatus: qualification.status,
+                missingQualificationFields: qualification.missing,
+                source: 'website',
                 message,
                 timestamp:
                     typeof firebase !== 'undefined' && firebase.database
@@ -170,7 +201,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const fingerprint = [
                 payload.email.toLowerCase(),
                 payload.siteLocation.toLowerCase(),
-                payload.message.toLowerCase(),
+                payload.service.toLowerCase(),
+                payload.customerNotes.toLowerCase(),
                 attachmentFiles.map((file) => `${file.name}:${file.size}`).join(',')
             ].join('|');
             const lastSubmission = JSON.parse(
@@ -196,21 +228,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (typeof firebase === 'undefined' || !firebase.database) {
                     throw new Error('Firebase is unavailable');
                 }
-
                 if (attachmentFiles.length && !firebase.storage) {
                     throw new Error('Firebase Storage is unavailable');
                 }
 
-                const submissionRef = firebase
-                    .database()
-                    .ref('contact_submissions')
-                    .push();
-
+                const submissionRef = firebase.database().ref('contact_submissions').push();
                 if (attachmentFiles.length) {
-                    payload.attachments = await uploadAttachments(
-                        submissionRef.key,
-                        attachmentFiles
-                    );
+                    payload.attachments = await uploadAttachments(submissionRef.key, attachmentFiles);
                 }
 
                 setStatus('Saving your quote request…');
