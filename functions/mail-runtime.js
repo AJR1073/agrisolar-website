@@ -5,6 +5,8 @@
 // Firebase-originated mail through the current info@agrisolarllc.com mailbox.
 // Ryan already receives forwarded copies of info@ mail, so new website
 // inquiries are addressed to Aaron + Info to avoid sending Ryan duplicates.
+// A separate copy also goes to Aaron's connected Outlook inbox so GPT Work
+// can monitor website-originated leads immediately.
 
 const nodemailer = require('nodemailer');
 
@@ -14,7 +16,8 @@ const SMTP_HOST = 'server265.web-hosting.com';
 const SMTP_SENDER = 'info@agrisolarllc.com';
 const WEBSITE_INQUIRY_RECIPIENTS = [
     'aaron@agrisolarllc.com',
-    'info@agrisolarllc.com'
+    'info@agrisolarllc.com',
+    'aaronreifschneider@outlook.com'
 ];
 
 const originalCreateTransport = nodemailer.createTransport.bind(nodemailer);
