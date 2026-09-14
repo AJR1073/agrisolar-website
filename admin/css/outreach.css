@@ -294,6 +294,66 @@
 .outreach-form-grid textarea { resize: vertical; }
 .outreach-form-grid small { display: block; margin-top: 0.35rem; color: #66736c; }
 
+/* Submission-card readability improvements. This stylesheet loads after admin.css,
+   so these rules safely refine the existing dashboard without changing actions. */
+#submissionsTab .submissions-list {
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    align-items: start;
+}
+
+#submissionsTab .submission-item {
+    padding: 1.1rem;
+}
+
+#submissionsTab .submission-content {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem 1rem;
+    margin-bottom: 0.8rem;
+}
+
+#submissionsTab .submission-content > p {
+    margin: 0;
+    padding: 0.45rem 0.5rem;
+    border-radius: 5px;
+    background: #f8faf9;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+#submissionsTab .submission-content > p strong {
+    display: block;
+    margin-bottom: 0.18rem;
+    color: #66736c;
+    font-size: 0.68rem;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+}
+
+#submissionsTab .submission-message,
+#submissionsTab .submission-attachments,
+#submissionsTab .reply-details {
+    grid-column: 1 / -1;
+}
+
+#submissionsTab .submission-message {
+    padding: 0.8rem !important;
+    border-left: 4px solid #7bab8c;
+    background: #f3f8f5 !important;
+    white-space: pre-wrap;
+}
+
+#submissionsTab .submission-header {
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid #e2e8e4;
+}
+
+#submissionsTab .submission-actions {
+    padding-top: 0.75rem;
+    border-top: 1px solid #e2e8e4;
+}
+
 @media (max-width: 768px) {
     .outreach-heading,
     .outreach-card-header,
@@ -313,4 +373,7 @@
 
     .outreach-form-wide { grid-column: auto; }
     .outreach-badges { justify-content: flex-start; }
+
+    #submissionsTab .submissions-list,
+    #submissionsTab .submission-content { grid-template-columns: 1fr; }
 }
