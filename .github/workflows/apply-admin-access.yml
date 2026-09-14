@@ -1,94 +1,29 @@
-name: Apply AgriSolar admin access
+name: Prepare AgriSolar admin access
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - scripts/apply-admin-access.cjs
-      - .github/workflows/apply-admin-access.yml
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply-admin-access:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          ref: main
 
       - name: Set up Node 22
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Apply administrator allowlist migration
-        run: node scripts/apply-admin-access.cjs
-
-      - name: Commit administrator access changes
+      - name: Verify admin access migration is already applied
         run: |
-          if git diff --quiet; then
-            echo "No repository changes to commit."
-          else
-            git config user.name "AgriSolar Admin Access Bot"
-            git config user.email "167011114+AJR1073@users.noreply.github.com"
-            git add database.rules.json storage.rules functions/index.js functions/business-api.js
-            git commit -m "Grant Ryan full admin access"
-            git push origin HEAD:main
+          node scripts/apply-admin-access.cjs
+          if ! git diff --quiet; then
+            echo "Admin access files are not fully migrated. Review the generated diff before deploying."
+            git diff -- database.rules.json storage.rules functions/index.js functions/business-api.js
+            exit 1
           fi
-
-      - name: Install Cloud Functions dependencies
-        run: npm ci --prefix functions
-
-      - name: Configure Firebase service account
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_AGRISOLAR_WEBSITE }}
-        run: |
-          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/agrisolar-firebase-service-account.json"
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/agrisolar-firebase-service-account.json" >> "$GITHUB_ENV"
-
-      - name: Ensure Ryan has a Firebase Authentication account
-        working-directory: functions
-        run: |
-          node <<'NODE'
-          const admin = require('firebase-admin');
-          admin.initializeApp({
-            credential: admin.credential.applicationDefault(),
-            projectId: 'agrisolar-website'
-          });
-          const email = 'rfschndr@outlook.com';
-          (async () => {
-            try {
-              const existing = await admin.auth().getUserByEmail(email);
-              console.log(`Firebase Auth user already exists: ${existing.uid}`);
-            } catch (error) {
-              if (error.code !== 'auth/user-not-found') throw error;
-              const created = await admin.auth().createUser({
-                email,
-                displayName: 'R R',
-                disabled: false,
-                emailVerified: false
-              });
-              console.log(`Created Firebase Auth user: ${created.uid}`);
-            }
-          })().catch((error) => {
-            console.error(error);
-            process.exit(1);
-          });
-          NODE
-
-      - name: Deploy database and storage rules
-        run: |
-          npx --yes firebase-tools@15.30.0 deploy \
-            --project agrisolar-website \
-            --only database,storage \
-            --non-interactive
-
-      - name: Functions deployment note
-        run: |
-          echo "Function authorization changes are committed to main."
-          echo "Deploy sendReply, discoverProspects, draftOutreachEmail, and apiV1 from an account with Service Account User permission."
+          echo "Admin access configuration is ready. Deploy backend changes from an authorized Firebase CLI login."
