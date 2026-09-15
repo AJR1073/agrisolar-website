@@ -1,0 +1,226 @@
+/* Photography and layout for the Solar Grazing page only. */
+.solar-grazing-page .container {
+    max-width: 1280px;
+}
+
+.solar-grazing-page .page-section {
+    padding-block: clamp(3.5rem, 7vw, 6rem);
+}
+
+.solar-grazing-page .page-section--light {
+    background: #f0f5f1;
+}
+
+.solar-grazing-page .eyebrow {
+    font-size: 0.8rem;
+}
+
+.solar-grazing-page .grazing-hero {
+    margin-top: 80px;
+    padding: 0;
+    background: #123d2b;
+    color: #fff;
+}
+
+.solar-grazing-page .grazing-hero__layout {
+    display: grid;
+    max-width: 1280px;
+    margin-inline: auto;
+    grid-template-columns: minmax(0, 0.84fr) minmax(0, 1.16fr);
+    align-items: center;
+}
+
+.solar-grazing-page .grazing-hero__copy {
+    min-width: 0;
+    padding: clamp(2rem, 3.75vw, 3rem);
+}
+
+.solar-grazing-page .grazing-hero .eyebrow {
+    margin-bottom: 1.25rem;
+    color: #b9e7c8;
+}
+
+.solar-grazing-page .grazing-hero h1 {
+    max-width: 15ch;
+    margin: 0 0 1.5rem;
+    color: #fff;
+    font-family: var(--heading-font);
+    font-size: clamp(2.25rem, 3.8vw, 3.2rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.035em;
+}
+
+.solar-grazing-page .grazing-hero__lead {
+    max-width: 45ch;
+    margin: 0;
+    color: #edf5ef;
+    font-size: clamp(1.05rem, 1.5vw, 1.18rem);
+    line-height: 1.7;
+}
+
+.solar-grazing-page .grazing-hero__photo,
+.solar-grazing-page .grazing-story__photo {
+    min-width: 0;
+    overflow: hidden;
+    background: #dce7dc;
+}
+
+.solar-grazing-page .grazing-hero__photo img,
+.solar-grazing-page .grazing-story__photo img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.solar-grazing-page .grazing-story {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4rem;
+    align-items: center;
+}
+
+.solar-grazing-page .grazing-story__copy {
+    min-width: 0;
+    max-width: 65ch;
+}
+
+.solar-grazing-page .grazing-story__copy > p {
+    margin-bottom: 1.25rem;
+    line-height: 1.8;
+}
+
+.solar-grazing-page .grazing-story__copy > p:last-child {
+    margin-bottom: 0;
+}
+
+.solar-grazing-page .grazing-story__copy > .eyebrow {
+    margin-bottom: 0.85rem;
+}
+
+.solar-grazing-page .grazing-story__copy > .btn {
+    margin-top: 0.5rem;
+}
+
+.solar-grazing-page .grazing-story__photo {
+    border-radius: 16px;
+}
+
+.solar-grazing-page .grazing-story--reverse .grazing-story__copy {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.solar-grazing-page .grazing-story--reverse .grazing-story__photo {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.solar-grazing-page .section-title {
+    max-width: 880px;
+    margin-inline: auto;
+}
+
+.solar-grazing-page .card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.solar-grazing-page .content-card {
+    box-shadow: 0 5px 20px rgba(18, 61, 43, 0.06);
+}
+
+.solar-grazing-page .grazing-planning {
+    padding-top: 0;
+}
+
+.solar-grazing-page .grazing-planning .process-grid {
+    margin-top: 2rem;
+}
+
+.solar-grazing-page .content-narrow {
+    max-width: 960px;
+}
+
+.solar-grazing-page .grazing-compatibility p {
+    max-width: 65ch;
+    margin-bottom: 1.25rem;
+    line-height: 1.8;
+}
+
+.solar-grazing-page .grazing-compatibility .eyebrow {
+    margin-bottom: 0.85rem;
+}
+
+.solar-grazing-page .grazing-fit {
+    margin-bottom: 2.5rem;
+    padding: 0;
+}
+
+.solar-grazing-page .grazing-fit li,
+.solar-grazing-page .source-note {
+    background: #fff;
+}
+
+.solar-grazing-page .cta-panel {
+    padding-block: clamp(3.5rem, 6vw, 5rem);
+    background: #123d2b;
+}
+
+.solar-grazing-page .cta-panel h2 {
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    line-height: 1.2;
+}
+
+@media (max-width: 900px) {
+    .solar-grazing-page .container {
+        padding-inline: 24px;
+    }
+
+    .solar-grazing-page .grazing-hero__layout,
+    .solar-grazing-page .grazing-story {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .solar-grazing-page .grazing-hero__copy {
+        padding: 3rem 24px;
+    }
+
+    .solar-grazing-page .grazing-hero h1 {
+        max-width: 22ch;
+        font-size: clamp(2.25rem, 6vw, 3.2rem);
+    }
+
+    .solar-grazing-page .grazing-hero__lead {
+        max-width: 60ch;
+    }
+
+    .solar-grazing-page .grazing-story {
+        gap: 2rem;
+    }
+
+    .solar-grazing-page .grazing-story--reverse .grazing-story__copy,
+    .solar-grazing-page .grazing-story--reverse .grazing-story__photo {
+        grid-column: auto;
+        grid-row: auto;
+    }
+}
+
+@media (max-width: 768px) {
+    .solar-grazing-page .grazing-hero {
+        margin-top: 72px;
+    }
+
+    .solar-grazing-page .card-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .solar-grazing-page .grazing-story__photo {
+        border-radius: 12px;
+    }
+
+    .solar-grazing-page .grazing-story__copy > .btn {
+        width: 100%;
+        padding-inline: 1rem;
+        text-align: center;
+    }
+}
