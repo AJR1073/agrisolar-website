@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isMissing(values.acreage)) missing.push('acreage');
         if (isMissing(values.schedule)) missing.push('desired schedule');
         return {
-            status: missing.length ? 'needs_qualification' : 'ready_for_review',
+            status: missing.length ? 'needs_qualification' : 'ready',
             missing
         };
     }

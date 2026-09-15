@@ -245,12 +245,26 @@ describe('Realtime Database contact submission rules', () => {
         );
     });
 
+    it('allows a 3000-character legacy message with 2000-character customer notes', async () => {
+        const db = testEnv.unauthenticatedContext().database();
+        await assertSucceeds(
+            set(
+                ref(db, 'contact_submissions/maximum-message'),
+                validSubmission({
+                    message: 'x'.repeat(3000),
+                    customerNotes: 'x'.repeat(2000),
+                    qualificationStatus: 'ready'
+                })
+            )
+        );
+    });
+
     it('rejects invalid or unexpected public fields', async () => {
         const db = testEnv.unauthenticatedContext().database();
         await assertFails(
             set(
                 ref(db, 'contact_submissions/invalid-request'),
-                validSubmission({ message: 'x'.repeat(2001) })
+                validSubmission({ message: 'x'.repeat(3001) })
             )
         );
         await assertFails(

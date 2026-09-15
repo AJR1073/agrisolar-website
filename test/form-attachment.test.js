@@ -73,14 +73,19 @@ async function run() {
         await page.goto(`${hostingBase}/contact/`, {
             waitUntil: 'domcontentloaded'
         });
+        const customerNotes = 'Please review the attached site-condition photograph.'
+            .padEnd(2000, 'x');
         await page.type('#contact-name', 'Attachment Test');
+        await page.type('#contact-company', 'Example Solar');
         await page.type('#contact-email', 'attachment@example.com');
+        await page.type('#contact-phone', '618-555-0100');
         await page.type('#contact-location', 'Belleville, Illinois');
+        await page.type('#contact-acreage', '85');
+        await page.select('#contact-facility-type', 'Community solar');
+        await page.select('#contact-frequency', 'Recurring seasonal service');
         await page.select('#contact-service', 'Commercial Mowing');
-        await page.type(
-            '#contact-message',
-            'Please review the attached site-condition photograph.'
-        );
+        await page.type('#contact-schedule', 'Spring 2027');
+        await page.type('#contact-message', customerNotes);
 
         const fileInput = await page.$('#contact-attachments');
         const attachmentPath = path.resolve(
@@ -90,9 +95,8 @@ async function run() {
         await fileInput.uploadFile(...Array(10).fill(attachmentPath));
         await page.$eval('.quote-form', (form) => form.requestSubmit());
         await page.waitForFunction(() => (
-            document.querySelector('.form-status')?.textContent.includes(
-                'sent successfully'
-            )
+            window.__attachmentTest.payload !== null &&
+            document.querySelector('.form-status')?.textContent.includes('sent successfully')
         ));
 
         const result = await page.evaluate(() => window.__attachmentTest);
@@ -108,9 +112,45 @@ async function run() {
             result.uploaded[0].path
         );
         assert.equal(result.payload.attachments[0].name, 'about-hero.webp');
+        assert.equal(result.payload.qualificationStatus, 'ready');
+        assert.deepEqual(result.payload.missingQualificationFields, []);
+        assert.equal(result.payload.customerNotes, customerNotes);
+        assert.ok(result.payload.message.length > 2000);
+        assert.ok(result.payload.message.length <= 3000);
+        assert.match(result.payload.message, /^Facility type: Community solar\n/);
+        assert.ok(result.payload.message.endsWith(`Customer notes:\n${customerNotes}`));
 
         console.log(
-            'PASS: Quote form uploads ten attachments before saving validated metadata'
+            'PASS: Complete quote lead stores ready status, ten attachments, and full customer notes'
+        );
+
+        await page.goto(`${hostingBase}/contact/`, {
+            waitUntil: 'domcontentloaded'
+        });
+        await page.type('#contact-name', 'Qualification Test');
+        await page.type('#contact-email', 'qualification@example.com');
+        await page.type('#contact-location', 'Belleville, Illinois');
+        await page.select('#contact-facility-type', 'Community solar');
+        await page.select('#contact-frequency', 'Unsure');
+        await page.select('#contact-service', 'Commercial Mowing');
+        await page.type('#contact-message', 'Please help us qualify this site.');
+        await page.$eval('.quote-form', (form) => form.requestSubmit());
+        await page.waitForFunction(() => (
+            window.__attachmentTest.payload?.email === 'qualification@example.com' &&
+            document.querySelector('.form-status')?.textContent.includes('sent successfully')
+        ));
+
+        const incomplete = await page.evaluate(() => window.__attachmentTest);
+        assert.equal(incomplete.payload.qualificationStatus, 'needs_qualification');
+        assert.deepEqual(incomplete.payload.missingQualificationFields, [
+            'company',
+            'phone',
+            'acreage',
+            'desired schedule'
+        ]);
+        assert.equal(incomplete.uploaded.length, 0);
+        console.log(
+            'PASS: Incomplete quote lead stores needs_qualification status and missing fields'
         );
     } finally {
         await browser.close();
