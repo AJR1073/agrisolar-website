@@ -1,23 +1,20 @@
 # AgriSolar LLC Website
 
-AgriSolar's public website and Firebase-backed admin tools for solar-site vegetation management, scheduling, outreach, and quote intake.
+Production-oriented static website and Firebase backend for AgriSolar LLC.
 
 ## Local development
 
-Install dependencies with:
-
 ```bash
 npm ci
-npm ci --prefix functions
+npm run build:hosting
+firebase emulators:start
 ```
-
-The Firebase project used for the development site is `agrisolar-website`.
 
 ## Codex-assisted deployment
 
-This repository includes local deployment automation intended for Codex CLI or direct terminal use.
+Codex instructions live in `AGENTS.md`.
 
-Full development deploy:
+Normal development deployment:
 
 ```bash
 ./scripts/deploy-dev.sh
@@ -29,25 +26,10 @@ Cloud Functions only:
 ./scripts/deploy-functions.sh
 ```
 
-Verify the current Firebase deployment without changing anything:
+Non-mutating deployment verification:
 
 ```bash
 ./scripts/check-deployment.sh
 ```
 
-The deployment scripts refuse to discard local changes or deploy an unexpected Firebase project. See `AGENTS.md` for Codex operating and safety rules.
-
-## Firebase development URLs
-
-- Public site: https://agrisolar-website.web.app/
-- Admin: https://agrisolar-website.web.app/admin/
-
-## Tests
-
-Run the core test suite with:
-
-```bash
-npm test
-```
-
-Additional focused tests are available through the scripts in `package.json`.
+The deployment scripts target the `agrisolar-website` Firebase project and refuse to discard local changes.
