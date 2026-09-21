@@ -51,6 +51,8 @@ if [[ "${AGRISOLAR_SKIP_TESTS:-0}" != "1" ]]; then
   echo "==> Running deployment checks"
   npm run test:syntax
   npm run test:structure
+  npm run build:hosting
+  npm run test:seo
   npm run test:business-api
   npm run test:form-attachment
   npm run test:admin-attachment

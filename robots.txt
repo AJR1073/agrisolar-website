@@ -1,4 +1,7 @@
+# Crawling is allowed so search engines can read the development noindex rules.
+# Firebase Hosting adds X-Robots-Tag; the dev build also adds HTML noindex tags.
 User-agent: *
 Allow: /
 
+# Canonical public-domain sitemap, prepared for a separately approved launch.
 Sitemap: https://agrisolarllc.com/sitemap.xml

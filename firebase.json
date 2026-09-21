@@ -2,10 +2,23 @@
   "hosting": {
     "public": "dist",
     "predeploy": [
-      "npm run build:hosting"
+      "npm run build:hosting",
+      "npm run test:seo"
     ],
     "cleanUrls": true,
     "trailingSlash": true,
+    "redirects": [
+      {
+        "source": "/about.html",
+        "destination": "/about/",
+        "type": 301
+      },
+      {
+        "source": "/index.html",
+        "destination": "/",
+        "type": 301
+      }
+    ],
     "ignore": [
       "firebase.json",
       ".firebaserc",

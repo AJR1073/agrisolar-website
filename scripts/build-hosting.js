@@ -22,6 +22,10 @@ const allowedFiles = [
     '404.html',
     'about.html',
     'index.html',
+    'favicon.svg',
+    'favicon.png',
+    'favicon.ico',
+    'apple-touch-icon.png',
     'robots.txt',
     'sitemap.xml'
 ];
@@ -50,6 +54,26 @@ for (const file of allowedFiles) {
         path.join(outputDir, file)
     );
 }
+
+// This build targets Firebase development Hosting only. Keep a page-level
+// noindex fallback alongside the Hosting header without changing source SEO.
+function protectDevelopmentPages(directory) {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+        const filename = path.join(directory, entry.name);
+        if (entry.isDirectory()) {
+            protectDevelopmentPages(filename);
+        } else if (entry.name.endsWith('.html')) {
+            const html = fs.readFileSync(filename, 'utf8');
+            const withoutRobots = html.replace(/\s*<meta\s+name="robots"[^>]*>/gi, '');
+            fs.writeFileSync(filename, withoutRobots.replace(
+                /<head>/i,
+                '<head>\n    <meta name="robots" content="noindex, nofollow, noarchive">'
+            ));
+        }
+    }
+}
+
+protectDevelopmentPages(outputDir);
 
 console.log(
     `Prepared Firebase Hosting output with ${allowedDirectories.length} directories and ${allowedFiles.length} root files.`

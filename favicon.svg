@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="AgriSolar LLC">
+  <title>AgriSolar LLC</title>
+  <rect width="96" height="96" rx="20" fill="#087f3f"/>
+  <path fill="#fff" fill-rule="evenodd" d="M12 69 27 27h11l15 42H41l-3-9H26l-3 9Zm17-19h6l-3-10Z"/>
+  <path fill="#fff" d="M80 31c-5-4-10-6-15-6-11 0-15 6-15 13 0 8 6 11 13 13l4 1c5 2 6 3 6 6 0 3-3 4-7 4-5 0-10-2-15-5l-2 9c5 4 11 6 17 6 11 0 18-6 18-14 0-8-4-12-13-15l-5-1c-4-1-6-2-6-5 0-2 2-3 6-3 4 0 8 2 11 4Z"/>
+</svg>
