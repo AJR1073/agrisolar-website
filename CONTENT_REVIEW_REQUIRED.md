@@ -5,7 +5,7 @@ The development site deliberately avoids publishing the following until the owne
 ## Projects and photographs
 
 - Worden site: customer/public project name, exact location wording, acreage, work dates, scope, crew, equipment, results, and permission to publish.
-- Four owner-supplied September 5 photographs are included on the development Projects page with identifying details withheld. Confirm approval before promoting them to production.
+- Ten owner-supplied project photographs are included on the development Projects page with identifying details withheld. Confirm approval before promoting them to production.
 - Identify which repository photographs are owned by AgriSolar and which depict completed AgriSolar work.
 - Supply approved before-and-after captions and image dates.
 
@@ -24,7 +24,7 @@ The development site deliberately avoids publishing the following until the owne
 ## Business information
 
 - Whether a public street address should be listed or Belleville, Illinois should remain the only office location.
-- Confirm the public service-area wording: maximum 75-mile radius from Belleville, including the portions of Missouri that fall inside it.
+- Current development copy follows the expanded service area committed in c63fcdc: sites within a few hours’ drive of Belleville, with larger or recurring work farther away considered individually. Confirm any more specific coverage promises before adding them.
 - Decide whether honey/products content should return as a secondary footer page. It remains outside the primary commercial navigation.
 
 ## Future form data

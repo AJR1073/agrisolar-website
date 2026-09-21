@@ -24,7 +24,7 @@
     from { transform: scale(1.08) translate3d(-2%, -1%, 0); }
     to { transform: scale(1.18) translate3d(3%, 2%, 0); }
 }
-.commercial-hero__content { display: flex; padding: clamp(3rem, 6vw, 6.5rem); flex-direction: column; justify-content: center; color: #fff; }
+.commercial-hero__content { display: flex; min-width: 0; padding: clamp(3rem, 6vw, 6.5rem); flex-direction: column; justify-content: center; color: #fff; }
 .eyebrow { margin-bottom: 1rem; color: #a8dfb9; font-family: var(--heading-font); font-size: 0.82rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
 .eyebrow--green { color: var(--action-color) !important; }
 .commercial-hero h1 { max-width: 700px; margin-bottom: 1.5rem; color: #fff; font-family: var(--heading-font); font-size: clamp(3rem, 5.8vw, 5.8rem); line-height: 0.98; letter-spacing: -0.045em; }
@@ -96,7 +96,7 @@
 }
 
 @media (max-width: 900px) {
-    .commercial-hero, .site-details, .service-columns { grid-template-columns: 1fr; }
+    .commercial-hero, .site-details, .service-columns { grid-template-columns: minmax(0, 1fr); }
     .commercial-hero { min-height: auto; }
     .commercial-hero__media, .site-details__image { min-height: 420px; }
     .commercial-hero__content { grid-row: 1; }
@@ -109,6 +109,7 @@
 @media (max-width: 768px) {
     .commercial-hero { margin-top: 72px; }
     .commercial-hero__content { padding: 3.5rem 1.5rem; }
+    .site-details__content { padding-inline: 1.5rem; }
     .commercial-hero__media, .site-details__image { min-height: 300px; }
     .commercial-hero__video { min-height: 300px; }
     .commercial-audience ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.55rem 1.25rem; }
@@ -122,6 +123,7 @@
 }
 
 @media (max-width: 480px) {
+    .commercial-hero h1 { font-size: clamp(2rem, 12vw, 3rem); overflow-wrap: anywhere; }
     .commercial-audience ul { grid-template-columns: 1fr; }
 }
 
@@ -661,6 +663,15 @@ textarea:focus-visible {
 
     .page-hero {
         padding: 5rem 0;
+    }
+
+    .page-hero .container {
+        padding: 1.5rem;
+    }
+
+    .page-hero h1 {
+        font-size: clamp(2rem, 6vw, 3.6rem);
+        overflow-wrap: anywhere;
     }
 
     .page-section {
