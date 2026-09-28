@@ -20,10 +20,27 @@ Use Node 22 when available. Run `npm ci`, `npm run check:release`, and `npm run 
 
 The main-branch workflow deploys only development Hosting after these checks. There is no automatic production deployment workflow.
 
+## Hosting provisioning before the first production deployment
+
+Firebase's service announcement supplied on September 28, 2026 states that projects created starting October 15, 2026 will not automatically receive a default Hosting site at project creation. The date comes from that announcement; the official documentation below confirms the site-list/create mechanism.
+
+The existing `agrisolar-website` development Hosting site is already provisioned. Its successful September 28 deployment does not need site recreation. For a new production project, do not assume its default Hosting site exists.
+
+After the production project and site IDs are approved, use this provisioning sequence before the first asset deployment:
+
+1. Run `firebase hosting:sites:list --project <approved-project-id>` and verify the approved site belongs to that project.
+2. If the approved site is absent, create it once with `firebase hosting:sites:create <approved-site-id> --project <approved-project-id>`. If the ID is unavailable, choose an approved unique ID. Stop on permission or provisioning errors; do not ignore them or treat every error as “already exists.”
+3. Verify the site is now listed, then bind `firebase target:apply hosting production <approved-site-id> --project <approved-project-id>`.
+4. Continue with the production configuration and the remaining backend, custom-domain, Analytics, and end-to-end launch checks.
+
+Keep creation in initial infrastructure provisioning, with an existence check, rather than running it unconditionally on every application deployment. The provisioning identity needs permission to create sites; this preparation does not change IAM or credentials. No new Hosting site has been created as part of this checklist update.
+
+Official references: [Hosting sites and targets](https://firebase.google.com/docs/hosting/multisites), [REST deployment and site existence checks](https://firebase.google.com/docs/hosting/api-deploy), and [projects.sites.create](https://firebase.google.com/docs/reference/hosting/rest/v1beta1/projects.sites/create).
+
 ## Remaining launch prerequisites
 
 1. Confirm the production Firebase project and Hosting site, and whether production will use the existing backend or a separate backend. The frontend currently uses Firebase Hosting's `/__/firebase/init.js`; it connects to whichever project hosts it. A separate project requires separately approved backend/rules/secrets setup and an end-to-end check. Do not point the domain at an unprepared project.
-2. With explicit cutover approval, bind the `production` Hosting target to the approved site, connect/verify the custom domain and TLS, and plan the DNS change. Preserve all existing mail records and `info@agrisolarllc.com` routing.
+2. Complete the Hosting provisioning check above. With explicit cutover approval, bind the `production` Hosting target to the approved site, connect/verify the custom domain and TLS, and plan the DNS change. Preserve all existing mail records and `info@agrisolarllc.com` routing.
 3. Confirm access to the existing GA4 property. At launch, verify live `page_view` and a controlled successful `generate_lead` in Realtime/DebugView; mark `generate_lead` as a key event. Verify enhanced-measurement settings do not treat failed form attempts as conversions. Code tests do not prove account-side collection or reporting settings.
 4. Confirm Google Search Console ownership, submit the canonical sitemap, inspect important production URLs, and check any AI-search inclusion controls in the account. Do not submit the development domain for indexing.
 5. Confirm business/service-area wording, licensing/coverage details, and permission before adding identifiable customer project photos, logos, or case studies. No new customer-specific claims were published in this release.
