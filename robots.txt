@@ -1,5 +1,5 @@
 # Crawling is allowed so search engines can read the development noindex rules.
-# Firebase Hosting adds X-Robots-Tag; the dev build also adds HTML noindex tags.
+# Development Hosting adds X-Robots-Tag; the dev build also adds HTML noindex tags.
 User-agent: *
 Allow: /
 

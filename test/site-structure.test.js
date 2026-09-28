@@ -16,8 +16,6 @@ const publicPages = [
     'services/commercial-mowing/index.html',
     'services/solar-grazing/index.html',
     'services/vegetation-herbicide-management/index.html',
-    'services/native-planting/index.html',
-    'services/erosion-control/index.html',
     'services/site-maintenance-reporting/index.html'
 ];
 const titles = new Set();
@@ -29,7 +27,11 @@ const forbiddenContent = [
     'Client Testimonials',
     'Professional panel monitoring',
     'Our Equipment Fleet',
-    '33% annual'
+    '33% annual',
+    'Native Planting',
+    'Erosion Control',
+    '/services/native-planting/',
+    '/services/erosion-control/'
 ];
 
 function countMatches(value, expression) {

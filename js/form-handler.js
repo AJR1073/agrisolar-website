@@ -205,9 +205,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 payload.customerNotes.toLowerCase(),
                 attachmentFiles.map((file) => `${file.name}:${file.size}`).join(',')
             ].join('|');
-            const lastSubmission = JSON.parse(
-                sessionStorage.getItem('agrisolarLastSubmission') || 'null'
-            );
+            let lastSubmission = null;
+            try {
+                lastSubmission = JSON.parse(sessionStorage.getItem('agrisolarLastSubmission') || 'null');
+            } catch (_) { /* A blocked or damaged browser cache must not block a quote. */ }
 
             if (
                 lastSubmission &&
@@ -239,10 +240,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 setStatus('Saving your quote request…');
                 await submissionRef.set(payload);
-                sessionStorage.setItem(
-                    'agrisolarLastSubmission',
-                    JSON.stringify({ fingerprint, createdAt: Date.now() })
-                );
+                // Count only a confirmed save, never a click, validation failure, or honeypot.
+                try { window.AgriSolarAnalytics?.track('generate_lead'); } catch (_) { /* Non-essential. */ }
+                try {
+                    sessionStorage.setItem(
+                        'agrisolarLastSubmission',
+                        JSON.stringify({ fingerprint, createdAt: Date.now() })
+                    );
+                } catch (_) { /* The quote is already saved even when browser storage is unavailable. */ }
                 form.reset();
                 fields.forEach((field) => setFieldError(field, ''));
                 setStatus(
