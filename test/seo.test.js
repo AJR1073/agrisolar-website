@@ -3,11 +3,14 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
+const production = process.argv.includes('--production');
+const outputName = production ? 'dist-production' : 'dist';
+const output = path.join(root, outputName);
 const origin = 'https://agrisolarllc.com';
 const routes = ['/', '/about/', '/contact/', '/faq/', '/privacy/', '/projects/',
     '/safety-equipment/', '/service-area/', '/services/',
     ...['commercial-mowing', 'solar-grazing', 'vegetation-herbicide-management',
-        'native-planting', 'erosion-control', 'site-maintenance-reporting'].map(slug => `/services/${slug}/`)];
+        'site-maintenance-reporting'].map(slug => `/services/${slug}/`)];
 const expectedUrls = routes.map(route => origin + route).sort();
 const businessId = `${origin}/#business`;
 const websiteId = `${origin}/#website`;
@@ -76,8 +79,8 @@ function htmlFiles(directory) {
     });
 }
 
-for (const directory of [root, path.join(root, 'dist')]) {
-    const label = directory === root ? 'source' : 'dist';
+for (const directory of [root, output]) {
+    const label = directory === root ? 'source' : outputName;
     const sitemap = read(path.join(directory, 'sitemap.xml')).replace(/<\?xml[^?]*\?>|<!--[\s\S]*?-->/g, '').trim();
     assert.match(sitemap, /^<urlset\s+xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">[\s\S]*<\/urlset>$/,
         `${label}: sitemap namespace/root missing`);
@@ -85,7 +88,7 @@ for (const directory of [root, path.join(root, 'dist')]) {
     assert.equal(sitemap.replace(/^<urlset[^>]*>|<\/urlset>$/g, '')
         .replace(/<url>\s*<loc>[^<]+<\/loc>\s*<\/url>/g, '').trim(), '', `${label}: invalid sitemap entry`);
     assert.deepEqual(entries.map(match => decode(match[1])).sort(), expectedUrls,
-        `${label}: sitemap must contain exactly the 15 canonical public routes`);
+        `${label}: sitemap must contain exactly the canonical public routes`);
     const robots = read(path.join(directory, 'robots.txt')).replace(/#.*$/gm, '');
     assert.match(robots, /^User-agent:\s*\*\s*$/im, `${label}: robots wildcard group missing`);
     assert.ok(!/^Disallow:\s*\/(?:\*\$?)?\s*$/im.test(robots), `${label}: robots must allow crawlers to read noindex`);
@@ -176,18 +179,27 @@ for (const directory of [root, path.join(root, 'dist')]) {
         }
     }
 }
-const config = JSON.parse(read(path.join(root, 'firebase.json'))).hosting;
-assert.ok(config.headers.some(rule => rule.source === '**' && rule.headers.some(header =>
-    header.key.toLowerCase() === 'x-robots-tag' && /\bnoindex\b/i.test(header.value))), 'Global Hosting noindex header required');
+const config = JSON.parse(read(path.join(root, production ? 'firebase.production.json' : 'firebase.json'))).hosting;
+const globalNoindex = config.headers.some(rule => rule.source === '**' && rule.headers.some(header =>
+    header.key.toLowerCase() === 'x-robots-tag' && /\bnoindex\b/i.test(header.value)));
+assert.equal(globalNoindex, !production, 'Hosting indexing policy must match the build environment');
 for (const [source, destination] of [['/about.html', '/about/'], ['/index.html', '/']]) {
     assert.ok(config.redirects?.some(rule => rule.source === source && rule.destination === destination && rule.type === 301),
         `Permanent redirect required: ${source} -> ${destination}`);
 }
 noindex(read(path.join(root, 'admin/index.html')), 'source admin');
-const builtHtml = htmlFiles(path.join(root, 'dist'));
-const builtVisitorRoutes = builtHtml.map(filename => path.relative(path.join(root, 'dist'), filename).split(path.sep).join('/'))
+const builtHtml = htmlFiles(output);
+const builtVisitorRoutes = builtHtml.map(filename => path.relative(output, filename).split(path.sep).join('/'))
     .filter(filename => !filename.startsWith('admin/') && !['404.html', 'about.html'].includes(filename))
     .map(filename => '/' + filename.replace(/index\.html$/, '')).sort();
 assert.deepEqual(builtVisitorRoutes, [...routes].sort(), 'Every built visitor page must be covered by the sitemap and SEO checks');
-builtHtml.forEach(filename => noindex(read(filename), path.relative(root, filename)));
-console.log(`PASS: ${routes.length} source/built pages have consistent SEO; ${builtHtml.length} development pages remain noindex.`);
+builtHtml.forEach(filename => {
+    const relative = path.relative(output, filename).split(path.sep).join('/');
+    const html = read(filename);
+    if (!production || relative.startsWith('admin/') || ['404.html', 'about.html'].includes(relative)) {
+        noindex(html, relative);
+    } else {
+        assert.ok(!/\bnoindex\b/i.test(metadata(html).get('robots') || ''), `${relative}: production page must be indexable`);
+    }
+});
+console.log(`PASS: ${routes.length} source/built pages have consistent SEO and correct ${production ? 'production' : 'development'} indexing.`);

@@ -4,11 +4,14 @@ set -Eeuo pipefail
 PROJECT_ID="${FIREBASE_PROJECT_ID:-agrisolar-website}"
 EXPECTED_PROJECT_ID="agrisolar-website"
 FUNCTIONS_ONLY=0
+HOSTING_ONLY=0
 
 if [[ "${1:-}" == "--functions-only" ]]; then
   FUNCTIONS_ONLY=1
+elif [[ "${1:-}" == "--hosting-only" ]]; then
+  HOSTING_ONLY=1
 elif [[ $# -gt 0 ]]; then
-  echo "Usage: $0 [--functions-only]" >&2
+  echo "Usage: $0 [--functions-only|--hosting-only]" >&2
   exit 2
 fi
 
@@ -17,6 +20,7 @@ if [[ "$PROJECT_ID" != "$EXPECTED_PROJECT_ID" ]]; then
   exit 2
 fi
 
+if [[ "$HOSTING_ONLY" != "1" ]]; then
 if ! command -v firebase >/dev/null 2>&1; then
   echo "firebase CLI is required for verification." >&2
   exit 2
@@ -43,6 +47,7 @@ for function_name in "${EXPECTED_FUNCTIONS[@]}"; do
   fi
   echo "  OK: $function_name"
 done
+fi
 
 if [[ "$FUNCTIONS_ONLY" == "1" ]]; then
   echo "==> Function verification passed."

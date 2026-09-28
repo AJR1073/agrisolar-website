@@ -20,6 +20,21 @@ jobs:
       - name: Check out pull-request branch
         uses: actions/checkout@v4
 
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install exact dependencies
+        run: npm ci
+
+      - name: Verify development and production release builds
+        run: npm run check:release
+
+      - name: Verify quote attachments and conversion events without sending inquiries
+        run: npm run test:form-attachment
+
       - name: Deploy Firebase Hosting preview
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:

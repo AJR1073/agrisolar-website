@@ -1,9 +1,9 @@
 {
   "hosting": {
-    "public": "dist",
+    "public": "dist-production",
     "predeploy": [
-      "npm run build:hosting",
-      "npm run test:seo"
+      "npm run build:production",
+      "npm run test:release"
     ],
     "cleanUrls": true,
     "trailingSlash": true,
@@ -159,10 +159,6 @@
         "source": "**",
         "headers": [
           {
-            "key": "X-Robots-Tag",
-            "value": "noindex, nofollow, noarchive"
-          },
-          {
             "key": "X-Content-Type-Options",
             "value": "nosniff"
           },
@@ -188,41 +184,21 @@
             "value": "public, max-age=604800"
           }
         ]
+      },
+      {
+        "source": "/admin{,/**}",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex, nofollow, noarchive"
+          },
+          {
+            "key": "Cache-Control",
+            "value": "no-store"
+          }
+        ]
       }
-    ]
-  },
-  "database": {
-    "rules": "database.rules.json"
-  },
-  "storage": {
-    "rules": "storage.rules"
-  },
-  "functions": {
-    "source": "functions",
-    "runtime": "nodejs22"
-  },
-  "emulators": {
-    "hosting": {
-      "host": "127.0.0.1",
-      "port": 5100
-    },
-    "database": {
-      "host": "127.0.0.1",
-      "port": 9100
-    },
-    "storage": {
-      "host": "127.0.0.1",
-      "port": 9200
-    },
-    "functions": {
-      "host": "127.0.0.1",
-      "port": 5101
-    },
-    "ui": {
-      "enabled": true,
-      "host": "127.0.0.1",
-      "port": 4101
-    },
-    "singleProjectMode": true
+    ],
+    "target": "production"
   }
 }

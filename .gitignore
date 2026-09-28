@@ -8,3 +8,4 @@ functions/.secret.local
 *.log
 .firebase/
 dist/
+dist-production/
